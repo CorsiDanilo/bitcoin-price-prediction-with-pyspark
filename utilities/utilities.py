@@ -404,7 +404,7 @@ def autoTuning(dataSet, proportion_lst, feature_col, label_col, ml_model, params
         
     # Transform dict to pandas dataframe
     results_df = pd.DataFrame(result_best)
-    return results_df, result_best, train_best, test_best, predictions_best, 
+    return results_df, train_best, test_best, predictions_best, 
 
 '''
 Description: Multiple Splits Cross Validation on Time Series data
@@ -561,10 +561,7 @@ def tsCrossValidation(dataSet, feature_col, label_col, ml_model, params, assembl
         elif cv_info['cv_type'] == 'wfTs':
             split_position_df = wfTsCrossValidation(num, cv_info['min_obser'], cv_info['expand_window'])
 
-            print(split_position_df)
-
         for position in split_position_df.itertuples():
-            print("SONO QUI")
             # Get the start/split/end position from a kind of Time Series Cross Validation
             start = getattr(position, 'start')
             splits = getattr(position, 'split')
@@ -643,4 +640,5 @@ def tsCrossValidation(dataSet, feature_col, label_col, ml_model, params, assembl
 
     # Transform dict to pandas dataframe
     tsCv_df = pd.DataFrame(result_lst)
-    return tsCv_df, result_best, train_best, test_best, predictions_best, 
+    results_df = pd.DataFrame(result_best)
+    return tsCv_df, result_best, train_best, test_best, predictions_best
