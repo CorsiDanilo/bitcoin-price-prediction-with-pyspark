@@ -16,7 +16,7 @@ import pyspark.sql.functions as F
 
 from pyspark.ml import Pipeline
 from pyspark.ml.feature import VectorAssembler,StandardScaler
-from pyspark.ml.regression import LinearRegression, GeneralizedLinearRegression, DecisionTreeRegressor, RandomForestRegressor, GBTRegressor
+from pyspark.ml.regression import LinearRegression, GeneralizedLinearRegression, RandomForestRegressor, GBTRegressor
 from pyspark.ml.evaluation import RegressionEvaluator
 
 # Python
@@ -53,6 +53,7 @@ import json
 
 import matplotlib.pyplot as plt
 import seaborn as sns
+
 ##########
 # GLOBAL #
 ##########
@@ -63,26 +64,46 @@ metrics = ['mse', 'rmse', 'mae', 'r2']
 ##########
 
 # Return the dataset with the selected features
-def select_features(dataset, features, dep_var):
+def select_features(dataset, features, featureCol, labelCol):
   vectorAssembler = VectorAssembler(
     inputCols = features,
-    outputCol = 'features')
+    outputCol = featureCol)
 
   dataset = vectorAssembler.transform(dataset)
-  dataset = dataset.select(['timestamp','index', 'features', dep_var])
+  dataset = dataset.select(['timestamp','id', featureCol, labelCol])
+
   return dataset
+
+'''
+Description: Split and keep the original time-series order
+Args:
+    dataSet: The dataSet which needs to be splited
+    proportion: A number represents the split proportion
+
+Return: 
+    train_data: The train dataSet
+    valid_data: The validation dataSet
+'''
+def trainSplit(dataSet, proportion):
+    records_num = dataSet.count()
+    split_point = int(records_num * proportion)
+    
+    train_data = dataSet.filter(dataSet['id'] < split_point)
+    valid_data = dataSet.filter(dataSet['id'] >= split_point)
+
+    return (train_data,valid_data)
 
 def show_results(train, valid, pred):
   trace1 = go.Scatter(
       x = train['timestamp'],
-      y = train['market-price'].astype(float),
+      y = train['tomorrow-market-price'].astype(float),
       mode = 'lines',
       name = 'Train set'
   )
 
   trace2 = go.Scatter(
       x = valid['timestamp'],
-      y = valid['market-price'].astype(float),
+      y = valid['tomorrow-market-price'].astype(float),
       mode = 'lines',
       name = 'Valid set'
   )
@@ -152,15 +173,17 @@ def modelComparison(cv_result, model_info, evaluator_lst):
 # SIMPLE MODELS #
 #################
 
-def simple_model(train, modelName, featureCol, labelCol):
+def simple_model(dataframe, modelName, featureCol, labelCol):
     if (modelName == 'LinearRegression'):
         model = LinearRegression(featuresCol=featureCol, labelCol=labelCol)
+    if (modelName == 'GeneralizedLinearRegression'):
+        model = GeneralizedLinearRegression(featuresCol=featureCol, labelCol=labelCol)
     elif (modelName == 'RandomForestRegressor'):
         model = RandomForestRegressor(featuresCol=featureCol, labelCol=labelCol)
     elif (modelName == 'GBTRegressor'):
         model = GBTRegressor(featuresCol=featureCol, labelCol=labelCol)
 
-    fit_model = model.fit(train)
+    fit_model = model.fit(dataframe)
 
     return fit_model
 
@@ -180,21 +203,16 @@ def evaluate_model(predictions, modelName, typeName, label, prediction, metrics)
       print('R2_adj'+' for '+modelName+' on '+typeName+' set: '+str(compute_r2adj(evaluation, predictions.count(), len(predictions.columns))))
 
 # Function that create simple models (without hyperparameter tuning) and evaluate them
-def train_valid_simple_model(train_data, valid_data, modelName, features, featureCol, labelCol, metrics = ['rmse', 'r2']):    
+def evaluate_simple_model(dataframe, features, modelName, featureCol, labelCol, metrics = ['rmse', 'r2']):    
     # Select train and valid data features
-    train_data = select_features(train_data, features, labelCol)
-    valid_data = select_features(valid_data, features, labelCol)
+    dataframe = select_features(dataframe, features, featureCol, labelCol)
+
+    train_data, valid_data = trainSplit(dataframe, 0.8)
 
     # Train the model
     model = simple_model(train_data, modelName, featureCol, labelCol)
-
-    # Training set evaluation
-    training = model.transform(train_data)
-    evaluate_model(training, modelName, 'training', labelCol, 'prediction', metrics)
-
-    print('-----')
-
-    # Validation set evaluation
+    
+    # Model evaluation
     predictions = model.transform(valid_data)
     evaluate_model(predictions, modelName, 'validation', labelCol, 'prediction', metrics)
 
@@ -204,38 +222,20 @@ def train_valid_simple_model(train_data, valid_data, modelName, features, featur
 #########################
 # HYPERPARAMETER TUNING #
 #########################
+def autoTuning(dataSet, features, params, proportion_lst, ml_model, feature_col, label_col):    
+    dataSet = select_features(dataSet, features, feature_col, label_col)
 
-'''
-Description: Split and keep the original time-series order
-Args:
-    dataSet: The dataSet which needs to be splited
-    proportion: A number represents the split proportion
-
-Return: 
-    train_data: The train dataSet
-    test_data: The test dataSet
-'''
-def trainSplit(dataSet, proportion):
-    records_num = dataSet.count()
-    split_point = int(records_num * proportion)
-    
-    train_data = dataSet.filter(dataSet.index < split_point)
-    test_data = dataSet.filter(dataSet.index >= split_point)
-    
-    return (train_data,test_data)
-
-def autoTuning(dataSet, proportion_lst, ml_model, feature_col, label_col, params):    
     # Initialize the best result for comparison
     result_best = {"RMSE": float('inf')}
         
     # Try different proportions 
     for proportion in proportion_lst:
         # Split the dataSet
-        train_data,test_data = trainSplit(dataSet, proportion)
+        train_data,valid_data = trainSplit(dataSet, proportion)
     
         # Cache it
         train_data.cache()
-        test_data.cache()
+        valid_data.cache()
     
         # ALL combination of params
         param_lst = [dict(zip(params, param)) for param in product(*params.values())]
@@ -248,6 +248,14 @@ def autoTuning(dataSet, proportion_lst, ml_model, feature_col, label_col, params
                                          maxIter=param['maxIter'], \
                                          regParam=param['regParam'], \
                                          elasticNetParam=param['elasticNetParam'])
+                
+            elif ml_model == "GeneralizedLinearRegression":
+                model = GeneralizedLinearRegression(featuresCol=feature_col, \
+                                                    labelCol=label_col, \
+                                                    maxIter=param['maxIter'], \
+                                                    regParam=param['regParam'], \
+                                                    family=param['family'], \
+                                                    link=param['link'])
 
             elif ml_model == "RandomForestRegressor":
                 model = RandomForestRegressor(featuresCol=feature_col, \
@@ -271,9 +279,9 @@ def autoTuning(dataSet, proportion_lst, ml_model, feature_col, label_col, params
             end = time.time()
 
             # Make predictions
-            predictions = pipeline_model.transform(test_data)
+            predictions = pipeline_model.transform(valid_data)
 
-            # Compute test error by several evaluators
+            # Compute validation error by several evaluators
             rmse_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='rmse')
             mae_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='mae')
             r2_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='r2')
@@ -307,7 +315,7 @@ def autoTuning(dataSet, proportion_lst, ml_model, feature_col, label_col, params
             }
 
             # DEBUG: show data for each split
-            # show_results(train_data.toPandas(), test_data.toPandas(), predictions.toPandas())
+            # show_results(train_data.toPandas(), valid_data.toPandas(), predictions.toPandas())
             
             # Only store the lowest RMSE
             if results['RMSE'] < result_best['RMSE']:
@@ -315,7 +323,7 @@ def autoTuning(dataSet, proportion_lst, ml_model, feature_col, label_col, params
 
         # Release Cache
         train_data.unpersist()
-        test_data.unpersist()
+        valid_data.unpersist()
         
     # Transform dict to pandas dataframe
     results_df = pd.DataFrame(result_best)
@@ -338,14 +346,14 @@ def mulTsCrossValidation(num, n_splits):
     split_position_lst = []
     # Calculate the split position for each time 
     for i in range(1, n_splits+1):
-        # Calculate train size and test size
+        # Calculate train size and validation size
         train_size = i * num // (n_splits + 1) + num % (n_splits + 1)
-        test_size = num //(n_splits + 1)
+        valid_size = num //(n_splits + 1)
 
         # Calculate the start/split/end point for each fold
         start = 0
         split = train_size
-        end = train_size + test_size
+        end = train_size + valid_size
         
         # Avoid to beyond the whole number of dataSet
         if end > num:
@@ -373,7 +381,7 @@ def blockedTsCrossValidation(num, n_splits):
         # Calculate the start/split/end point for each fold
         start = i * kfold_size
         end = start + kfold_size
-        # Manually set train-test split proportion in each fold
+        # Manually set train-validation split proportion in each fold
         split = int(0.8 * (end - start)) + start
         split_position_lst.append((start,split,end))
         
@@ -394,7 +402,9 @@ Args:
 Return: 
     tsCv_df: All the splits performance of each model in a pandas dataframe
 '''
-def tsCrossValidation(dataSet, ml_model, feature_col, label_col, params, cv_info):
+def tsCrossValidation(dataSet, features, params, cv_info, ml_model, feature_col, label_col):
+    dataSet = select_features(dataSet, features, feature_col, label_col)
+
     # Get the number of samples
     num = dataSet.count()
     
@@ -413,6 +423,14 @@ def tsCrossValidation(dataSet, ml_model, feature_col, label_col, params, cv_info
                                      maxIter=param['maxIter'], \
                                      regParam=param['regParam'], \
                                      elasticNetParam=param['elasticNetParam'])
+            
+        elif ml_model == "GeneralizedLinearRegression":
+                model = GeneralizedLinearRegression(featuresCol=feature_col, \
+                                                    labelCol=label_col, \
+                                                    maxIter=param['maxIter'], \
+                                                    regParam=param['regParam'], \
+                                                    family=param['family'], \
+                                                    link=param['link'])
 
         elif ml_model == "RandomForestRegressor":
             model = RandomForestRegressor(featuresCol=feature_col, \
@@ -420,7 +438,7 @@ def tsCrossValidation(dataSet, ml_model, feature_col, label_col, params, cv_info
                                           numTrees = param["numTrees"], \
                                           maxDepth = param["maxDepth"])
 
-        elif ml_model == "GBTRegression":
+        elif ml_model == "GBTRegressor":
             model = GBTRegressor(featuresCol=feature_col, \
                                  labelCol=label_col, \
                                  maxIter = param['maxIter'], \
@@ -440,17 +458,17 @@ def tsCrossValidation(dataSet, ml_model, feature_col, label_col, params, cv_info
             end = getattr(position, 'end')
             idx  = getattr(position, 'Index')
             
-            # Train/Test size
+            # Train/Validation size
             train_size = splits - start
-            test_size = end - splits
+            valid_size = end - splits
 
-            # Get training data and test data
-            train_data = dataSet.filter(dataSet.index.between(start, splits-1))
-            test_data = dataSet.filter(dataSet.index.between(splits, end-1))
+            # Get training data and validation data
+            train_data = dataSet.filter(dataSet['id'].between(start, splits-1))
+            valid_data = dataSet.filter(dataSet['id'].between(splits, end-1))
 
             # Cache it
             train_data.cache()
-            test_data.cache()
+            valid_data.cache()
 
             # Chain assembler and model in a Pipeline
             pipeline = Pipeline(stages=[model])
@@ -460,9 +478,9 @@ def tsCrossValidation(dataSet, ml_model, feature_col, label_col, params, cv_info
             end = time.time()
 
             # Make predictions
-            predictions = pipeline_model.transform(test_data)
+            predictions = pipeline_model.transform(valid_data)
 
-            # Compute test error by several evaluator
+            # Compute validation error by several evaluator
             rmse_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='rmse')
             mae_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='mae')
             r2_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='r2')
@@ -485,7 +503,7 @@ def tsCrossValidation(dataSet, ml_model, feature_col, label_col, params, cv_info
                 "Model": ml_model,
                 'CV_type': cv_info['cv_type'],
                 "Splits": idx + 1,
-                "Train&Test": (train_size,test_size),
+                "Train&Validation": (train_size,valid_size),
                 "Parameters": list(param.values()),
                 "RMSE": rmse,
                 "MAPE": mape,
@@ -497,7 +515,7 @@ def tsCrossValidation(dataSet, ml_model, feature_col, label_col, params, cv_info
             }
 
             # DEBUG: show data for each split
-            # show_results(train_data.toPandas(), test_data.toPandas(), predictions.toPandas())
+            # show_results(train_data.toPandas(), valid_data.toPandas(), predictions.toPandas())
             
             # Store each splits result
             result_lst.append(results)
@@ -507,8 +525,66 @@ def tsCrossValidation(dataSet, ml_model, feature_col, label_col, params, cv_info
             
             # Release Cache
             train_data.unpersist()
-            test_data.unpersist()
+            valid_data.unpersist()
 
     # Transform dict to pandas dataframe
     tsCv_df = pd.DataFrame(result_lst)
     return tsCv_df, trained_models
+
+#####################
+# TRAIN FINAL MODEL #
+#####################
+
+def train_final_model(dataSet, features, params, ml_model, feature_col, label_col):    
+    dataSet = select_features(dataSet, features, feature_col, label_col)
+
+    # Split the dataSet
+    train_data,valid_data = trainSplit(dataSet, 1)
+
+    # Cache it
+    train_data.cache()
+    valid_data.cache()
+    
+    # ALL combination of params
+    param_lst = [dict(zip(params, param)) for param in product(*params.values())]
+    
+    for param in param_lst:
+        # Chosen Model
+        if ml_model == "LinearRegression":
+            model = LinearRegression(featuresCol=feature_col, \
+                                        labelCol=label_col, \
+                                        maxIter=param['maxIter'], \
+                                        regParam=param['regParam'], \
+                                        elasticNetParam=param['elasticNetParam'])
+            
+        elif ml_model == "GeneralizedLinearRegression":
+            model = GeneralizedLinearRegression(featuresCol=feature_col, \
+                                                labelCol=label_col, \
+                                                maxIter=param['maxIter'], \
+                                                regParam=param['regParam'], \
+                                                family=param['family'], \
+                                                link=param['link'])
+
+        elif ml_model == "RandomForestRegressor":
+            model = RandomForestRegressor(featuresCol=feature_col, \
+                                            labelCol=label_col, \
+                                            numTrees = param["numTrees"], \
+                                            maxDepth = param["maxDepth"])
+
+        elif ml_model == "GBTRegressor":
+            model = GBTRegressor(featuresCol=feature_col, \
+                                    labelCol=label_col, \
+                                    maxIter = param['maxIter'], \
+                                    maxDepth = param['maxDepth'], \
+                                    stepSize = param['stepSize'], \
+                                    seed=0)
+        
+        # Chain assembler and model in a Pipeline
+        pipeline = Pipeline(stages=[model])
+        pipeline_model = pipeline.fit(train_data)
+
+    # Release Cache
+    train_data.unpersist()
+    valid_data.unpersist()
+        
+    return pipeline_model
