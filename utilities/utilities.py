@@ -225,6 +225,12 @@ def evaluate_simple_model(dataframe, features, modelName, featureCol, labelCol, 
 def autoTuning(dataSet, features, params, proportion_lst, ml_model, feature_col, label_col):    
     dataSet = select_features(dataSet, features, feature_col, label_col)
 
+<<<<<<< Updated upstream
+=======
+def autoTuning(dataSet, features, params, proportion_lst, ml_model, feature_col, label_col):    
+    dataSet = select_features(dataSet, features, feature_col, label_col)
+
+>>>>>>> Stashed changes
     # Initialize the best result for comparison
     result_best = {"RMSE": float('inf')}
         
