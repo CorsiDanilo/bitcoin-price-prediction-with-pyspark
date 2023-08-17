@@ -96,14 +96,14 @@ def trainSplit(dataSet, proportion):
 def show_results(train, valid, pred):
   trace1 = go.Scatter(
       x = train['timestamp'],
-      y = train['tomorrow-market-price'].astype(float),
+      y = train['next-market-price'].astype(float),
       mode = 'lines',
       name = 'Train set'
   )
 
   trace2 = go.Scatter(
       x = valid['timestamp'],
-      y = valid['tomorrow-market-price'].astype(float),
+      y = valid['next-market-price'].astype(float),
       mode = 'lines',
       name = 'Valid set'
   )
@@ -151,6 +151,90 @@ def show_results(train, valid, pred):
   fig = dict(data=data, layout=layout)
   iplot(fig, filename = "Train, valid and predictions with Rangeslider")
 
+def get_defaults_model_params(modelName):
+    if (modelName == 'LinearRegression'):
+        params = {
+            'maxIter' : [100], # max number of iterations (>=0), default:100
+            'regParam' : [0.0],# regularization parameter (>=0), default:0.0
+            'elasticNetParam' : [0.0] # the ElasticNet mixing parameter, [0, 1], default:0.0
+        }   
+    if (modelName == 'GeneralizedLinearRegression'):
+        params = {
+            'maxIter' : [25], # max number of iterations (>=0), default:25
+            'regParam' : [0], # regularization parameter (>=0), default:0.0
+            'family': ['gaussian'], # The name of family which is a description of the error distribution to be used in the model.
+            'link': ['identity'] # which provides the relationship between the linear predictor and the mean of the distribution function.
+        }
+    elif (modelName == 'RandomForestRegressor'):
+        params = {
+            'numTrees' : [20],# Number of trees to train, >=1, default:20
+            'maxDepth' : [5] # Maximum depth of the tree, <=30, default:5
+            }
+    elif (modelName == 'GBTRegressor'):
+        params = {
+            'maxIter' : [20], # max number of iterations (>=0), default:20
+            'maxDepth' : [5], # Maximum depth of the tree (>=0), <=30, default:5
+            'stepSize': [0.1] # learning rate, [0,1], default:0.1
+        }
+    
+    return params
+
+def get_base_model_params(modelName):
+    if (modelName == 'LinearRegression'):
+        params = {
+            'maxIter' : [5, 10, 50, 80, 100], # max number of iterations (>=0), default:100
+            'regParam' : np.arange(0,1,0.2).round(decimals=2),# regularization parameter (>=0), default:0.0
+            'elasticNetParam' : np.arange(0,1,0.2).round(decimals=2) # the ElasticNet mixing parameter, [0, 1], default:0.0
+        }
+    if (modelName == 'GeneralizedLinearRegression'):
+        params = {
+            'maxIter' : [5, 10, 50, 80], # max number of iterations (>=0), default:25
+            'regParam' : [0, 0.1, 0.2], # regularization parameter (>=0), default:0.0
+            'family': ['gaussian', 'gamma'], # The name of family which is a description of the error distribution to be used in the model.
+            'link': ['identity', 'inverse'] # which provides the relationship between the linear predictor and the mean of the distribution function.
+        }
+    elif (modelName == 'RandomForestRegressor'):
+        params = {
+            'numTrees' : [5, 10, 15, 20, 25], # Number of trees to train, >=1, default:20
+            'maxDepth' : [2, 3, 5, 7, 10] # Maximum depth of the tree, <=30, default:5
+        }
+    elif (modelName == 'GBTRegressor'):
+        params = {
+            'maxIter' : [20, 40, 60], # max number of iterations (>=0), default:20
+            'maxDepth' : [5, 8, 10], # Maximum depth of the tree (>=0), <=30, default:5
+            'stepSize': [0.1, 0.3, 0.5, 0.7] # learning rate, [0,1], default:0.1
+        }
+
+    return params
+
+def get_tuned_model_params(modelName):
+    if (modelName == 'LinearRegression'):
+        params = {
+            'maxIter' : [5], # max number of iterations (>=0), default:100
+            'regParam' : [0.0],# regularization parameter (>=0), default:0.0
+            'elasticNetParam' : [0.0] # the ElasticNet mixing parameter, [0, 1], default:0.0
+        }   
+    if (modelName == 'GeneralizedLinearRegression'):
+        params = {
+            'maxIter' : [5], # max number of iterations (>=0), default:25
+            'regParam' : [0], # regularization parameter (>=0), default:0.0
+            'family': ['gaussian'], # The name of family which is a description of the error distribution to be used in the model.
+            'link': ['identity'] # which provides the relationship between the linear predictor and the mean of the distribution function.
+        }
+    elif (modelName == 'RandomForestRegressor'):
+        params = {
+            'numTrees' : [20],# Number of trees to train, >=1, default:20
+            'maxDepth' : [5] # Maximum depth of the tree, <=30, default:5
+            }
+    elif (modelName == 'GBTRegressor'):
+        params = {
+            'maxIter' : [40], # max number of iterations (>=0), default:20
+            'maxDepth' : [5], # Maximum depth of the tree (>=0), <=30, default:5
+            'stepSize': [0.3] # learning rate, [0,1], default:0.1
+        }
+    
+    return params
+
 '''
 Description: Apply calculations on Time Series Cross Validation results to form the final Model Comparison Table
 Args:
@@ -187,50 +271,69 @@ def simple_model(dataframe, modelName, featureCol, labelCol):
 
     return fit_model
 
-# Function to compute the r2 adjusted metric
-# r2 is the r2 metric, n is the number of observations, k is the number of features
-def compute_r2adj(r2, n, k):
-  return 1 - (1 - r2) * ((n - 1) / (n - k - 1))
-
-# Function to evaluate a model
-def evaluate_model(predictions, modelName, typeName, label, prediction, metrics):
-  r2 = None
-  for metric in metrics:
-    evaluator = RegressionEvaluator(labelCol=label, predictionCol=prediction, metricName=metric)
-    evaluation = evaluator.evaluate(predictions)
-    print(metric.upper()+' for '+modelName+' on '+typeName+' set: '+str(evaluation))
-    if metric == 'r2':
-      print('R2_adj'+' for '+modelName+' on '+typeName+' set: '+str(compute_r2adj(evaluation, predictions.count(), len(predictions.columns))))
-
 # Function that create simple models (without hyperparameter tuning) and evaluate them
-def evaluate_simple_model(dataframe, features, modelName, featureCol, labelCol, metrics = ['rmse', 'r2']):    
+def evaluate_simple_model(dataframe, features, features_id,modelName, featureCol, labelCol):    
     # Select train and valid data features
     dataframe = select_features(dataframe, features, featureCol, labelCol)
 
     train_data, valid_data = trainSplit(dataframe, 0.8)
 
-    # Train the model
+    # Train a model and calculate running time
+    start = time.time()
     model = simple_model(train_data, modelName, featureCol, labelCol)
-    
-    # Model evaluation
+    end = time.time()
+
+    # Make predictions
     predictions = model.transform(valid_data)
-    evaluate_model(predictions, modelName, 'validation', labelCol, 'prediction', metrics)
+
+    # Compute validation error by several evaluators
+    rmse_evaluator = RegressionEvaluator(labelCol=labelCol, predictionCol="prediction", metricName='rmse')
+    mae_evaluator = RegressionEvaluator(labelCol=labelCol, predictionCol="prediction", metricName='mae')
+    r2_evaluator = RegressionEvaluator(labelCol=labelCol, predictionCol="prediction", metricName='r2')
+    var_evaluator = RegressionEvaluator(labelCol=labelCol, predictionCol="prediction", metricName='var')
+    
+    predictions_pd = predictions.select(labelCol,"prediction").toPandas()
+    mape = mean_absolute_percentage_error(predictions_pd[labelCol], predictions_pd["prediction"])
+    
+    rmse = rmse_evaluator.evaluate(predictions)
+    mae = mae_evaluator.evaluate(predictions)
+    var = var_evaluator.evaluate(predictions)
+    r2 = r2_evaluator.evaluate(predictions)
+    # Adjusted R-squared
+    n = predictions.count()
+    p = len(predictions.columns)
+    adj_r2 = 1-(1-r2)*(n-1)/(n-p-1)
+
+    # Use dict to store each result
+    result = {
+        "Model": modelName,
+        "Type": "Base",
+        "Features": features_id,
+        "Parameters": "Defaults",
+        "RMSE": rmse,
+        "MAPE":mape,
+        "MAE": mae,
+        "Variance": var,
+        "R2": r2,
+        "Adjusted_R2": adj_r2,
+        "Time": end - start,
+    }
 
     # Show results
-    show_results(train_data.toPandas(), valid_data.toPandas(), predictions.toPandas())
+    # show_results(train_data.toPandas(), valid_data.toPandas(), predictions.toPandas())
+
+    # Transform dict to pandas dataframe
+    result_df = pd.DataFrame(result, index=[0])
+
+    return result_df
 
 #########################
 # HYPERPARAMETER TUNING #
 #########################
-def autoTuning(dataSet, features, params, proportion_lst, ml_model, feature_col, label_col):    
+
+def autoTuning(dataSet, features, params, features_id, proportion_lst, ml_model, feature_col, label_col):    
     dataSet = select_features(dataSet, features, feature_col, label_col)
 
-<<<<<<< Updated upstream
-=======
-def autoTuning(dataSet, features, params, proportion_lst, ml_model, feature_col, label_col):    
-    dataSet = select_features(dataSet, features, feature_col, label_col)
-
->>>>>>> Stashed changes
     # Initialize the best result for comparison
     result_best = {"RMSE": float('inf')}
         
@@ -308,6 +411,8 @@ def autoTuning(dataSet, features, params, proportion_lst, ml_model, feature_col,
             # Use dict to store each result
             results = {
                 "Model": ml_model,
+                "Features": features_id,
+                "Type": "AutoTuning",
                 "Proportion": proportion,
                 "Parameters": [list(param.values())],
                 "RMSE": rmse,
@@ -317,7 +422,6 @@ def autoTuning(dataSet, features, params, proportion_lst, ml_model, feature_col,
                 "R2": r2,
                 "Adjusted_R2": adj_r2,
                 "Time": end - start,
-                "Predictions": predictions.select(label_col,"prediction",'timestamp')
             }
 
             # DEBUG: show data for each split
@@ -332,9 +436,9 @@ def autoTuning(dataSet, features, params, proportion_lst, ml_model, feature_col,
         valid_data.unpersist()
         
     # Transform dict to pandas dataframe
-    results_df = pd.DataFrame(result_best)
+    result_best_df = pd.DataFrame(result_best)
 
-    return results_df
+    return result_best_df
 
 ####################
 # CROSS VALIDATION #
@@ -408,7 +512,7 @@ Args:
 Return: 
     tsCv_df: All the splits performance of each model in a pandas dataframe
 '''
-def tsCrossValidation(dataSet, features, params, cv_info, ml_model, feature_col, label_col):
+def tsCrossValidation(dataSet, features, params, cv_info, features_id, ml_model, feature_col, label_col):
     dataSet = select_features(dataSet, features, feature_col, label_col)
 
     # Get the number of samples
@@ -507,7 +611,8 @@ def tsCrossValidation(dataSet, features, params, cv_info, ml_model, feature_col,
             # Use dict to store each result
             results = {
                 "Model": ml_model,
-                'CV_type': cv_info['cv_type'],
+                "Features": features_id,
+                'Type': cv_info['cv_type'],
                 "Splits": idx + 1,
                 "Train&Validation": (train_size,valid_size),
                 "Parameters": list(param.values()),
