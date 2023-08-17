@@ -55,11 +55,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 ##########
-# GLOBAL #
-##########
-metrics = ['mse', 'rmse', 'mae', 'r2']
-
-##########
 # SHARED #
 ##########
 
@@ -93,30 +88,23 @@ def trainSplit(dataSet, proportion):
 
     return (train_data,valid_data)
 
-def show_results(train, valid, pred):
+def show_results(results, ml_model):
   trace1 = go.Scatter(
-      x = train['timestamp'],
-      y = train['next-market-price'].astype(float),
+      x = results['timestamp'],
+      y = results['next-market-price'].astype(float),
       mode = 'lines',
-      name = 'Train set'
+      name = 'Next market price (usd)'
   )
 
   trace2 = go.Scatter(
-      x = valid['timestamp'],
-      y = valid['next-market-price'].astype(float),
+      x = results['timestamp'],
+      y = results['prediction'].astype(float),
       mode = 'lines',
-      name = 'Valid set'
-  )
-
-  trace3 = go.Scatter(
-      x = pred['timestamp'],
-      y = pred['prediction'].astype(float),
-      mode = 'lines',
-      name = 'Valid prediction'
+      name = 'Predicted next makert price (usd)'
   )
 
   layout = dict(
-      title='Train, valid and predictions with Rangeslider',
+      title= ml_model +' predicitons',
       xaxis=dict(
           rangeselector=dict(
               buttons=list([
@@ -147,9 +135,9 @@ def show_results(train, valid, pred):
       )
   )
 
-  data = [trace1,trace2,trace3]
+  data = [trace1,trace2]
   fig = dict(data=data, layout=layout)
-  iplot(fig, filename = "Train, valid and predictions with Rangeslider")
+  iplot(fig, filename = ml_model +' predicitons')
 
 def get_defaults_model_params(modelName):
     if (modelName == 'LinearRegression'):
@@ -179,7 +167,7 @@ def get_defaults_model_params(modelName):
     
     return params
 
-def get_base_model_params(modelName):
+def get_simple_model_params(modelName):
     if (modelName == 'LinearRegression'):
         params = {
             'maxIter' : [5, 10, 50, 80, 100], # max number of iterations (>=0), default:100
@@ -200,8 +188,8 @@ def get_base_model_params(modelName):
         }
     elif (modelName == 'GBTRegressor'):
         params = {
-            'maxIter' : [20, 40, 60], # max number of iterations (>=0), default:20
-            'maxDepth' : [5, 8, 10], # Maximum depth of the tree (>=0), <=30, default:5
+            'maxIter' : [10, 20, 30], # max number of iterations (>=0), default:20
+            'maxDepth' : [3, 5, 8], # Maximum depth of the tree (>=0), <=30, default:5
             'stepSize': [0.1, 0.3, 0.5, 0.7] # learning rate, [0,1], default:0.1
         }
 
@@ -211,26 +199,26 @@ def get_tuned_model_params(modelName):
     if (modelName == 'LinearRegression'):
         params = {
             'maxIter' : [5], # max number of iterations (>=0), default:100
-            'regParam' : [0.0],# regularization parameter (>=0), default:0.0
+            'regParam' : [0.8],# regularization parameter (>=0), default:0.0
             'elasticNetParam' : [0.0] # the ElasticNet mixing parameter, [0, 1], default:0.0
         }   
     if (modelName == 'GeneralizedLinearRegression'):
         params = {
             'maxIter' : [5], # max number of iterations (>=0), default:25
-            'regParam' : [0], # regularization parameter (>=0), default:0.0
+            'regParam' : [0.2], # regularization parameter (>=0), default:0.0
             'family': ['gaussian'], # The name of family which is a description of the error distribution to be used in the model.
             'link': ['identity'] # which provides the relationship between the linear predictor and the mean of the distribution function.
         }
     elif (modelName == 'RandomForestRegressor'):
         params = {
-            'numTrees' : [20],# Number of trees to train, >=1, default:20
+            'numTrees' : [5],# Number of trees to train, >=1, default:20
             'maxDepth' : [5] # Maximum depth of the tree, <=30, default:5
             }
     elif (modelName == 'GBTRegressor'):
         params = {
-            'maxIter' : [40], # max number of iterations (>=0), default:20
-            'maxDepth' : [5], # Maximum depth of the tree (>=0), <=30, default:5
-            'stepSize': [0.3] # learning rate, [0,1], default:0.1
+            'maxIter' : [20], # max number of iterations (>=0), default:20
+            'maxDepth' : [3], # Maximum depth of the tree (>=0), <=30, default:5
+            'stepSize': [0.5] # learning rate, [0,1], default:0.1
         }
     
     return params
@@ -257,75 +245,93 @@ def modelComparison(cv_result, model_info, evaluator_lst):
 # SIMPLE MODELS #
 #################
 
-def simple_model(dataframe, modelName, featureCol, labelCol):
-    if (modelName == 'LinearRegression'):
-        model = LinearRegression(featuresCol=featureCol, labelCol=labelCol)
-    if (modelName == 'GeneralizedLinearRegression'):
-        model = GeneralizedLinearRegression(featuresCol=featureCol, labelCol=labelCol)
-    elif (modelName == 'RandomForestRegressor'):
-        model = RandomForestRegressor(featuresCol=featureCol, labelCol=labelCol)
-    elif (modelName == 'GBTRegressor'):
-        model = GBTRegressor(featuresCol=featureCol, labelCol=labelCol)
-
-    fit_model = model.fit(dataframe)
-
-    return fit_model
-
 # Function that create simple models (without hyperparameter tuning) and evaluate them
-def evaluate_simple_model(dataframe, features, features_id,modelName, featureCol, labelCol):    
+def evaluate_simple_model(dataframe, features, params, features_id, ml_model, feature_col, label_col): 
     # Select train and valid data features
-    dataframe = select_features(dataframe, features, featureCol, labelCol)
+    dataframe = select_features(dataframe, features, feature_col, label_col)
 
-    train_data, valid_data = trainSplit(dataframe, 0.8)
+    # ALL combination of params
+    param_lst = [dict(zip(params, param)) for param in product(*params.values())]
 
-    # Train a model and calculate running time
-    start = time.time()
-    model = simple_model(train_data, modelName, featureCol, labelCol)
-    end = time.time()
+    for param in param_lst:
+        # Chosen Model
+        if ml_model == "LinearRegression":
+            model = LinearRegression(featuresCol=feature_col, \
+                                     labelCol=label_col, \
+                                     maxIter=param['maxIter'], \
+                                     regParam=param['regParam'], \
+                                     elasticNetParam=param['elasticNetParam'])
+            
+        elif ml_model == "GeneralizedLinearRegression":
+            model = GeneralizedLinearRegression(featuresCol=feature_col, \
+                                                labelCol=label_col, \
+                                                maxIter=param['maxIter'], \
+                                                regParam=param['regParam'], \
+                                                family=param['family'], \
+                                                link=param['link'])
 
-    # Make predictions
-    predictions = model.transform(valid_data)
+        elif ml_model == "RandomForestRegressor":
+            model = RandomForestRegressor(featuresCol=feature_col, \
+                                          labelCol=label_col, \
+                                          numTrees = param["numTrees"], \
+                                          maxDepth = param["maxDepth"])
 
-    # Compute validation error by several evaluators
-    rmse_evaluator = RegressionEvaluator(labelCol=labelCol, predictionCol="prediction", metricName='rmse')
-    mae_evaluator = RegressionEvaluator(labelCol=labelCol, predictionCol="prediction", metricName='mae')
-    r2_evaluator = RegressionEvaluator(labelCol=labelCol, predictionCol="prediction", metricName='r2')
-    var_evaluator = RegressionEvaluator(labelCol=labelCol, predictionCol="prediction", metricName='var')
-    
-    predictions_pd = predictions.select(labelCol,"prediction").toPandas()
-    mape = mean_absolute_percentage_error(predictions_pd[labelCol], predictions_pd["prediction"])
-    
-    rmse = rmse_evaluator.evaluate(predictions)
-    mae = mae_evaluator.evaluate(predictions)
-    var = var_evaluator.evaluate(predictions)
-    r2 = r2_evaluator.evaluate(predictions)
-    # Adjusted R-squared
-    n = predictions.count()
-    p = len(predictions.columns)
-    adj_r2 = 1-(1-r2)*(n-1)/(n-p-1)
+        elif ml_model == "GBTRegressor":
+            model = GBTRegressor(featuresCol=feature_col, \
+                                 labelCol=label_col, \
+                                 maxIter = param['maxIter'], \
+                                 maxDepth = param['maxDepth'], \
+                                 stepSize = param['stepSize'])
 
-    # Use dict to store each result
-    result = {
-        "Model": modelName,
-        "Type": "Base",
-        "Features": features_id,
-        "Parameters": "Defaults",
-        "RMSE": rmse,
-        "MAPE":mape,
-        "MAE": mae,
-        "Variance": var,
-        "R2": r2,
-        "Adjusted_R2": adj_r2,
-        "Time": end - start,
-    }
+        train_data, valid_data = trainSplit(dataframe, 0.8)
 
-    # Show results
-    # show_results(train_data.toPandas(), valid_data.toPandas(), predictions.toPandas())
+        # Chain assembler and model in a Pipeline
+        pipeline = Pipeline(stages=[model])
+        # Train a model and calculate running time
+        start = time.time()
+        pipeline_model = pipeline.fit(train_data)
+        end = time.time()
+
+        # Make predictions
+        predictions = pipeline_model.transform(valid_data)
+
+        # Compute validation error by several evaluators
+        rmse_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='rmse')
+        mae_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='mae')
+        r2_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='r2')
+        var_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='var')
+        
+        predictions_pd = predictions.select(label_col, "prediction", 'timestamp').toPandas()
+        mape = mean_absolute_percentage_error(predictions_pd[label_col], predictions_pd["prediction"])
+        
+        rmse = rmse_evaluator.evaluate(predictions)
+        mae = mae_evaluator.evaluate(predictions)
+        var = var_evaluator.evaluate(predictions)
+        r2 = r2_evaluator.evaluate(predictions)
+        # Adjusted R-squared
+        n = predictions.count()
+        p = len(predictions.columns)
+        adj_r2 = 1-(1-r2)*(n-1)/(n-p-1)
+
+        # Use dict to store each result
+        result = {
+            "Model": ml_model,
+            "Type": "simple",
+            "Features": features_id,
+            "Parameters": [list(param.values())],
+            "RMSE": rmse,
+            "MAPE":mape,
+            "MAE": mae,
+            "Variance": var,
+            "R2": r2,
+            "Adjusted_R2": adj_r2,
+            "Time": end - start,
+        }
 
     # Transform dict to pandas dataframe
     result_df = pd.DataFrame(result, index=[0])
 
-    return result_df
+    return result_df, predictions_pd
 
 #########################
 # HYPERPARAMETER TUNING #
@@ -396,7 +402,7 @@ def autoTuning(dataSet, features, params, features_id, proportion_lst, ml_model,
             r2_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='r2')
             var_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='var')
             
-            predictions_pd = predictions.select(label_col,"prediction").toPandas()
+            predictions_pd = predictions.select(label_col, "prediction").toPandas()
             mape = mean_absolute_percentage_error(predictions_pd[label_col], predictions_pd["prediction"])
             
             rmse = rmse_evaluator.evaluate(predictions)
@@ -411,8 +417,8 @@ def autoTuning(dataSet, features, params, features_id, proportion_lst, ml_model,
             # Use dict to store each result
             results = {
                 "Model": ml_model,
+                "Type": "autotuning",
                 "Features": features_id,
-                "Type": "AutoTuning",
                 "Proportion": proportion,
                 "Parameters": [list(param.values())],
                 "RMSE": rmse,
@@ -611,8 +617,8 @@ def tsCrossValidation(dataSet, features, params, cv_info, features_id, ml_model,
             # Use dict to store each result
             results = {
                 "Model": ml_model,
-                "Features": features_id,
                 'Type': cv_info['cv_type'],
+                "Features": features_id,
                 "Splits": idx + 1,
                 "Train&Validation": (train_size,valid_size),
                 "Parameters": list(param.values()),
@@ -625,9 +631,6 @@ def tsCrossValidation(dataSet, features, params, cv_info, features_id, ml_model,
                 "Time": end - start
             }
 
-            # DEBUG: show data for each split
-            # show_results(train_data.toPandas(), valid_data.toPandas(), predictions.toPandas())
-            
             # Store each splits result
             result_lst.append(results)
 
