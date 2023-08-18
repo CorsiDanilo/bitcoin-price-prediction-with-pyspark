@@ -88,10 +88,10 @@ def trainSplit(dataSet, proportion):
 
     return (train_data,valid_data)
 
-def show_results(results, ml_model):
+def show_results(results, ml_model, target_val):
   trace1 = go.Scatter(
       x = results['timestamp'],
-      y = results['next-market-price'].astype(float),
+      y = results[target_val].astype(float),
       mode = 'lines',
       name = 'Next market price (usd)'
   )
@@ -198,9 +198,9 @@ def get_simple_model_params(modelName):
 def get_tuned_model_params(modelName):
     if (modelName == 'LinearRegression'):
         params = {
-            'maxIter' : [5], # max number of iterations (>=0), default:100
-            'regParam' : [0.8],# regularization parameter (>=0), default:0.0
-            'elasticNetParam' : [0.0] # the ElasticNet mixing parameter, [0, 1], default:0.0
+            'maxIter' : [100], # max number of iterations (>=0), default:100
+            'regParam' : [0.4],# regularization parameter (>=0), default:0.0
+            'elasticNetParam' : [0.2] # the ElasticNet mixing parameter, [0, 1], default:0.0
         }   
     if (modelName == 'GeneralizedLinearRegression'):
         params = {
@@ -212,13 +212,13 @@ def get_tuned_model_params(modelName):
     elif (modelName == 'RandomForestRegressor'):
         params = {
             'numTrees' : [5],# Number of trees to train, >=1, default:20
-            'maxDepth' : [5] # Maximum depth of the tree, <=30, default:5
+            'maxDepth' : [10] # Maximum depth of the tree, <=30, default:5
             }
     elif (modelName == 'GBTRegressor'):
         params = {
             'maxIter' : [20], # max number of iterations (>=0), default:20
             'maxDepth' : [3], # Maximum depth of the tree (>=0), <=30, default:5
-            'stepSize': [0.5] # learning rate, [0,1], default:0.1
+            'stepSize': [0.3] # learning rate, [0,1], default:0.1
         }
     
     return params
