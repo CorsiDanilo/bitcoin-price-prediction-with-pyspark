@@ -1,73 +1,38 @@
-import pyspark
-from pyspark.sql import *
-from pyspark.sql.types import *
-from pyspark.sql.functions import *
-from pyspark import SparkContext, SparkConf
-from pyspark.ml.regression import LinearRegression, RandomForestRegressor, GBTRegressor
-from pyspark.ml.tuning import CrossValidator, ParamGridBuilder
-from pyspark.ml.evaluation import RegressionEvaluator
-from pyspark.ml.feature import VectorAssembler
-from pyspark.ml.stat import Correlation
-from pyspark.ml import Pipeline
-
-# Apache Spark
-from pyspark.sql import SparkSession
-import pyspark.sql.functions as F
-
-from pyspark.ml import Pipeline
-from pyspark.ml.feature import VectorAssembler,StandardScaler
-from pyspark.ml.regression import LinearRegression, GeneralizedLinearRegression, RandomForestRegressor, GBTRegressor
-from pyspark.ml.evaluation import RegressionEvaluator
-
-# Python
-import numpy as np
-import pandas as pd
+from imports import *
 from itertools import product
-import time
-
-# Graph packages
-# https://plotly.com/python/getting-started/#jupyterlab-support
-# https://plotly.com/python/time-series/
-import plotly.express as px
-
-# Scikit-learn
-from sklearn.metrics import mean_absolute_percentage_error
-
-#Install some useful dependencies
-import requests
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-from itertools import cycle
-
-import plotly.express as px
-
-import plotly.graph_objs as go
-from plotly.offline import init_notebook_mode, iplot
-import gc
-
-import pandas as pd
-import numpy as np
-import json
-
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 ##########
 # SHARED #
 ##########
 
-# Return the dataset with the selected features
-def select_features(dataset, features, featureCol, labelCol):
-  vectorAssembler = VectorAssembler(
-    inputCols = features,
-    outputCol = featureCol)
+# Raw features selection❗
+# # Return the dataset with the selected features
+# def select_features(dataset, features, featureCol, labelCol):
+#   vectorAssembler = VectorAssembler(
+#     inputCols = features,
+#     outputCol = featureCol)
 
-  dataset = vectorAssembler.transform(dataset)
-  dataset = dataset.select(['timestamp','id', featureCol, labelCol])
+#   dataset = vectorAssembler.transform(dataset)
+#   dataset = dataset.select(['timestamp','id', featureCol, labelCol])
+#   return dataset
 
-  return dataset
+# Normalized / standardized features selection❗
+def select_features(dataset, features, featureCol, labelCol):    
+    # Assemble the columns into a vector column
+    assembler = VectorAssembler(inputCols=features, outputCol="raw_features")
+    df_vector  = assembler.transform(dataset).select("timestamp", "id", "raw_features", labelCol)
+
+    # Normalized
+    # Create a Normalizer instance
+    normalizer = Normalizer(inputCol="raw_features", outputCol=featureCol)
+
+    # Fit and transform the data
+    normalized_data = normalizer.transform(df_vector)
+
+    # Show the normalized data
+    # normalized_data.show()
+
+    return normalized_data
 
 '''
 Description: Split and keep the original time-series order
@@ -93,14 +58,14 @@ def show_results(results, ml_model, target_val):
       x = results['timestamp'],
       y = results[target_val].astype(float),
       mode = 'lines',
-      name = 'Next market price (usd)'
+      name = 'Market price (usd)'
   )
 
   trace2 = go.Scatter(
       x = results['timestamp'],
       y = results['prediction'].astype(float),
       mode = 'lines',
-      name = 'Predicted next makert price (usd)'
+      name = 'Predicted makert price (usd)'
   )
 
   layout = dict(
@@ -139,89 +104,63 @@ def show_results(results, ml_model, target_val):
   fig = dict(data=data, layout=layout)
   iplot(fig, filename = ml_model +' predicitons')
 
-def get_defaults_model_params(modelName):
-    if (modelName == 'LinearRegression'):
-        params = {
-            'maxIter' : [100], # max number of iterations (>=0), default:100
-            'regParam' : [0.0],# regularization parameter (>=0), default:0.0
-            'elasticNetParam' : [0.0] # the ElasticNet mixing parameter, [0, 1], default:0.0
-        }   
-    if (modelName == 'GeneralizedLinearRegression'):
-        params = {
-            'maxIter' : [25], # max number of iterations (>=0), default:25
-            'regParam' : [0], # regularization parameter (>=0), default:0.0
-            'family': ['gaussian'], # The name of family which is a description of the error distribution to be used in the model.
-            'link': ['identity'] # which provides the relationship between the linear predictor and the mean of the distribution function.
-        }
-    elif (modelName == 'RandomForestRegressor'):
-        params = {
-            'numTrees' : [20],# Number of trees to train, >=1, default:20
-            'maxDepth' : [5] # Maximum depth of the tree, <=30, default:5
-            }
-    elif (modelName == 'GBTRegressor'):
-        params = {
-            'maxIter' : [20], # max number of iterations (>=0), default:20
-            'maxDepth' : [5], # Maximum depth of the tree (>=0), <=30, default:5
-            'stepSize': [0.1] # learning rate, [0,1], default:0.1
-        }
-    
-    return params
+def show_results_debug(train, valid, pred, ml_model, target_val):
+  trace1 = go.Scatter(
+      x = train['timestamp'],
+      y = train[target_val].astype(float),
+      mode = 'lines',
+      name = 'Train'
+  )
 
-def get_simple_model_params(modelName):
-    if (modelName == 'LinearRegression'):
-        params = {
-            'maxIter' : [5, 10, 50, 80, 100], # max number of iterations (>=0), default:100
-            'regParam' : np.arange(0,1,0.2).round(decimals=2),# regularization parameter (>=0), default:0.0
-            'elasticNetParam' : np.arange(0,1,0.2).round(decimals=2) # the ElasticNet mixing parameter, [0, 1], default:0.0
-        }
-    if (modelName == 'GeneralizedLinearRegression'):
-        params = {
-            'maxIter' : [5, 10, 50, 80], # max number of iterations (>=0), default:25
-            'regParam' : [0, 0.1, 0.2], # regularization parameter (>=0), default:0.0
-            'family': ['gaussian', 'gamma'], # The name of family which is a description of the error distribution to be used in the model.
-            'link': ['identity', 'inverse'] # which provides the relationship between the linear predictor and the mean of the distribution function.
-        }
-    elif (modelName == 'RandomForestRegressor'):
-        params = {
-            'numTrees' : [5, 10, 15, 20, 25], # Number of trees to train, >=1, default:20
-            'maxDepth' : [2, 3, 5, 7, 10] # Maximum depth of the tree, <=30, default:5
-        }
-    elif (modelName == 'GBTRegressor'):
-        params = {
-            'maxIter' : [10, 20, 30], # max number of iterations (>=0), default:20
-            'maxDepth' : [3, 5, 8], # Maximum depth of the tree (>=0), <=30, default:5
-            'stepSize': [0.1, 0.3, 0.5, 0.7] # learning rate, [0,1], default:0.1
-        }
+  trace2 = go.Scatter(
+      x = valid['timestamp'],
+      y = valid[target_val].astype(float),
+      mode = 'lines',
+      name = 'Validation'
+  )
 
-    return params
+  trace3 = go.Scatter(
+      x = pred['timestamp'],
+      y = pred['prediction'].astype(float),
+      mode = 'lines',
+      name = 'Predictions'
+  )
 
-def get_tuned_model_params(modelName):
-    if (modelName == 'LinearRegression'):
-        params = {
-            'maxIter' : [100], # max number of iterations (>=0), default:100
-            'regParam' : [0.4],# regularization parameter (>=0), default:0.0
-            'elasticNetParam' : [0.2] # the ElasticNet mixing parameter, [0, 1], default:0.0
-        }   
-    if (modelName == 'GeneralizedLinearRegression'):
-        params = {
-            'maxIter' : [5], # max number of iterations (>=0), default:25
-            'regParam' : [0.2], # regularization parameter (>=0), default:0.0
-            'family': ['gaussian'], # The name of family which is a description of the error distribution to be used in the model.
-            'link': ['identity'] # which provides the relationship between the linear predictor and the mean of the distribution function.
-        }
-    elif (modelName == 'RandomForestRegressor'):
-        params = {
-            'numTrees' : [5],# Number of trees to train, >=1, default:20
-            'maxDepth' : [10] # Maximum depth of the tree, <=30, default:5
-            }
-    elif (modelName == 'GBTRegressor'):
-        params = {
-            'maxIter' : [20], # max number of iterations (>=0), default:20
-            'maxDepth' : [3], # Maximum depth of the tree (>=0), <=30, default:5
-            'stepSize': [0.3] # learning rate, [0,1], default:0.1
-        }
-    
-    return params
+  layout = dict(
+      title= ml_model +' predicitons',
+      xaxis=dict(
+          rangeselector=dict(
+              buttons=list([
+                  #change the count to desired amount of months.
+                  dict(count=1,
+                      label='1m',
+                      step='month',
+                      stepmode='backward'),
+                  dict(count=6,
+                      label='6m',
+                      step='month',
+                      stepmode='backward'),
+                  dict(count=12,
+                      label='1y',
+                      step='month',
+                      stepmode='backward'),
+                  dict(count=36,
+                      label='3y',
+                      step='month',
+                      stepmode='backward'),
+                  dict(step='all')
+              ])
+          ),
+          rangeslider=dict(
+              visible = True
+          ),
+          type='date'
+      )
+  )
+
+  data = [trace1,trace2,trace3]
+  fig = dict(data=data, layout=layout)
+  iplot(fig, filename = ml_model +' predicitons')
 
 '''
 Description: Apply calculations on Time Series Cross Validation results to form the final Model Comparison Table
@@ -241,9 +180,9 @@ def modelComparison(cv_result, model_info, evaluator_lst):
     comparison_df = pd.concat([model_info_df,col_mean_df],axis=1)
     return comparison_df
 
-#################
-# SIMPLE MODELS #
-#################
+################
+# SIMPLE MODEL #
+################
 
 # Function that create simple models (without hyperparameter tuning) and evaluate them
 def evaluate_simple_model(dataframe, features, params, features_id, ml_model, feature_col, label_col): 
@@ -431,7 +370,7 @@ def autoTuning(dataSet, features, params, features_id, proportion_lst, ml_model,
             }
 
             # DEBUG: show data for each split
-            # show_results(train_data.toPandas(), valid_data.toPandas(), predictions.toPandas())
+            # show_results_debug(train_data.toPandas(), valid_data.toPandas(), predictions.toPandas(), ml_model, label_col)
             
             # Only store the lowest RMSE
             if results['RMSE'] < result_best['RMSE']:
@@ -636,6 +575,9 @@ def tsCrossValidation(dataSet, features, params, cv_info, features_id, ml_model,
 
             # Append the trained model to the list
             trained_models.append(pipeline_model)
+
+            # DEBUG: show data for each split
+            # show_results_debug(train_data.toPandas(), valid_data.toPandas(), predictions.toPandas(), ml_model, label_col)
             
             # Release Cache
             train_data.unpersist()
