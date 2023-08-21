@@ -276,6 +276,8 @@ def evaluate_simple_model(dataframe, features, params, features_id, ml_model, fe
 # HYPERPARAMETER TUNING #
 #########################
 
+from itertools import product
+
 def autoTuning(dataSet, features, params, features_id, proportion_lst, ml_model, feature_col, label_col):    
     dataSet = select_features(dataSet, features, feature_col, label_col)
 
@@ -375,6 +377,7 @@ def autoTuning(dataSet, features, params, features_id, proportion_lst, ml_model,
             # Only store the lowest RMSE
             if results['RMSE'] < result_best['RMSE']:
                 result_best = results
+                param_best = dict({key: [value] for key, value in param.items()})
 
         # Release Cache
         train_data.unpersist()
@@ -383,7 +386,7 @@ def autoTuning(dataSet, features, params, features_id, proportion_lst, ml_model,
     # Transform dict to pandas dataframe
     result_best_df = pd.DataFrame(result_best)
 
-    return result_best_df
+    return result_best_df, param_best
 
 ####################
 # CROSS VALIDATION #
