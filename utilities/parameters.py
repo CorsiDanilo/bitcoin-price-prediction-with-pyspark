@@ -3,9 +3,9 @@ from imports import *
 def get_defaults_model_params(modelName):
     if (modelName == 'LinearRegression'):
         params = {
-            'maxIter' : [100], # max number of iterations (>=0), default:100
-            'regParam' : [0.0],# regularization parameter (>=0), default:0.0
-            'elasticNetParam' : [0.0] # the ElasticNet mixing parameter, [0, 1], default:0.0
+                'maxIter' : [100], # max number of iterations (>=0), default:100
+                'regParam' : [0.0],# regularization parameter (>=0), default:0.0
+                'elasticNetParam' : [0.0] # the ElasticNet mixing parameter, [0, 1], default:0.0
         }   
     if (modelName == 'GeneralizedLinearRegression'):
         params = {

@@ -123,14 +123,12 @@ def modelComparison(cv_result, model_info, evaluator_lst):
 ################
 
 # Function that create simple models (without hyperparameter tuning) and evaluate them
-def evaluate_simple_model(dataset, features, params, features_id, ml_model, feature_col, label_col, isNormalized): 
+def evaluate_simple_model(dataset, features, params, ml_type, features_id, ml_model, feature_col, label_col): 
     # Select train and valid data features
-    if(isNormalized):
-        ml_type = "simple_norm"
-        dataset = select_normalized_features(dataset, features, feature_col, label_col)
-    else:
-        ml_type = "simple"
+    if ml_type == "simple":
         dataset = select_features(dataset, features, feature_col, label_col)
+    elif ml_type == "simple_norm" or ml_type == "final_validated":
+        dataset = select_normalized_features(dataset, features, feature_col, label_col)
 
     # ALL combination of params
     param_lst = [dict(zip(params, param)) for param in product(*params.values())]
@@ -165,7 +163,7 @@ def evaluate_simple_model(dataset, features, params, features_id, ml_model, feat
                                  maxDepth = param['maxDepth'], \
                                  stepSize = param['stepSize'])
         
-        train_data, valid_data = trainSplit(dataset, 0.9)
+        train_data, valid_data = trainSplit(dataset, 0.8)
 
         # Chain assembler and model in a Pipeline
         pipeline = Pipeline(stages=[model])
@@ -221,7 +219,7 @@ def evaluate_simple_model(dataset, features, params, features_id, ml_model, feat
 
 from itertools import product
 
-def autoTuning(dataset, features, params, features_id, proportion_lst, ml_model, feature_col, label_col):    
+def autoTuning(dataset, features, params, features_id, proportion_lst, ml_model, feature_col, label_col):  
     dataset = select_normalized_features(dataset, features, feature_col, label_col)
 
     # Initialize the best result for comparison
@@ -317,7 +315,6 @@ def autoTuning(dataset, features, params, features_id, proportion_lst, ml_model,
             if results['RMSE'] < result_best['RMSE']:
                 result_best = results
                 params_best = dict({key: [value] for key, value in param.items()})
-                result_best
 
         # Release Cache
         train_data.unpersist()
@@ -408,7 +405,6 @@ def tsCrossValidation(dataset, features, params, cv_info, features_id, ml_model,
     
     # Save results in a list
     result_lst = []
-    trained_models = []
 
     # ALL combination of params
     param_lst = [dict(zip(params, param)) for param in product(*params.values())]
@@ -499,7 +495,7 @@ def tsCrossValidation(dataset, features, params, cv_info, features_id, ml_model,
             # Use dict to store each result
             results = {
                 "Model": ml_model,
-                'Type': cv_info['cv_type'],
+                "Type": cv_info['cv_type'],
                 "Features": features_id,
                 "Splits": idx + 1,
                 "Train&Validation": (train_size,valid_size),
@@ -516,31 +512,21 @@ def tsCrossValidation(dataset, features, params, cv_info, features_id, ml_model,
             # Store each splits result
             result_lst.append(results)
 
-            # Append the trained model to the list
-            trained_models.append(pipeline_model)
-
             # Release Cache
             train_data.unpersist()
             valid_data.unpersist()
 
     # Transform dict to pandas dataset
     tsCv_df = pd.DataFrame(result_lst)
-    return tsCv_df, trained_models
+    return tsCv_df
 
 #####################
 # TRAIN FINAL MODEL #
 #####################
 
-def train_final_model(dataset, features, params, ml_model, feature_col, label_col):    
+def train_final_model(dataset, features, params, ml_type, features_id, ml_model, feature_col, label_col):    
     dataset = select_normalized_features(dataset, features, feature_col, label_col)
-
-    # Split the dataset
-    train_data,valid_data = trainSplit(dataset, 1)
-
-    # Cache it
-    train_data.cache()
-    valid_data.cache()
-    
+  
     # ALL combination of params
     param_lst = [dict(zip(params, param)) for param in product(*params.values())]
     
@@ -576,10 +562,48 @@ def train_final_model(dataset, features, params, ml_model, feature_col, label_co
         
         # Chain assembler and model in a Pipeline
         pipeline = Pipeline(stages=[model])
-        pipeline_model = pipeline.fit(train_data)
+        # Train a model and calculate running time
+        start = time.time()
+        pipeline_model = pipeline.fit(dataset)
+        end = time.time()
 
-    # Release Cache
-    train_data.unpersist()
-    valid_data.unpersist()
+        # Make predictions
+        predictions = pipeline_model.transform(dataset)
+
+        # Compute validation error by several evaluators
+        rmse_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='rmse')
+        mae_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='mae')
+        r2_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='r2')
+        var_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='var')
         
-    return pipeline_model
+        predictions_pd = predictions.select(label_col, "prediction", 'timestamp').toPandas()
+        mape = mean_absolute_percentage_error(predictions_pd[label_col], predictions_pd["prediction"])
+        
+        rmse = rmse_evaluator.evaluate(predictions)
+        mae = mae_evaluator.evaluate(predictions)
+        var = var_evaluator.evaluate(predictions)
+        r2 = r2_evaluator.evaluate(predictions)
+        # Adjusted R-squared
+        n = predictions.count()
+        p = len(predictions.columns)
+        adj_r2 = 1-(1-r2)*(n-1)/(n-p-1)
+
+        # Use dict to store each result
+        results = {
+            "Model": ml_model,
+                'Type': ml_type,
+                "Features": features_id,
+                "Parameters": [list(param.values())],
+                "RMSE": rmse,
+                "MAPE": mape,
+                "MAE": mae,
+                "Variance": var,
+                "R2": r2,
+                "Adjusted_R2": adj_r2,
+                "Time": end - start
+        }
+
+    # Transform dict to pandas dataset
+    results_df = pd.DataFrame(results)
+        
+    return results_df, pipeline_model, predictions_pd
