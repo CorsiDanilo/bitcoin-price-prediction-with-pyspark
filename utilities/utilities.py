@@ -6,24 +6,24 @@ from itertools import product
 ##########
 
 # Return the dataset with the selected features
-def select_features(dataset, features, featureCol, labelCol):
-  vectorAssembler = VectorAssembler(inputCols = features, outputCol = featureCol)
+def select_features(dataset, features, features_label, target_label):
+  vectorAssembler = VectorAssembler(inputCols = features, outputCol = features_label)
 
-  dataset = vectorAssembler.transform(dataset).select("timestamp", "id", featureCol, labelCol)
+  dataset = vectorAssembler.transform(dataset).select("timestamp", "id", features_label, target_label)
 
   return dataset
 
 # Normalized / standardized features selection
-def select_normalized_features(dataset, features, featureCol, labelCol):    
+def select_normalized_features(dataset, features, features_label, target_label):    
     # Assemble the columns into a vector column
     assembler = VectorAssembler(inputCols = features, outputCol = "raw_features")
-    df_vector  = assembler.transform(dataset).select("timestamp", "id", "raw_features", labelCol)
+    df_vector  = assembler.transform(dataset).select("timestamp", "id", "raw_features", target_label)
 
     # Create a Normalizer instance
-    normalizer = Normalizer(inputCol="raw_features", outputCol=featureCol)
+    normalizer = Normalizer(inputCol="raw_features", outputCol=features_label)
 
     # Fit and transform the data
-    normalized_data = normalizer.transform(df_vector).select("timestamp", "id", featureCol, labelCol)
+    normalized_data = normalizer.transform(df_vector).select("timestamp", "id", features_label, target_label)
 
     return normalized_data
 
@@ -44,21 +44,21 @@ def trainSplit(dataset, proportion):
     train_data = dataset.filter(dataset['id'] < split_point)
     valid_data = dataset.filter(dataset['id'] >= split_point)
 
-    return (train_data,valid_data)
+    return train_data, valid_data
 
-def show_results(results, ml_model, target_val):
+def show_results(results, ml_model):
   trace1 = go.Scatter(
       x = results['timestamp'],
-      y = results[target_val].astype(float),
+      y = results['next-market-price'].astype(float),
       mode = 'lines',
-      name = 'Market price (usd)'
+      name = 'Next Market price (usd)'
   )
 
   trace2 = go.Scatter(
       x = results['timestamp'],
       y = results['prediction'].astype(float),
       mode = 'lines',
-      name = 'Predicted makert price (usd)'
+      name = 'Predicted next makert price (usd)'
   )
 
   layout = dict(
@@ -114,55 +114,79 @@ def modelComparison(cv_result, model_info, evaluator_lst):
     model_info_df = cv_result[model_info][:1]
 
     # Concatenate by row
-    comparison_df = pd.concat([model_info_df,col_mean_df],axis=1)
+    comparison_df = pd.concat([model_info_df,col_mean_df], axis=1)
     
     return comparison_df
+
+def model_selection(ml_model, param, features_label, target_label):
+    if ml_model == "LinearRegression":
+        model = LinearRegression(featuresCol=features_label, \
+                                    labelCol=target_label, \
+                                    maxIter=param['maxIter'], \
+                                    regParam=param['regParam'], \
+                                    elasticNetParam=param['elasticNetParam'])
+        
+    elif ml_model == "GeneralizedLinearRegression":
+        model = GeneralizedLinearRegression(featuresCol=features_label, \
+                                            labelCol=target_label, \
+                                            maxIter=param['maxIter'], \
+                                            regParam=param['regParam'])
+
+    elif ml_model == "RandomForestRegressor":
+        model = RandomForestRegressor(featuresCol=features_label, \
+                                        labelCol=target_label, \
+                                        numTrees = param["numTrees"], \
+                                        maxDepth = param["maxDepth"])
+
+    elif ml_model == "GBTRegressor":
+        model = GBTRegressor(featuresCol=features_label, \
+                                labelCol=target_label, \
+                                maxIter = param['maxIter'], \
+                                maxDepth = param['maxDepth'], \
+                                stepSize = param['stepSize'])
+    return model
+
+def model_evaluation(target_label, predictions):
+    rmse_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='rmse')
+    mae_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='mae')
+    r2_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='r2')
+    var_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='var')
+    
+    mape = mean_absolute_percentage_error(predictions.toPandas()[target_label], predictions.toPandas()["prediction"])
+    
+    rmse = rmse_evaluator.evaluate(predictions)
+    mae = mae_evaluator.evaluate(predictions)
+    var = var_evaluator.evaluate(predictions)
+    r2 = r2_evaluator.evaluate(predictions)
+    # Adjusted R-squared
+    n = predictions.count()
+    p = len(predictions.columns)
+    adj_r2 = 1-(1-r2)*(n-1)/(n-p-1)
+
+    results = {'mape':mape, 'rmse':rmse, 'mae':mae, 'var':var, 'r2':r2, 'adj_r2':adj_r2}
+
+    return results
 
 ################
 # SIMPLE MODEL #
 ################
 
 # Function that create simple models (without hyperparameter tuning) and evaluate them
-def evaluate_simple_model(dataset, features, params, ml_type, features_id, ml_model, feature_col, label_col): 
+def evaluate_model(dataset, params, features, ml_type, features_name, ml_model, features_label, target_label): 
     # Select train and valid data features
     if ml_type == "simple":
-        dataset = select_features(dataset, features, feature_col, label_col)
+        dataset = select_features(dataset, features, features_label, target_label)
     elif ml_type == "simple_norm" or ml_type == "final_validated":
-        dataset = select_normalized_features(dataset, features, feature_col, label_col)
+        dataset = select_normalized_features(dataset, features, features_label, target_label)
 
     # ALL combination of params
     param_lst = [dict(zip(params, param)) for param in product(*params.values())]
 
     for param in param_lst:
         # Chosen Model
-        if ml_model == "LinearRegression":
-            model = LinearRegression(featuresCol=feature_col, \
-                                     labelCol=label_col, \
-                                     maxIter=param['maxIter'], \
-                                     regParam=param['regParam'], \
-                                     elasticNetParam=param['elasticNetParam'])
-            
-        elif ml_model == "GeneralizedLinearRegression":
-            model = GeneralizedLinearRegression(featuresCol=feature_col, \
-                                                labelCol=label_col, \
-                                                maxIter=param['maxIter'], \
-                                                regParam=param['regParam'], \
-                                                family=param['family'], \
-                                                link=param['link'])
-
-        elif ml_model == "RandomForestRegressor":
-            model = RandomForestRegressor(featuresCol=feature_col, \
-                                          labelCol=label_col, \
-                                          numTrees = param["numTrees"], \
-                                          maxDepth = param["maxDepth"])
-
-        elif ml_model == "GBTRegressor":
-            model = GBTRegressor(featuresCol=feature_col, \
-                                 labelCol=label_col, \
-                                 maxIter = param['maxIter'], \
-                                 maxDepth = param['maxDepth'], \
-                                 stepSize = param['stepSize'])
+        model = model_selection(ml_model, param, features_label, target_label)
         
+        # Split dataset
         train_data, valid_data = trainSplit(dataset, 0.8)
 
         # Chain assembler and model in a Pipeline
@@ -173,54 +197,52 @@ def evaluate_simple_model(dataset, features, params, ml_type, features_id, ml_mo
         end = time.time()
 
         # Make predictions
-        predictions = pipeline_model.transform(valid_data)
+        predictions = pipeline_model.transform(valid_data).select(target_label, "prediction", 'timestamp')
 
         # Compute validation error by several evaluators
-        rmse_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='rmse')
-        mae_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='mae')
-        r2_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='r2')
-        var_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='var')
-        
-        predictions_pd = predictions.select(label_col, "prediction", 'timestamp').toPandas()
-        mape = mean_absolute_percentage_error(predictions_pd[label_col], predictions_pd["prediction"])
-        
-        rmse = rmse_evaluator.evaluate(predictions)
-        mae = mae_evaluator.evaluate(predictions)
-        var = var_evaluator.evaluate(predictions)
-        r2 = r2_evaluator.evaluate(predictions)
-        # Adjusted R-squared
-        n = predictions.count()
-        p = len(predictions.columns)
-        adj_r2 = 1-(1-r2)*(n-1)/(n-p-1)
+        eval_res = model_evaluation(target_label, predictions)
 
         # Use dict to store each result
-        result = {
+        results = {
             "Model": ml_model,
             "Type": ml_type,
-            "Features": features_id,
+            "Features": features_name,
             "Parameters": [list(param.values())],
-            "RMSE": rmse,
-            "MAPE":mape,
-            "MAE": mae,
-            "Variance": var,
-            "R2": r2,
-            "Adjusted_R2": adj_r2,
+            "RMSE": eval_res['rmse'],
+            "MAPE":eval_res['mape'],
+            "MAE": eval_res['mae'],
+            "Variance": eval_res['var'],
+            "R2": eval_res['r2'],
+            "Adjusted_R2": eval_res['adj_r2'],
             "Time": end - start,
         }
 
     # Transform dict to pandas dataset
-    result_df = pd.DataFrame(result, index=[0])
+    result_pd = pd.DataFrame(results, index=[0])
 
-    return result_df, predictions_pd
+    return result_pd, predictions.toPandas()
 
 #########################
 # HYPERPARAMETER TUNING #
 #########################
 
-from itertools import product
+'''
+Description: Use Grid Search to tune the Model 
+Args:
+    dataSet: The dataSet which needs to be splited
+    proportion_lst: A list represents the split proportion
+    feature_col: The column name of features
+    label_col: The column name of label
+    ml_model: The module to use
+    params: Parameters which want to test 
+    assembler: An assembler to dataSet
+    scaler: A scaler to dataSet
+Return: 
+    results_df: The best result in a pandas dataframe
+'''
 
-def autoTuning(dataset, features, params, features_id, proportion_lst, ml_model, feature_col, label_col):  
-    dataset = select_normalized_features(dataset, features, feature_col, label_col)
+def autoTuning(dataset, params, proportion_lst, features, features_name, ml_model, features_label, target_label):  
+    dataset = select_normalized_features(dataset, features, features_label, target_label)
 
     # Initialize the best result for comparison
     result_best = {"RMSE": float('inf')}
@@ -239,33 +261,7 @@ def autoTuning(dataset, features, params, features_id, proportion_lst, ml_model,
     
         for param in param_lst:
             # Chosen Model
-            if ml_model == "LinearRegression":
-                model = LinearRegression(featuresCol=feature_col, \
-                                         labelCol=label_col, \
-                                         maxIter=param['maxIter'], \
-                                         regParam=param['regParam'], \
-                                         elasticNetParam=param['elasticNetParam'])
-                
-            elif ml_model == "GeneralizedLinearRegression":
-                model = GeneralizedLinearRegression(featuresCol=feature_col, \
-                                                    labelCol=label_col, \
-                                                    maxIter=param['maxIter'], \
-                                                    regParam=param['regParam'], \
-                                                    family=param['family'], \
-                                                    link=param['link'])
-
-            elif ml_model == "RandomForestRegressor":
-                model = RandomForestRegressor(featuresCol=feature_col, \
-                                              labelCol=label_col, \
-                                              numTrees = param["numTrees"], \
-                                              maxDepth = param["maxDepth"])
-
-            elif ml_model == "GBTRegressor":
-                model = GBTRegressor(featuresCol=feature_col, \
-                                     labelCol=label_col, \
-                                     maxIter = param['maxIter'], \
-                                     maxDepth = param['maxDepth'], \
-                                     stepSize = param['stepSize'])
+            model = model_selection(ml_model, param, features_label, target_label)
             
             # Chain assembler and model in a Pipeline
             pipeline = Pipeline(stages=[model])
@@ -275,39 +271,24 @@ def autoTuning(dataset, features, params, features_id, proportion_lst, ml_model,
             end = time.time()
 
             # Make predictions
-            predictions = pipeline_model.transform(valid_data)
+            predictions = pipeline_model.transform(valid_data).select(target_label, "prediction", 'timestamp')
 
             # Compute validation error by several evaluators
-            rmse_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='rmse')
-            mae_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='mae')
-            r2_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='r2')
-            var_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='var')
-            
-            predictions_pd = predictions.select(label_col, "prediction").toPandas()
-            mape = mean_absolute_percentage_error(predictions_pd[label_col], predictions_pd["prediction"])
-            
-            rmse = rmse_evaluator.evaluate(predictions)
-            mae = mae_evaluator.evaluate(predictions)
-            var = var_evaluator.evaluate(predictions)
-            r2 = r2_evaluator.evaluate(predictions)
-            # Adjusted R-squared
-            n = predictions.count()
-            p = len(predictions.columns)
-            adj_r2 = 1-(1-r2)*(n-1)/(n-p-1)
+            eval_res = model_evaluation(target_label, predictions)
         
             # Use dict to store each result
             results = {
                 "Model": ml_model,
                 "Type": "autotuning",
-                "Features": features_id,
+                "Features": features_name,
                 "Proportion": proportion,
                 "Parameters": [list(param.values())],
-                "RMSE": rmse,
-                "MAPE":mape,
-                "MAE": mae,
-                "Variance": var,
-                "R2": r2,
-                "Adjusted_R2": adj_r2,
+                "RMSE": eval_res['rmse'],
+                "MAPE":eval_res['mape'],
+                "MAE": eval_res['mae'],
+                "Variance": eval_res['var'],
+                "R2": eval_res['r2'],
+                "Adjusted_R2": eval_res['adj_r2'],
                 "Time": end - start,
             }
             
@@ -321,9 +302,9 @@ def autoTuning(dataset, features, params, features_id, proportion_lst, ml_model,
         valid_data.unpersist()
         
     # Transform dict to pandas dataset
-    result_best_df = pd.DataFrame(result_best)
+    result_best_pd = pd.DataFrame(result_best)
 
-    return result_best_df, params_best
+    return result_best_pd, params_best
 
 ####################
 # CROSS VALIDATION #
@@ -388,8 +369,8 @@ def blockedTsCrossValidation(num, n_splits):
 Description: Cross Validation on Time Series data
 Args:
     dataset: The dataset which needs to be splited
-    feature_col: The column name of features
-    label_col: The column name of label
+    features_label: The column name of features
+    target_label: The column name of label
     ml_model: The module to use
     params: Parameters which want to test 
     assembler: An assembler to dataset
@@ -397,8 +378,8 @@ Args:
 Return: 
     tsCv_df: All the splits performance of each model in a pandas dataset
 '''
-def tsCrossValidation(dataset, features, params, cv_info, features_id, ml_model, feature_col, label_col):
-    dataset = select_normalized_features(dataset, features, feature_col, label_col)
+def tsCrossValidation(dataset, params, cv_info, features, features_name, ml_model, features_label, target_label):
+    dataset = select_normalized_features(dataset, features, features_label, target_label)
 
     # Get the number of samples
     num = dataset.count()
@@ -411,34 +392,8 @@ def tsCrossValidation(dataset, features, params, cv_info, features_id, ml_model,
 
     for param in param_lst:
         # Chosen Model
-        if ml_model == "LinearRegression":
-            model = LinearRegression(featuresCol=feature_col, \
-                                     labelCol=label_col, \
-                                     maxIter=param['maxIter'], \
-                                     regParam=param['regParam'], \
-                                     elasticNetParam=param['elasticNetParam'])
-            
-        elif ml_model == "GeneralizedLinearRegression":
-                model = GeneralizedLinearRegression(featuresCol=feature_col, \
-                                                    labelCol=label_col, \
-                                                    maxIter=param['maxIter'], \
-                                                    regParam=param['regParam'], \
-                                                    family=param['family'], \
-                                                    link=param['link'])
+        model = model_selection(ml_model, param, features_label, target_label)
 
-        elif ml_model == "RandomForestRegressor":
-            model = RandomForestRegressor(featuresCol=feature_col, \
-                                          labelCol=label_col, \
-                                          numTrees = param["numTrees"], \
-                                          maxDepth = param["maxDepth"])
-
-        elif ml_model == "GBTRegressor":
-            model = GBTRegressor(featuresCol=feature_col, \
-                                 labelCol=label_col, \
-                                 maxIter = param['maxIter'], \
-                                 maxDepth = param['maxDepth'], \
-                                 stepSize = param['stepSize'])
-        
         # Identify the type of Cross Validation 
         if cv_info['cv_type'] == 'mulTs':
             split_position_df = mulTsCrossValidation(num, cv_info['kSplits'])
@@ -472,41 +427,26 @@ def tsCrossValidation(dataset, features, params, cv_info, features_id, ml_model,
             end = time.time()
 
             # Make predictions
-            predictions = pipeline_model.transform(valid_data)
+            predictions = pipeline_model.transform(valid_data).select(target_label, "prediction", 'timestamp')
 
-            # Compute validation error by several evaluator
-            rmse_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='rmse')
-            mae_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='mae')
-            r2_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='r2')
-            var_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='var')
-            
-            predictions_pd = predictions.select(label_col,"prediction").toPandas()
-            mape = mean_absolute_percentage_error(predictions_pd[label_col], predictions_pd["prediction"])
-
-            rmse = rmse_evaluator.evaluate(predictions)
-            mae = mae_evaluator.evaluate(predictions)
-            var = var_evaluator.evaluate(predictions)
-            r2 = r2_evaluator.evaluate(predictions)
-            # Adjusted R-squared
-            n = predictions.count()
-            p = len(predictions.columns)
-            adj_r2 = 1-(1-r2)*(n-1)/(n-p-1)
+            # Compute validation error by several evaluators
+            eval_res = model_evaluation(target_label, predictions)
 
             # Use dict to store each result
             results = {
                 "Model": ml_model,
                 "Type": cv_info['cv_type'],
-                "Features": features_id,
+                "Features": features_name,
                 "Splits": idx + 1,
                 "Train&Validation": (train_size,valid_size),
                 "Parameters": list(param.values()),
-                "RMSE": rmse,
-                "MAPE": mape,
-                "MAE": mae,
-                "Variance": var,
-                "R2": r2,
-                "Adjusted_R2": adj_r2,
-                "Time": end - start
+                "RMSE": eval_res['rmse'],
+                "MAPE":eval_res['mape'],
+                "MAE": eval_res['mae'],
+                "Variance": eval_res['var'],
+                "R2": eval_res['r2'],
+                "Adjusted_R2": eval_res['adj_r2'],
+                "Time": end - start,
             }
 
             # Store each splits result
@@ -517,48 +457,22 @@ def tsCrossValidation(dataset, features, params, cv_info, features_id, ml_model,
             valid_data.unpersist()
 
     # Transform dict to pandas dataset
-    tsCv_df = pd.DataFrame(result_lst)
-    return tsCv_df
+    tsCv_pd = pd.DataFrame(result_lst)
+    return tsCv_pd
 
 #####################
 # TRAIN FINAL MODEL #
 #####################
 
-def train_final_model(dataset, features, params, ml_type, features_id, ml_model, feature_col, label_col):    
-    dataset = select_normalized_features(dataset, features, feature_col, label_col)
+def train_model(dataset, params, features, ml_type, features_name, ml_model, features_label, target_label):    
+    dataset = select_normalized_features(dataset, features, features_label, target_label)
   
     # ALL combination of params
     param_lst = [dict(zip(params, param)) for param in product(*params.values())]
     
     for param in param_lst:
         # Chosen Model
-        if ml_model == "LinearRegression":
-            model = LinearRegression(featuresCol=feature_col, \
-                                        labelCol=label_col, \
-                                        maxIter=param['maxIter'], \
-                                        regParam=param['regParam'], \
-                                        elasticNetParam=param['elasticNetParam'])
-            
-        elif ml_model == "GeneralizedLinearRegression":
-            model = GeneralizedLinearRegression(featuresCol=feature_col, \
-                                                labelCol=label_col, \
-                                                maxIter=param['maxIter'], \
-                                                regParam=param['regParam'], \
-                                                family=param['family'], \
-                                                link=param['link'])
-
-        elif ml_model == "RandomForestRegressor":
-            model = RandomForestRegressor(featuresCol=feature_col, \
-                                            labelCol=label_col, \
-                                            numTrees = param["numTrees"], \
-                                            maxDepth = param["maxDepth"])
-
-        elif ml_model == "GBTRegressor":
-            model = GBTRegressor(featuresCol=feature_col, \
-                                    labelCol=label_col, \
-                                    maxIter = param['maxIter'], \
-                                    maxDepth = param['maxDepth'], \
-                                    stepSize = param['stepSize'])
+        model = model_selection(ml_model, param, features_label, target_label)
         
         # Chain assembler and model in a Pipeline
         pipeline = Pipeline(stages=[model])
@@ -568,42 +482,27 @@ def train_final_model(dataset, features, params, ml_type, features_id, ml_model,
         end = time.time()
 
         # Make predictions
-        predictions = pipeline_model.transform(dataset)
+        predictions = pipeline_model.transform(dataset).select(target_label, "prediction", 'timestamp')
 
         # Compute validation error by several evaluators
-        rmse_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='rmse')
-        mae_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='mae')
-        r2_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='r2')
-        var_evaluator = RegressionEvaluator(labelCol=label_col, predictionCol="prediction", metricName='var')
-        
-        predictions_pd = predictions.select(label_col, "prediction", 'timestamp').toPandas()
-        mape = mean_absolute_percentage_error(predictions_pd[label_col], predictions_pd["prediction"])
-        
-        rmse = rmse_evaluator.evaluate(predictions)
-        mae = mae_evaluator.evaluate(predictions)
-        var = var_evaluator.evaluate(predictions)
-        r2 = r2_evaluator.evaluate(predictions)
-        # Adjusted R-squared
-        n = predictions.count()
-        p = len(predictions.columns)
-        adj_r2 = 1-(1-r2)*(n-1)/(n-p-1)
+        eval_res = model_evaluation(target_label, predictions)
 
         # Use dict to store each result
         results = {
             "Model": ml_model,
-                'Type': ml_type,
-                "Features": features_id,
-                "Parameters": [list(param.values())],
-                "RMSE": rmse,
-                "MAPE": mape,
-                "MAE": mae,
-                "Variance": var,
-                "R2": r2,
-                "Adjusted_R2": adj_r2,
-                "Time": end - start
+            "Type": ml_type,
+            "Features": features_name,
+            "Parameters": [list(param.values())],
+            "RMSE": eval_res['rmse'],
+            "MAPE":eval_res['mape'],
+            "MAE": eval_res['mae'],
+            "Variance": eval_res['var'],
+            "R2": eval_res['r2'],
+            "Adjusted_R2": eval_res['adj_r2'],
+            "Time": end - start,
         }
 
     # Transform dict to pandas dataset
-    results_df = pd.DataFrame(results)
+    results_pd = pd.DataFrame(results)
         
-    return results_df, pipeline_model, predictions_pd
+    return results_pd, pipeline_model, predictions.toPandas()

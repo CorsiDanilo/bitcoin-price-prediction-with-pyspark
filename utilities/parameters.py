@@ -3,55 +3,53 @@ from imports import *
 def get_defaults_model_params(modelName):
     if (modelName == 'LinearRegression'):
         params = {
-                'maxIter' : [100], # max number of iterations (>=0), default:100
-                'regParam' : [0.0],# regularization parameter (>=0), default:0.0
-                'elasticNetParam' : [0.0] # the ElasticNet mixing parameter, [0, 1], default:0.0
+                'maxIter' : [100],
+                'regParam' : [0.0],
+                'elasticNetParam' : [0.0]
         }   
     if (modelName == 'GeneralizedLinearRegression'):
         params = {
-            'maxIter' : [25], # max number of iterations (>=0), default:25
-            'regParam' : [0], # regularization parameter (>=0), default:0.0
-            'family': ['gaussian'], # The name of family which is a description of the error distribution to be used in the model.
-            'link': ['identity'] # which provides the relationship between the linear predictor and the mean of the distribution function.
+            'maxIter' : [25],
+            'regParam' : [0],
         }
     elif (modelName == 'RandomForestRegressor'):
         params = {
-            'numTrees' : [20],# Number of trees to train, >=1, default:20
-            'maxDepth' : [5] # Maximum depth of the tree, <=30, default:5
+            'numTrees' : [20],
+            'maxDepth' : [5]
             }
     elif (modelName == 'GBTRegressor'):
         params = {
-            'maxIter' : [20], # max number of iterations (>=0), default:20
-            'maxDepth' : [5], # Maximum depth of the tree (>=0), <=30, default:5
-            'stepSize': [0.1] # learning rate, [0,1], default:0.1
+            'maxIter' : [20],
+            'maxDepth' : [5],
+            'stepSize': [0.1]
         }
     
     return params
 
-def get_model_params(modelName):
+def get_model_grid_params(modelName):
     if (modelName == 'LinearRegression'):
         params = {
-            'maxIter' : [5, 50, 100, 120, 150], # max number of iterations (>=0), default:100
-            'regParam' : [0.0, 0.05, 0.1], # regularization parameter (>=0), default:0.0
-            'elasticNetParam' : [0.0, 0.5, 1.0] # the ElasticNet mixing parameter, [0, 1], default:0.0
+            'maxIter' : [5, 10, 50, 80, 100],
+            'regParam' : np.arange(0,1,0.2).round(decimals=2),
+            'elasticNetParam' : np.arange(0,1,0.2).round(decimals=2)
         }
     if (modelName == 'GeneralizedLinearRegression'):
         params = {
-            'maxIter' : [5, 15, 25, 50, 80], # max number of iterations (>=0), default:25
-            'regParam' : [0.0, 0.05, 0.1], # regularization parameter (>=0), default:0.0
-            'family': ['gaussian'], # The name of family which is a description of the error distribution to be used in the model.
-            'link': ['log'] # which provides the relationship between the linear predictor and the mean of the distribution function.
+            'maxIter' : [5, 10, 50, 80],
+            'regParam' : [0, 0.1, 0.2],
+            'family': ['gaussian', 'gamma'],
+            'link': ['log', 'identity', 'inverse']
         }
     elif (modelName == 'RandomForestRegressor'):
         params = {
-            'numTrees' : [10, 20, 30], # Number of trees to train, >=1, default:20
-            'maxDepth' : [3, 5, 8] # Maximum depth of the tree, <=30, default:5
+            'numTrees' : [3, 5, 10, 20, 30],
+            'maxDepth' : [3, 5, 10]
         }
     elif (modelName == 'GBTRegressor'):
         params = {
-            'maxIter' : [10, 20, 30], # max number of iterations (>=0), default:20
-            'maxDepth' : [3, 5, 8], # Maximum depth of the tree (>=0), <=30, default:5
-            'stepSize': [0.1, 0.5, 0.7] # learning rate, [0,1], default:0.1
+            'maxIter' : [5, 10, 20, 30, 40],
+            'maxDepth' : [5, 8, 10],
+            'stepSize': [0.1, 0.3, 0.5, 0.7]
         }
 
     return params
