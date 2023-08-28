@@ -37,7 +37,7 @@ Return:
     train_data: The train dataset
     valid_data: The validation dataset
 '''
-def trainSplit(dataset, proportion):
+def dataset_split(dataset, proportion):
     records_num = dataset.count()
     split_point = int(records_num * proportion)
     
@@ -46,7 +46,7 @@ def trainSplit(dataset, proportion):
 
     return train_data, valid_data
 
-def show_results(results, ml_model):
+def show_results(results, model_name):
   trace1 = go.Scatter(
       x = results['timestamp'],
       y = results['next-market-price'].astype(float),
@@ -62,7 +62,7 @@ def show_results(results, ml_model):
   )
 
   layout = dict(
-      title= ml_model +' predicitons',
+      title= model_name + " predicitons",
       xaxis=dict(
           rangeselector=dict(
               buttons=list([
@@ -95,18 +95,18 @@ def show_results(results, ml_model):
 
   data = [trace1,trace2]
   fig = dict(data=data, layout=layout)
-  iplot(fig, filename = ml_model +' predicitons')
+  iplot(fig, filename = model_name + " predicitons")
 
 '''
 Description: Apply calculations on Time Series Cross Validation results to form the final Model Comparison Table
 Args:
-    cv_result: The results from tsCrossValidation()
+    cv_result: The results from cross_validation()
     model_info: The model information which you would like to show
     evaluator_lst: The evaluator metrics which you would like to show
 Return:
     comparison_df: A pandas dataset of a model on a type of Time Series Cross Validation
 '''
-def modelComparison(cv_result, model_info, evaluator_lst):
+def model_comparison(cv_result, model_info, evaluator_lst):
     # Calculate mean of all splits on chosen evaluator
     col_mean_df = cv_result[evaluator_lst].mean().to_frame().T
 
@@ -118,27 +118,27 @@ def modelComparison(cv_result, model_info, evaluator_lst):
     
     return comparison_df
 
-def model_selection(ml_model, param, features_label, target_label):
-    if ml_model == "LinearRegression":
+def model_selection(model_name, param, features_label, target_label):
+    if model_name == "LinearRegression":
         model = LinearRegression(featuresCol=features_label, \
                                     labelCol=target_label, \
                                     maxIter=param['maxIter'], \
                                     regParam=param['regParam'], \
                                     elasticNetParam=param['elasticNetParam'])
         
-    elif ml_model == "GeneralizedLinearRegression":
+    elif model_name == "GeneralizedLinearRegression":
         model = GeneralizedLinearRegression(featuresCol=features_label, \
                                             labelCol=target_label, \
                                             maxIter=param['maxIter'], \
                                             regParam=param['regParam'])
 
-    elif ml_model == "RandomForestRegressor":
+    elif model_name == "RandomForestRegressor":
         model = RandomForestRegressor(featuresCol=features_label, \
                                         labelCol=target_label, \
                                         numTrees = param["numTrees"], \
                                         maxDepth = param["maxDepth"])
 
-    elif ml_model == "GBTRegressor":
+    elif model_name == "GBTRegressor":
         model = GBTRegressor(featuresCol=features_label, \
                                 labelCol=target_label, \
                                 maxIter = param['maxIter'], \
@@ -147,23 +147,24 @@ def model_selection(ml_model, param, features_label, target_label):
     return model
 
 def model_evaluation(target_label, predictions):
+    mse_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='mse')
     rmse_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='rmse')
     mae_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='mae')
     r2_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='r2')
-    var_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='var')
-    
+
     mape = mean_absolute_percentage_error(predictions.toPandas()[target_label], predictions.toPandas()["prediction"])
-    
+
+    mse = mse_evaluator.evaluate(predictions)
     rmse = rmse_evaluator.evaluate(predictions)
     mae = mae_evaluator.evaluate(predictions)
-    var = var_evaluator.evaluate(predictions)
     r2 = r2_evaluator.evaluate(predictions)
+
     # Adjusted R-squared
     n = predictions.count()
     p = len(predictions.columns)
     adj_r2 = 1-(1-r2)*(n-1)/(n-p-1)
 
-    results = {'mape':mape, 'rmse':rmse, 'mae':mae, 'var':var, 'r2':r2, 'adj_r2':adj_r2}
+    results = {'rmse':rmse, 'mse':mse, 'mae':mae, 'mape':mape, 'r2':r2, 'adj_r2':adj_r2}
 
     return results
 
@@ -172,11 +173,11 @@ def model_evaluation(target_label, predictions):
 ################
 
 # Function that create simple models (without hyperparameter tuning) and evaluate them
-def evaluate_model(dataset, params, features, ml_type, features_name, ml_model, features_label, target_label): 
+def model_train_valid(dataset, params, features, model_type, features_name, model_name, features_label, target_label): 
     # Select train and valid data features
-    if ml_type == "simple":
+    if model_type == "simple":
         dataset = select_features(dataset, features, features_label, target_label)
-    elif ml_type == "simple_norm" or ml_type == "final_validated":
+    elif model_type == "simple_norm" or model_type == "final_validated":
         dataset = select_normalized_features(dataset, features, features_label, target_label)
 
     # ALL combination of params
@@ -184,10 +185,12 @@ def evaluate_model(dataset, params, features, ml_type, features_name, ml_model, 
 
     for param in param_lst:
         # Chosen Model
-        model = model_selection(ml_model, param, features_label, target_label)
+        model = model_selection(model_name, param, features_label, target_label)
         
         # Split dataset
-        train_data, valid_data = trainSplit(dataset, 0.8)
+        train_data, valid_data = dataset_split(dataset, 0.9)
+        # train_data,valid_data = dataset_split(dataset)
+
 
         # Chain assembler and model in a Pipeline
         pipeline = Pipeline(stages=[model])
@@ -204,23 +207,23 @@ def evaluate_model(dataset, params, features, ml_type, features_name, ml_model, 
 
         # Use dict to store each result
         results = {
-            "Model": ml_model,
-            "Type": ml_type,
+            "Model": model_name,
+            "Type": model_type,
             "Features": features_name,
             "Parameters": [list(param.values())],
             "RMSE": eval_res['rmse'],
-            "MAPE":eval_res['mape'],
+            "MSE": eval_res['mse'],
             "MAE": eval_res['mae'],
-            "Variance": eval_res['var'],
+            "MAPE": eval_res['mape'],
             "R2": eval_res['r2'],
             "Adjusted_R2": eval_res['adj_r2'],
             "Time": end - start,
         }
 
     # Transform dict to pandas dataset
-    result_pd = pd.DataFrame(results, index=[0])
+    results_pd = pd.DataFrame(results, index=[0])
 
-    return result_pd, predictions.toPandas()
+    return results_pd, predictions.toPandas()
 
 #########################
 # HYPERPARAMETER TUNING #
@@ -233,15 +236,14 @@ Args:
     proportion_lst: A list represents the split proportion
     feature_col: The column name of features
     label_col: The column name of label
-    ml_model: The module to use
+    model_name: The module to use
     params: Parameters which want to test 
     assembler: An assembler to dataSet
     scaler: A scaler to dataSet
 Return: 
     results_df: The best result in a pandas dataframe
 '''
-
-def autoTuning(dataset, params, proportion_lst, features, features_name, ml_model, features_label, target_label):  
+def autotuning(dataset, params, proportion_lst, features, features_name, model_name, features_label, target_label):  
     dataset = select_normalized_features(dataset, features, features_label, target_label)
 
     # Initialize the best result for comparison
@@ -250,7 +252,8 @@ def autoTuning(dataset, params, proportion_lst, features, features_name, ml_mode
     # Try different proportions 
     for proportion in proportion_lst:
         # Split the dataset
-        train_data,valid_data = trainSplit(dataset, proportion)
+        train_data,valid_data = dataset_split(dataset, proportion)
+        # train_data,valid_data = dataset_split(dataset)
     
         # Cache it
         train_data.cache()
@@ -261,7 +264,7 @@ def autoTuning(dataset, params, proportion_lst, features, features_name, ml_mode
     
         for param in param_lst:
             # Chosen Model
-            model = model_selection(ml_model, param, features_label, target_label)
+            model = model_selection(model_name, param, features_label, target_label)
             
             # Chain assembler and model in a Pipeline
             pipeline = Pipeline(stages=[model])
@@ -278,15 +281,15 @@ def autoTuning(dataset, params, proportion_lst, features, features_name, ml_mode
         
             # Use dict to store each result
             results = {
-                "Model": ml_model,
+                "Model": model_name,
                 "Type": "autotuning",
                 "Features": features_name,
                 "Proportion": proportion,
                 "Parameters": [list(param.values())],
                 "RMSE": eval_res['rmse'],
-                "MAPE":eval_res['mape'],
+                "MSE": eval_res['mse'],
                 "MAE": eval_res['mae'],
-                "Variance": eval_res['var'],
+                "MAPE": eval_res['mape'],
                 "R2": eval_res['r2'],
                 "Adjusted_R2": eval_res['adj_r2'],
                 "Time": end - start,
@@ -318,7 +321,7 @@ Args:
 Return: 
     split_position_df: All set of splits position in a Pandas dataset
 '''
-def mulTsCrossValidation(num, n_splits):
+def multi_splits(num, n_splits):
     split_position_lst = []
     # Calculate the split position for each time 
     for i in range(1, n_splits+1):
@@ -348,7 +351,7 @@ Args:
 Return: 
     split_position_df: All set of splits position in a Pandas dataset
 '''
-def blockedTsCrossValidation(num, n_splits):
+def block_splits(num, n_splits):
     kfold_size = num // n_splits
 
     split_position_lst = []
@@ -371,34 +374,34 @@ Args:
     dataset: The dataset which needs to be splited
     features_label: The column name of features
     target_label: The column name of label
-    ml_model: The module to use
+    model_name: The module to use
     params: Parameters which want to test 
     assembler: An assembler to dataset
     cv_info: The type of Cross Validation
 Return: 
     tsCv_df: All the splits performance of each model in a pandas dataset
 '''
-def tsCrossValidation(dataset, params, cv_info, features, features_name, ml_model, features_label, target_label):
+def cross_validation(dataset, params, cv_info, features, features_name, model_name, features_label, target_label):
     dataset = select_normalized_features(dataset, features, features_label, target_label)
 
     # Get the number of samples
     num = dataset.count()
     
     # Save results in a list
-    result_lst = []
+    results_lst = []
 
     # ALL combination of params
     param_lst = [dict(zip(params, param)) for param in product(*params.values())]
 
     for param in param_lst:
         # Chosen Model
-        model = model_selection(ml_model, param, features_label, target_label)
+        model = model_selection(model_name, param, features_label, target_label)
 
         # Identify the type of Cross Validation 
-        if cv_info['cv_type'] == 'mulTs':
-            split_position_df = mulTsCrossValidation(num, cv_info['kSplits'])
-        elif cv_info['cv_type'] == 'blkTs':
-            split_position_df = blockedTsCrossValidation(num, cv_info['kSplits'])
+        if cv_info['cv_type'] == 'multi_splits':
+            split_position_df = multi_splits(num, cv_info['splits'])
+        elif cv_info['cv_type'] == 'block_splits':
+            split_position_df = block_splits(num, cv_info['splits'])
 
         for position in split_position_df.itertuples():
             # Get the start/split/end position from a kind of Time Series Cross Validation
@@ -434,37 +437,37 @@ def tsCrossValidation(dataset, params, cv_info, features, features_name, ml_mode
 
             # Use dict to store each result
             results = {
-                "Model": ml_model,
+                "Model": model_name,
                 "Type": cv_info['cv_type'],
                 "Features": features_name,
                 "Splits": idx + 1,
-                "Train&Validation": (train_size,valid_size),
+                "Train&Validation": (train_size,valid_size),                
                 "Parameters": list(param.values()),
                 "RMSE": eval_res['rmse'],
-                "MAPE":eval_res['mape'],
+                "MSE": eval_res['mse'],
                 "MAE": eval_res['mae'],
-                "Variance": eval_res['var'],
+                "MAPE": eval_res['mape'],
                 "R2": eval_res['r2'],
                 "Adjusted_R2": eval_res['adj_r2'],
                 "Time": end - start,
             }
 
             # Store each splits result
-            result_lst.append(results)
+            results_lst.append(results)
 
             # Release Cache
             train_data.unpersist()
             valid_data.unpersist()
 
     # Transform dict to pandas dataset
-    tsCv_pd = pd.DataFrame(result_lst)
+    tsCv_pd = pd.DataFrame(results_lst)
     return tsCv_pd
 
 #####################
 # TRAIN FINAL MODEL #
 #####################
 
-def train_model(dataset, params, features, ml_type, features_name, ml_model, features_label, target_label):    
+def train_model(dataset, params, features, model_type, features_name, model_name, features_label, target_label):    
     dataset = select_normalized_features(dataset, features, features_label, target_label)
   
     # ALL combination of params
@@ -472,7 +475,7 @@ def train_model(dataset, params, features, ml_type, features_name, ml_model, fea
     
     for param in param_lst:
         # Chosen Model
-        model = model_selection(ml_model, param, features_label, target_label)
+        model = model_selection(model_name, param, features_label, target_label)
         
         # Chain assembler and model in a Pipeline
         pipeline = Pipeline(stages=[model])
@@ -489,14 +492,14 @@ def train_model(dataset, params, features, ml_type, features_name, ml_model, fea
 
         # Use dict to store each result
         results = {
-            "Model": ml_model,
-            "Type": ml_type,
+            "Model": model_name,
+            "Type": model_type,
             "Features": features_name,
             "Parameters": [list(param.values())],
             "RMSE": eval_res['rmse'],
-            "MAPE":eval_res['mape'],
+            "MSE": eval_res['mse'],
             "MAE": eval_res['mae'],
-            "Variance": eval_res['var'],
+            "MAPE": eval_res['mape'],
             "R2": eval_res['r2'],
             "Adjusted_R2": eval_res['adj_r2'],
             "Time": end - start,

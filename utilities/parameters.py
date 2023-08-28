@@ -53,3 +53,31 @@ def get_model_grid_params(modelName):
         }
 
     return params
+
+def get_best_model_params(modelName):
+    if (modelName == 'LinearRegression'):
+        params = {
+                'maxIter' : [5],
+                'regParam' : [0.2],
+                'elasticNetParam' : [0.2]
+        }   
+    if (modelName == 'GeneralizedLinearRegression'):
+        params = {
+            'maxIter' : [5],
+            'regParam' : [0.2],
+            'family': ['gaussian'],
+            'link': ['log']
+        }
+    elif (modelName == 'RandomForestRegressor'):
+        params = {
+            'numTrees' : [10],
+            'maxDepth' : [10]
+            }
+    elif (modelName == 'GBTRegressor'):
+        params = {
+            'maxIter' : [10],
+            'maxDepth' : [5],
+            'stepSize': [0.3]
+        }
+        
+    return params
