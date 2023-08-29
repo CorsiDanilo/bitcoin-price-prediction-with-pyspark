@@ -1,41 +1,46 @@
 from imports import *
-from itertools import product
 
-##########
-# SHARED #
-##########
-
-# Return the dataset with the selected features
-def select_features(dataset, features, features_label, target_label):
-  vectorAssembler = VectorAssembler(inputCols = features, outputCol = features_label)
-
-  dataset = vectorAssembler.transform(dataset).select("timestamp", "id", features_label, target_label)
-
-  return dataset
-
-# Normalized / standardized features selection
-def select_normalized_features(dataset, features, features_label, target_label):    
-    # Assemble the columns into a vector column
-    assembler = VectorAssembler(inputCols = features, outputCol = "raw_features")
-    df_vector  = assembler.transform(dataset).select("timestamp", "id", "raw_features", target_label)
-
-    # Create a Normalizer instance
-    normalizer = Normalizer(inputCol="raw_features", outputCol=features_label)
-
-    # Fit and transform the data
-    normalized_data = normalizer.transform(df_vector).select("timestamp", "id", features_label, target_label)
-
-    return normalized_data
+##################
+# --- SHARED --- #
+##################
 
 '''
-Description: Split and keep the original time-series order
+Description: Return the dataset with the selected features
+Args:
+    dataset: The dataset from which to extract the features
+    features_normalization: Indicates whether features should be normalized (True) or not (False)
+    features: list of features to be extracted
+    features_label: The column name of features
+    target_label: The column name of target variable
+Return: 
+    dataset: Dataset with the selected features
+'''
+def select_features(dataset, features_normalization, features, features_label, target_label):
+    if features_normalization:
+        # Assemble the columns into a vector column
+        assembler = VectorAssembler(inputCols = features, outputCol = "raw_features")
+        df_vector  = assembler.transform(dataset).select("timestamp", "id", "raw_features", target_label)
+
+        # Create a Normalizer instance
+        normalizer = Normalizer(inputCol="raw_features", outputCol=features_label)
+
+        # Fit and transform the data
+        dataset = normalizer.transform(df_vector).select("timestamp", "id", features_label, target_label)
+    else:
+        # Assemble the columns into a vector column
+        vectorAssembler = VectorAssembler(inputCols = features, outputCol = features_label)
+        dataset = vectorAssembler.transform(dataset).select("timestamp", "id", features_label, target_label)
+
+    return dataset
+
+'''
+Description: Split and keep the original time-series order based on a split point 
 Args:
     dataset: The dataset which needs to be splited
     proportion: A number represents the split proportion
-
 Return: 
     train_data: The train dataset
-    valid_data: The validation dataset
+    valid_data: The valid dataset
 '''
 def dataset_split(dataset, proportion):
     records_num = dataset.count()
@@ -46,6 +51,13 @@ def dataset_split(dataset, proportion):
 
     return train_data, valid_data
 
+'''
+Description: Plot the results obtained
+Args:
+    results: Results to be displayed
+    model_name: Model name selected
+Return: None
+'''
 def show_results(results, model_name):
   trace1 = go.Scatter(
       x = results['timestamp'],
@@ -66,7 +78,7 @@ def show_results(results, model_name):
       xaxis=dict(
           rangeselector=dict(
               buttons=list([
-                  #change the count to desired amount of months.
+                  # Change the count to desired amount of months.
                   dict(count=1,
                       label='1m',
                       step='month',
@@ -106,18 +118,28 @@ Args:
 Return:
     comparison_df: A pandas dataset of a model on a type of Time Series Cross Validation
 '''
-def model_comparison(cv_result, model_info, evaluator_lst):
-    # Calculate mean of all splits on chosen evaluator
-    col_mean_df = cv_result[evaluator_lst].mean().to_frame().T
+def model_comparison(results, model_info, evaluator_lst):
+    # Calculate mean of all results
+    col_mean_df = results[evaluator_lst].mean().to_frame().T
 
     # Extract model info
-    model_info_df = cv_result[model_info][:1]
+    model_info_df = results[model_info][:1]
 
     # Concatenate by row
-    comparison_df = pd.concat([model_info_df,col_mean_df], axis=1)
+    comparison_df = pd.concat([model_info_df, col_mean_df], axis=1)
     
     return comparison_df
 
+'''
+Description: Selection of the model to be initialized
+Args:
+    model_name: Model name selected
+    param: Parameters of the selected model
+    features_label: The column name of features
+    target_label: The column name of target variable
+Return:
+    model: Initialized model
+'''
 def model_selection(model_name, param, features_label, target_label):
     if model_name == "LinearRegression":
         model = LinearRegression(featuresCol=features_label, \
@@ -146,6 +168,14 @@ def model_selection(model_name, param, features_label, target_label):
                                 stepSize = param['stepSize'])
     return model
 
+'''
+Description: Evaluation of the selected model
+Args:
+    target_label: The column name of target variable
+    predictions: predictions made by the model
+Return:
+    results: Results obtained from the evaluation
+'''
 def model_evaluation(target_label, predictions):
     mse_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='mse')
     rmse_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='rmse')
@@ -172,29 +202,40 @@ def model_evaluation(target_label, predictions):
 # SIMPLE MODEL #
 ################
 
-# Function that create simple models (without hyperparameter tuning) and evaluate them
-def model_train_valid(dataset, params, features, model_type, features_name, model_name, features_label, target_label): 
-    # Select train and valid data features
-    if model_type == "simple":
-        dataset = select_features(dataset, features, features_label, target_label)
-    elif model_type == "simple_norm" or model_type == "final_validated":
-        dataset = select_normalized_features(dataset, features, features_label, target_label)
+'''
+Description: Train the model and makes the predictions on the data provided
+Args:
+    dataset: Data on which to train and make predictions
+    params: Parameters of the selected model
+    model_name: Model name selected
+    model_type: Model type [simple | simple_norm | hyp_tuning | final_validated | final_trained]
+    features_normalization: Indicates whether features should be normalized (True) or not (False)
+    features: Features to be used to make predictions
+    features_name: Name of features used
+    features_label: The column name of features
+    target_label: The column name of target variable
+Return:
+    results_df: Results obtained from the evaluation
+    predictions: Predictions obtained from the model
+'''
+def model_train_valid(dataset, params, model_name, model_type, features_normalization, features, features_name , features_label, target_label): 
+    # Select the type of features to be used
+    dataset = select_features(dataset, features_normalization, features, features_label, target_label)
 
-    # ALL combination of params
+    # All combination of params
     param_lst = [dict(zip(params, param)) for param in product(*params.values())]
 
     for param in param_lst:
-        # Chosen Model
+        # Choice of model
         model = model_selection(model_name, param, features_label, target_label)
         
         # Split dataset
         train_data, valid_data = dataset_split(dataset, 0.9)
-        # train_data,valid_data = dataset_split(dataset)
-
 
         # Chain assembler and model in a Pipeline
         pipeline = Pipeline(stages=[model])
-        # Train a model and calculate running time
+
+        # Train model and calculate running time
         start = time.time()
         pipeline_model = pipeline.fit(train_data)
         end = time.time()
@@ -221,9 +262,9 @@ def model_train_valid(dataset, params, features, model_type, features_name, mode
         }
 
     # Transform dict to pandas dataset
-    results_pd = pd.DataFrame(results, index=[0])
+    results_df = pd.DataFrame(results, index=[0])
 
-    return results_pd, predictions.toPandas()
+    return results_df, predictions.toPandas()
 
 #########################
 # HYPERPARAMETER TUNING #
@@ -232,19 +273,23 @@ def model_train_valid(dataset, params, features, model_type, features_name, mode
 '''
 Description: Use Grid Search to tune the Model 
 Args:
-    dataSet: The dataSet which needs to be splited
-    proportion_lst: A list represents the split proportion
-    feature_col: The column name of features
-    label_col: The column name of label
-    model_name: The module to use
+    dataset: The dataSet which needs to be splited
     params: Parameters which want to test 
-    assembler: An assembler to dataSet
-    scaler: A scaler to dataSet
-Return: 
-    results_df: The best result in a pandas dataframe
+    model_name: Model name selected
+    model_type: Model type [simple | simple_norm | hyp_tuning | final_validated | final_trained]
+    proportion_lst: A list represents the split proportion
+    features_normalization: Indicates whether features should be normalized (True) or not (False)
+    features: Features to be used to make predictions
+    features_name: Name of features used
+    features_label: The column name of features
+    target_label: The column name of target variable
+Return:
+    result_best_pd: Best results obtained from the evaluation
+    params_best: Best parameters obtained from the evaluation
 '''
-def autotuning(dataset, params, proportion_lst, features, features_name, model_name, features_label, target_label):  
-    dataset = select_normalized_features(dataset, features, features_label, target_label)
+def hyperparameter_tuning(dataset, params, proportion_lst, model_name, model_type, features_normalization, features, features_name, features_label, target_label):  
+    # Select the type of features to be used
+    dataset = select_features(dataset, features_normalization, features, features_label, target_label)
 
     # Initialize the best result for comparison
     result_best = {"RMSE": float('inf')}
@@ -252,14 +297,13 @@ def autotuning(dataset, params, proportion_lst, features, features_name, model_n
     # Try different proportions 
     for proportion in proportion_lst:
         # Split the dataset
-        train_data,valid_data = dataset_split(dataset, proportion)
-        # train_data,valid_data = dataset_split(dataset)
+        train_data, valid_data = dataset_split(dataset, proportion)
     
-        # Cache it
+        # Cache them
         train_data.cache()
         valid_data.cache()
     
-        # ALL combination of params
+        # All combination of params
         param_lst = [dict(zip(params, param)) for param in product(*params.values())]
     
         for param in param_lst:
@@ -268,7 +312,8 @@ def autotuning(dataset, params, proportion_lst, features, features_name, model_n
             
             # Chain assembler and model in a Pipeline
             pipeline = Pipeline(stages=[model])
-            # Train a model and calculate running time
+
+            # Train model and calculate running time
             start = time.time()
             pipeline_model = pipeline.fit(train_data)
             end = time.time()
@@ -282,7 +327,7 @@ def autotuning(dataset, params, proportion_lst, features, features_name, model_n
             # Use dict to store each result
             results = {
                 "Model": model_name,
-                "Type": "autotuning",
+                "Type": model_type,
                 "Features": features_name,
                 "Proportion": proportion,
                 "Parameters": [list(param.values())],
@@ -295,7 +340,7 @@ def autotuning(dataset, params, proportion_lst, features, features_name, model_n
                 "Time": end - start,
             }
             
-            # Only store the lowest RMSE
+            # Store the result with the lowest RMSE and the associated parameters
             if results['RMSE'] < result_best['RMSE']:
                 result_best = results
                 params_best = dict({key: [value] for key, value in param.items()})
@@ -305,25 +350,26 @@ def autotuning(dataset, params, proportion_lst, features, features_name, model_n
         valid_data.unpersist()
         
     # Transform dict to pandas dataset
-    result_best_pd = pd.DataFrame(result_best)
+    result_best_df = pd.DataFrame(result_best)
 
-    return result_best_pd, params_best
+    return result_best_df, params_best
 
 ####################
 # CROSS VALIDATION #
 ####################
 
 '''
-Description: Multiple Splits Cross Validation on Time Series data
+Description: Multiple splits cross validation on time series data
 Args:
-    num: Number of DataSet
+    num: Number of datasets
     n_splits: Split times
 Return: 
-    split_position_df: All set of splits position in a Pandas dataset
+    split_position_df: All sets of split positions in a Pandas dataset.
 '''
 def multi_splits(num, n_splits):
+
+    # Calculate the split position for each fold 
     split_position_lst = []
-    # Calculate the split position for each time 
     for i in range(1, n_splits+1):
         # Calculate train size and validation size
         train_size = i * num // (n_splits + 1) + num % (n_splits + 1)
@@ -334,55 +380,59 @@ def multi_splits(num, n_splits):
         split = train_size
         end = train_size + valid_size
         
-        # Avoid to beyond the whole number of dataset
+        # Avoid exceeding integer number of datasets
         if end > num:
             end = num
-        split_position_lst.append((start,split,end))
+        split_position_lst.append((start, split, end))
         
-    # Transform the split position list to a Pandas dataset
-    split_position_df = pd.DataFrame(split_position_lst,columns=['start','split','end'])
+    # Transforms the list of split locations into a Pandas dataset
+    split_position_df = pd.DataFrame(split_position_lst, columns=['start', 'split', 'end'])
+
     return split_position_df
 
 '''
-Description: Blocked Time Series Cross Validation
+Description: Blocked time series cross validation
 Args:
-    num: Number of DataSet
+    num: Number of datasets
     n_splits: Split times
 Return: 
-    split_position_df: All set of splits position in a Pandas dataset
+    split_position_df: All sets of split positions in a Pandas dataset.
 '''
 def block_splits(num, n_splits):
+    # Calculate the split position for each fold 
     kfold_size = num // n_splits
-
     split_position_lst = []
-    # Calculate the split position for each time 
     for i in range(n_splits):
         # Calculate the start/split/end point for each fold
         start = i * kfold_size
         end = start + kfold_size
+
         # Manually set train-validation split proportion in each fold
         split = int(0.8 * (end - start)) + start
-        split_position_lst.append((start,split,end))
+        split_position_lst.append((start, split,end))
         
     # Transform the split position list to a Pandas dataset
-    split_position_df = pd.DataFrame(split_position_lst,columns=['start','split','end'])
+    split_position_df = pd.DataFrame(split_position_lst, columns=['start', 'split', 'end'])
     return split_position_df
 
 '''
-Description: Cross Validation on Time Series data
+Description: Cross validation on time series data
 Args:
     dataset: The dataset which needs to be splited
-    features_label: The column name of features
-    target_label: The column name of label
-    model_name: The module to use
     params: Parameters which want to test 
-    assembler: An assembler to dataset
-    cv_info: The type of Cross Validation
+    cv_info: The type of cross validation [multi_splits | block_splits]
+    model_name: Model name selected
+    features_normalization: Indicates whether features should be normalized (True) or not (False)
+    features: Features to be used to make predictions
+    features_name: Name of features used
+    features_label: The column name of features
+    target_label: The column name of target variable
 Return: 
-    tsCv_df: All the splits performance of each model in a pandas dataset
+    results_lst_df: All the splits performances in a pandas dataset
 '''
-def cross_validation(dataset, params, cv_info, features, features_name, model_name, features_label, target_label):
-    dataset = select_normalized_features(dataset, features, features_label, target_label)
+def cross_validation(dataset, params, cv_info, model_name, features_normalization, features, features_name, features_label, target_label):
+    # Select the type of features to be used
+    dataset = select_features(dataset, features_normalization, features, features_label, target_label)
 
     # Get the number of samples
     num = dataset.count()
@@ -390,27 +440,27 @@ def cross_validation(dataset, params, cv_info, features, features_name, model_na
     # Save results in a list
     results_lst = []
 
-    # ALL combination of params
+    # All combination of params
     param_lst = [dict(zip(params, param)) for param in product(*params.values())]
 
     for param in param_lst:
         # Chosen Model
         model = model_selection(model_name, param, features_label, target_label)
 
-        # Identify the type of Cross Validation 
+        # Identify the type of cross validation 
         if cv_info['cv_type'] == 'multi_splits':
             split_position_df = multi_splits(num, cv_info['splits'])
         elif cv_info['cv_type'] == 'block_splits':
             split_position_df = block_splits(num, cv_info['splits'])
 
         for position in split_position_df.itertuples():
-            # Get the start/split/end position from a kind of Time Series Cross Validation
+            # Get the start/split/end position based on the type of cross validation
             start = getattr(position, 'start')
             splits = getattr(position, 'split')
             end = getattr(position, 'end')
             idx  = getattr(position, 'Index')
             
-            # Train/Validation size
+            # Train / validation size
             train_size = splits - start
             valid_size = end - splits
 
@@ -418,12 +468,13 @@ def cross_validation(dataset, params, cv_info, features, features_name, model_na
             train_data = dataset.filter(dataset['id'].between(start, splits-1))
             valid_data = dataset.filter(dataset['id'].between(splits, end-1))
 
-            # Cache it
+            # Cache them
             train_data.cache()
             valid_data.cache()
 
             # Chain assembler and model in a Pipeline
             pipeline = Pipeline(stages=[model])
+
             # Train a model and calculate running time
             start = time.time()
             pipeline_model = pipeline.fit(train_data)
@@ -452,7 +503,7 @@ def cross_validation(dataset, params, cv_info, features, features_name, model_na
                 "Time": end - start,
             }
 
-            # Store each splits result
+            # Store results for each split
             results_lst.append(results)
 
             # Release Cache
@@ -460,17 +511,36 @@ def cross_validation(dataset, params, cv_info, features, features_name, model_na
             valid_data.unpersist()
 
     # Transform dict to pandas dataset
-    tsCv_pd = pd.DataFrame(results_lst)
-    return tsCv_pd
+    results_lst_df = pd.DataFrame(results_lst)
+
+    return results_lst_df
 
 #####################
 # TRAIN FINAL MODEL #
 #####################
 
-def train_model(dataset, params, features, model_type, features_name, model_name, features_label, target_label):    
-    dataset = select_normalized_features(dataset, features, features_label, target_label)
+'''
+Description: Cross validation on time series data
+Args:
+    dataset: The dataset which needs to be splited
+    params: Parameters which want to test 
+    model_name: Model name selected
+    model_type: Model type [simple | simple_norm | hyp_tuning | final_validated | final_trained]
+    features_normalization: Indicates whether features should be normalized (True) or not (False)
+    features: Features to be used to make predictions
+    features_name: Name of features used
+    features_label: The column name of features
+    target_label: The column name of target variable
+Return: 
+    results_df: Results obtained from the evaluation
+    pipeline_model: Final trained model
+    predictions: Predictions obtained from the model
+'''
+def evaluate_trained_model(dataset, params, model_name, model_type, features_normalization, features, features_name, features_label, target_label):    
+    # Select the type of features to be used
+    dataset = select_features(dataset, features_normalization, features, features_label, target_label)
   
-    # ALL combination of params
+    # All combination of params
     param_lst = [dict(zip(params, param)) for param in product(*params.values())]
     
     for param in param_lst:
@@ -479,6 +549,7 @@ def train_model(dataset, params, features, model_type, features_name, model_name
         
         # Chain assembler and model in a Pipeline
         pipeline = Pipeline(stages=[model])
+
         # Train a model and calculate running time
         start = time.time()
         pipeline_model = pipeline.fit(dataset)
@@ -506,6 +577,6 @@ def train_model(dataset, params, features, model_type, features_name, model_name
         }
 
     # Transform dict to pandas dataset
-    results_pd = pd.DataFrame(results)
+    results_df = pd.DataFrame(results)
         
-    return results_pd, pipeline_model, predictions.toPandas()
+    return results_df, pipeline_model, predictions.toPandas()
