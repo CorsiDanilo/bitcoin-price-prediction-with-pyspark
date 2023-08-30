@@ -13,13 +13,40 @@ Corsi Danilo - corsi.1742375@studenti.uniroma1.it
 # Project details
 ### Problem
 The cryptocurrency Bitcoin has attracted the attention of many people in recent years. However, it's price fluctuation can be extremely unpredictable, which makes it difficult to predict when the right time to buy or sell this digital currency will be. In this context, prediction Bitcoin prices can be a competitive advantage for investors and traders, as it could allow them to make informed decisions on the right time to enter or exit the market. In this project, I will analyze some machine learning techniques to understand, through the processing of historical data, how accurately the price of Bitcoin can be predicted and whether this can provide added value to cryptocurrency investors and traders.
-### Dataset ❗
-I chose to use the following dataset from Blockchain.org, more specifically those containing minute-by-minute updates of the Bitcoin price from 2017 to 2021 (period for which there were moments of high volatility but also a lot of price lateralisation). The columns (features) contained in it, in addition to the timestamp of each transaction, are the opening, closing, highest and lowest price and the corresponding trading volume in Bitcoin and Dollars.
-### Methods ❗
-The methods I will test will be Linear Regression (simple and multiple) and Random Forest. Further comparisons with other classification models are planned in the course of development. Moreover, I would also like to try to understand what the differences are between these methods and the implementation of a state-of-the-art neural network such as Long-Short Term Memory.
 
-### Evaluation framework ❗
-As evaluation framework I will use R-square (R²), Mean Square Error (MSE) and Mean Absolute Error (MAE) to get a complete picture of the performance of the various models.
+### Dataset 
+I chose to collect data on the Bitcoin blockchain using the API of the website Blockchain.org, the most relevant information was retrieved from the year 2016 to the present day (a period for which there were moments of high volatility but also a lot of price lateralization). 
+The features taken under consideration were divided into several categories:
+
+**Currency Statistics**
+* **market-price:** Market Price: The average USD market price across major bitcoin exchanges.
+* **trade-volume:** Exchange Trade Volume (USD): The total USD value of trading volume on major bitcoin exchanges.
+* **total-bitcoins:** Total Circulating Bitcoin: The total number of mined bitcoin that are currently circulating on the network.
+* **market-cap:** Market Capitalization (USD): The total USD value of bitcoin in circulation.
+
+**Block Details**
+* **blocks-size:** Blockchain Size (MB): The total size of the blockchain minus database indexes in megabytes.
+* **avg-block-size:** Average Block Size (MB): The average block size over the past 24 hours in megabytes.
+* **n-transactions-total:** Total Number of Transactions: The total number of transactions on the blockchain.
+* **n-transactions-per-block:** Average Transactions Per Block: The average number of transactions per block over the past 24 hours.
+
+**Mining Information**
+* **hash-rate:** Total Hash Rate (TH/s): The estimated number of terahashes per second the bitcoin network is performing in the last 24 hours.
+* **difficulty:** Network Difficulty (T): A relative measure of how difficult it is to mine a new block for the blockchain.
+* **miners-revenue:** Miners Revenue (USD): Total value of coinbase block rewards and transaction fees paid to miners.
+* **transaction-fees-usd:** Total Transaction Fees (USD): The total USD value of all transaction fees paid to miners. This does not include coinbase block rewards.
+
+**Network Activity**
+* **n-unique-addresses:** The total number of unique addresses used on the blockchain.
+* **n-transactions:** Confirmed Transactions Per Day: The total number of confirmed transactions per day.
+* **estimated-transaction-volume-usd:** Estimated Transaction Value (USD): The total estimated value in USD of transactions on the blockchain.
+
+### Methods 
+The methods I will test will be **Linear Regression**, **Generalized Linear Regression**, **Random Forest Regressor** and **Gradient Boosting Tree Regressor** in order to see their differences and how they perform through various stages of train/validation and testing.
+
+### Evaluation framework 
+
+As evaluation framework I will use **RMSE (Root Mean Squared Error)**, **MSE (Mean Squared Error)**, **MAE (Mean Absolute Error)**, **MAPE (Mean Absolute Percentage Error)**, **R2 (R-squared)** and **Adjusted R2** to get a complete picture of the performance of the various models.
 
 # Project structure
 ```

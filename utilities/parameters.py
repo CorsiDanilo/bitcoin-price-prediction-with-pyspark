@@ -1,8 +1,16 @@
 from imports import *
 
 '''
+Description: Returns the list of splits
+Args:None
+Return: 
+    proportion_lst: List of various splits
+'''
+def get_proportion_lst():
+    return [0.92, 0.95, 0.97]
+'''
 Description: Returns the default parameters of the selected model
-Args:
+Args: None
     model_name: Model name selected
 Return: 
     params: Parameters of the selected model
@@ -61,9 +69,9 @@ def get_model_grid_params(model_name):
         }
     elif (model_name == 'GBTRegressor'):
         params = {
-            'maxIter' : [5, 10, 20, 30, 40],
-            'maxDepth' : [5, 8, 10],
-            'stepSize': [0.1, 0.3, 0.5, 0.7]
+            'maxIter' : [10, 20, 30],
+            'maxDepth' : [3, 5, 8],
+            'stepSize': [0.1, 0.4, 0.7]
         }
 
     return params
@@ -79,7 +87,7 @@ def get_best_model_params(model_name):
     if (model_name == 'LinearRegression'):
         params = {
                 'maxIter' : [5],
-                'regParam' : [0.4],
+                'regParam' : [0.2],
                 'elasticNetParam' : [0.2]
         }   
     if (model_name == 'GeneralizedLinearRegression'):
@@ -91,7 +99,7 @@ def get_best_model_params(model_name):
         }
     elif (model_name == 'RandomForestRegressor'):
         params = {
-            'numTrees' : [30],
+            'numTrees' : [10],
             'maxDepth' : [10]
             }
     elif (model_name == 'GBTRegressor'):

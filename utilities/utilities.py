@@ -110,13 +110,13 @@ def show_results(results, model_name):
   iplot(fig, filename = model_name + " predicitons")
 
 '''
-Description: Apply calculations on Time Series Cross Validation results to form the final Model Comparison Table
+Description: Returns the average of the results obtained (usually for the results of cross validation)
 Args:
-    cv_result: The results from cross_validation()
-    model_info: The model information which you would like to show
-    evaluator_lst: The evaluator metrics which you would like to show
+    results: Obtained results from the model
+    model_info: The model information to show
+    evaluator_lst: The evaluator metrics to show
 Return:
-    comparison_df: A pandas dataset of a model on a type of Time Series Cross Validation
+    comparison_df: Average of the results in a Pandas dataframe
 '''
 def model_comparison(results, model_info, evaluator_lst):
     # Calculate mean of all results
@@ -230,7 +230,7 @@ def model_train_valid(dataset, params, model_name, model_type, features_normaliz
         model = model_selection(model_name, param, features_label, target_label)
         
         # Split dataset
-        train_data, valid_data = dataset_split(dataset, 0.9)
+        train_data, valid_data = dataset_split(dataset, 0.93)
 
         # Chain assembler and model in a Pipeline
         pipeline = Pipeline(stages=[model])
