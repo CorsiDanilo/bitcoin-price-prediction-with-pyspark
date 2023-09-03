@@ -413,8 +413,38 @@ def block_splits(num, n_splits):
         
     # Transform the split position list to a Pandas dataset
     split_position_df = pd.DataFrame(split_position_lst, columns=['start', 'split', 'end'])
+
     return split_position_df
 
+'''
+Description: Walk forward cross validation
+Args:
+    num: Number of DataSet
+    min_obser: Minimum number of observations
+    sliding_window: Sliding Window
+Return: 
+    split_position_df: All sets of split positions in a Pandas dataset.
+''' 
+def walk_forward_splits(num, min_obser, sliding_window):
+    split_position_lst = []
+
+    # Calculate the split position for each time 
+    for i in range(min_obser, num, sliding_window):
+        # Calculate the start/split/end point for each fold
+        start = 0
+        split = i
+        end = split + sliding_window
+        
+        # Avoid to beyond the whole number of dataSet
+        if end > num:
+            end = num
+        split_position_lst.append((start, split, end))
+        
+    # Transform the split position list to a Pandas Dataframe
+    split_position_df = pd.DataFrame(split_position_lst, columns=['start', 'split', 'end'])
+    
+    return split_position_df
+    
 '''
 Description: Cross validation on time series data
 Args:
@@ -452,6 +482,8 @@ def cross_validation(dataset, params, cv_info, model_name, features_normalizatio
             split_position_df = multi_splits(num, cv_info['splits'])
         elif cv_info['cv_type'] == 'block_splits':
             split_position_df = block_splits(num, cv_info['splits'])
+        elif cv_info['cv_type'] == 'walk_forward_splits':
+            split_position_df = walk_forward_splits(num, cv_info['min_obser'], cv_info['sliding_window'])
 
         for position in split_position_df.itertuples():
             # Get the start/split/end position based on the type of cross validation
