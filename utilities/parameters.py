@@ -110,8 +110,8 @@ def get_best_model_params(model_name):
     if (model_name == 'LinearRegression'):
         params = {
             'maxIter' : [5],
-            'regParam' : [0.2],
-            'elasticNetParam' : [0.2]
+            'regParam' : [0.0],
+            'elasticNetParam' : [0.0]
         }   
     if (model_name == 'GeneralizedLinearRegression'):
         params = {
