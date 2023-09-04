@@ -158,14 +158,17 @@ def model_selection(model_name, param, features_label, target_label):
         model = RandomForestRegressor(featuresCol=features_label, \
                                         labelCol=target_label, \
                                         numTrees = param["numTrees"], \
-                                        maxDepth = param["maxDepth"])
+                                        maxDepth = param["maxDepth"], \
+                                        seed=param['seed'])
 
     elif model_name == "GBTRegressor":
         model = GBTRegressor(featuresCol=features_label, \
                                 labelCol=target_label, \
                                 maxIter = param['maxIter'], \
                                 maxDepth = param['maxDepth'], \
-                                stepSize = param['stepSize'])
+                                stepSize = param['stepSize'], \
+                                seed=param['seed'])
+
     return model
 
 '''
@@ -367,7 +370,6 @@ Return:
     split_position_df: All sets of split positions in a Pandas dataset.
 '''
 def multi_splits(num, n_splits):
-
     # Calculate the split position for each fold 
     split_position_lst = []
     for i in range(1, n_splits+1):

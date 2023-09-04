@@ -1,15 +1,7 @@
 from imports import *
 
+# For reproducibility
 RANDOM_SEED = 42
-
-'''
-Description: Returns the list of splits
-Args:None
-Return: 
-    proportion_lst: List of various splits
-'''
-def get_proportion_lst():
-    return [0.92, 0.95, 0.97]
 
 '''
 Description: Returns the  parameters of the selected cross validation type
@@ -28,10 +20,11 @@ def get_cross_validation_params(cv_type):
         params = {'cv_type':'block_splits',
                   'splits': 10}
     elif cv_type == "walk_forward_splits":
-        # Walk forward cross validation, Last 50 steps
+        # Walk forward cross validation parameters
         params = {'cv_type':'walk_forward_splits',
-                  'min_obser': 10,
-                  'sliding_window': 5}
+                  'min_obser': 10000,
+                  'sliding_window': 10000}
+
     return params
 
 '''
@@ -46,14 +39,12 @@ def get_defaults_model_params(model_name):
         params = {
             'maxIter' : [100],
             'regParam' : [0.0],
-            'elasticNetParam' : [0.0],
-            'seed' : [RANDOM_SEED]
+            'elasticNetParam' : [0.0]
         }   
     if (model_name == 'GeneralizedLinearRegression'):
         params = {
             'maxIter' : [25],
-            'regParam' : [0],
-            'seed' : [RANDOM_SEED]
+            'regParam' : [0]
         }
     elif (model_name == 'RandomForestRegressor'):
         params = {
@@ -83,17 +74,14 @@ def get_model_grid_params(model_name):
         params = {
             'maxIter' : [5, 10, 50, 80, 100],
             'regParam' : np.arange(0,1,0.2).round(decimals=2),
-            'elasticNetParam' : np.arange(0,1,0.2).round(decimals=2),
-            'seed' : [RANDOM_SEED]
-
+            'elasticNetParam' : np.arange(0,1,0.2).round(decimals=2)
         }
     if (model_name == 'GeneralizedLinearRegression'):
         params = {
             'maxIter' : [5, 10, 50, 80],
             'regParam' : [0, 0.1, 0.2],
             'family': ['gaussian', 'gamma'],
-            'link': ['log', 'identity', 'inverse'],
-            'seed' : [RANDOM_SEED]
+            'link': ['log', 'identity', 'inverse']
         }
     elif (model_name == 'RandomForestRegressor'):
         params = {
@@ -123,16 +111,14 @@ def get_best_model_params(model_name):
         params = {
             'maxIter' : [5],
             'regParam' : [0.2],
-            'elasticNetParam' : [0.2],
-            'seed' : [RANDOM_SEED]
+            'elasticNetParam' : [0.2]
         }   
     if (model_name == 'GeneralizedLinearRegression'):
         params = {
             'maxIter' : [5],
             'regParam' : [0.2],
             'family': ['gaussian'],
-            'link': ['log'],
-            'seed' : [RANDOM_SEED]
+            'link': ['log']
         }
     elif (model_name == 'RandomForestRegressor'):
         params = {

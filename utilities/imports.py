@@ -1,4 +1,4 @@
-# Pyspark
+# PySpark
 import pyspark
 from pyspark.sql import *
 from pyspark.sql.types import *
