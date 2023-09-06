@@ -23,7 +23,7 @@ def get_cross_validation_params(cv_type):
         # Walk forward cross validation parameters
         params = {'cv_type':'walk_forward_splits',
                   'min_obser': 10000,
-                  'sliding_window': 10000}
+                  'sliding_window': 5000}
 
     return params
 
@@ -96,6 +96,13 @@ def get_model_grid_params(model_name):
             'stepSize': [0.1, 0.4, 0.7],
             'seed' : [RANDOM_SEED]
         }
+        # TRY THIS ❗
+        # params = {
+        #     'maxIter' : [20, 40, 60],
+        #     'maxDepth' : [5, 8, 10],
+        #     'stepSize': [0.1, 0.3, 0.5, 0.7]
+        #     'seed' : [RANDOM_SEED]
+        # }
 
     return params
 
@@ -110,7 +117,7 @@ def get_best_model_params(model_name):
     if (model_name == 'LinearRegression'):
         params = {
             'maxIter' : [5],
-            'regParam' : [0.0],
+            'regParam' : [0.2],
             'elasticNetParam' : [0.0]
         }   
     if (model_name == 'GeneralizedLinearRegression'):
@@ -122,15 +129,15 @@ def get_best_model_params(model_name):
         }
     elif (model_name == 'RandomForestRegressor'):
         params = {
-            'numTrees' : [10],
-            'maxDepth' : [10],
+            'numTrees' : [3],
+            'maxDepth' : [5],
             'seed' : [RANDOM_SEED]
             }
     elif (model_name == 'GBTRegressor'):
         params = {
-            'maxIter' : [10],
-            'maxDepth' : [5],
-            'stepSize': [0.3],
+            'maxIter' : [30],
+            'maxDepth' : [3],
+            'stepSize': [0.4],
             'seed' : [RANDOM_SEED]
         }
         
