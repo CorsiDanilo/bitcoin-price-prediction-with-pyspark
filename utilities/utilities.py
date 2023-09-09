@@ -4,6 +4,35 @@ from imports import *
 # --- SHARED --- #
 ##################
 
+# '''
+# Description: Return the dataset with the selected features
+# Args:
+#     dataset: The dataset from which to extract the features
+#     features_normalization: Indicates whether features should be normalized (True) or not (False)
+#     features: list of features to be extracted
+#     features_label: The column name of features
+#     target_label: The column name of target variable
+# Return: 
+#     dataset: Dataset with the selected features
+# '''
+# def select_features(dataset, features_normalization, features, features_label, target_label):
+#     if features_normalization:
+#         # Assemble the columns into a vector column
+#         assembler = VectorAssembler(inputCols = features, outputCol = "raw_features")
+#         df_vector  = assembler.transform(dataset).select("timestamp", "id", "raw_features", target_label)
+
+#         # Create a Normalizer instance
+#         normalizer = Normalizer(inputCol="raw_features", outputCol=features_label)
+
+#         # Fit and transform the data
+#         dataset = normalizer.transform(df_vector).select("timestamp", "id", features_label, target_label)
+#     else:
+#         # Assemble the columns into a vector column
+#         vectorAssembler = VectorAssembler(inputCols = features, outputCol = features_label)
+#         dataset = vectorAssembler.transform(dataset).select("timestamp", "id", features_label, target_label)
+
+#     return dataset
+
 '''
 Description: Return the dataset with the selected features
 Args:
@@ -19,17 +48,17 @@ def select_features(dataset, features_normalization, features, features_label, t
     if features_normalization:
         # Assemble the columns into a vector column
         assembler = VectorAssembler(inputCols = features, outputCol = "raw_features")
-        df_vector  = assembler.transform(dataset).select("timestamp", "id", "raw_features", target_label)
+        df_vector  = assembler.transform(dataset).select("timestamp", "id", "market-price", "raw_features", target_label)
 
         # Create a Normalizer instance
         normalizer = Normalizer(inputCol="raw_features", outputCol=features_label)
 
         # Fit and transform the data
-        dataset = normalizer.transform(df_vector).select("timestamp", "id", features_label, target_label)
+        dataset = normalizer.transform(df_vector).select("timestamp", "id", "market-price",features_label, target_label)
     else:
         # Assemble the columns into a vector column
         vectorAssembler = VectorAssembler(inputCols = features, outputCol = features_label)
-        dataset = vectorAssembler.transform(dataset).select("timestamp", "id", features_label, target_label)
+        dataset = vectorAssembler.transform(dataset).select("timestamp", "id", "market-price", features_label, target_label)
 
     return dataset
 
@@ -201,9 +230,9 @@ def model_evaluation(target_label, predictions):
 
     return results
 
-################
-# SIMPLE MODEL #
-################
+##################
+# --- SIMPLE --- #
+##################
 
 '''
 Description: Train the model and makes the predictions on the data provided
@@ -269,54 +298,74 @@ def model_train_valid(dataset, params, model_name, model_type, features_normaliz
 
     return results_df, predictions.toPandas()
 
-#########################
-# HYPERPARAMETER TUNING #
-#########################
+#################################
+# --- HYPERPARAMETER TUNING --- #
+#################################
 
 '''
-Description: Use Grid Search to tune the Model 
+Description: Cross validation on time series data
 Args:
-    dataset: The dataSet which needs to be splited
+    dataset: The dataset which needs to be splited
     params: Parameters which want to test 
+    cv_info: The type of cross validation [multi_splits | block_splits]
     model_name: Model name selected
-    model_type: Model type [simple | simple_norm | hyp_tuning | final_validated | final_trained]
-    proportion_lst: A list represents the split proportion
     features_normalization: Indicates whether features should be normalized (True) or not (False)
     features: Features to be used to make predictions
     features_name: Name of features used
     features_label: The column name of features
     target_label: The column name of target variable
-Return:
-    result_best_pd: Best results obtained from the evaluation
-    params_best: Best parameters obtained from the evaluation
+Return: 
+    results_lst_df: All the splits performances in a pandas dataset
 '''
-def hyperparameter_tuning(dataset, params, proportion_lst, model_name, model_type, features_normalization, features, features_name, features_label, target_label):  
+def hyperparameter_tuning(dataset, params, cv_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
     # Select the type of features to be used
-    dataset = select_features(dataset, features_normalization, features, features_label, target_label)
+    dataset = utilities.select_features(dataset, features_normalization, features, features_label, target_label)
 
-    # Initialize the best result for comparison
-    result_best = {"RMSE": float('inf')}
+    best_split_result = []
+
+    # Get the number of samples
+    num = dataset.count()
+
+    # Identify the type of cross validation 
+    if cv_info['cv_type'] == 'multi_splits':
+        split_position_df = utilities.multi_splits(num, cv_info['splits'])
+    elif cv_info['cv_type'] == 'block_splits':
+        split_position_df = utilities.block_splits(num, cv_info['splits'])
+    elif cv_info['cv_type'] == 'walk_forward_splits':
+        split_position_df = walk_forward_splits_new(num, cv_info['min_obser'], cv_info['sliding_window'])
+
+    for position in split_position_df.itertuples():
+        best_result = {"RMSE": float('inf')}
+
+        # Get the start/split/end position based on the type of cross validation
+        start = getattr(position, 'start')
+        splits = getattr(position, 'split')
+        end = getattr(position, 'end')
+        idx  = getattr(position, 'Index')
         
-    # Try different proportions 
-    for proportion in proportion_lst:
-        # Split the dataset
-        train_data, valid_data = dataset_split(dataset, proportion)
-    
+        # Train / validation size
+        train_size = splits - start
+        valid_size = end - splits
+
+        # Get training data and validation data
+        train_data = dataset.filter(dataset['id'].between(start, splits-1))
+        valid_data = dataset.filter(dataset['id'].between(splits, end-1))
+
         # Cache them
         train_data.cache()
         valid_data.cache()
-    
+
         # All combination of params
         param_lst = [dict(zip(params, param)) for param in product(*params.values())]
-    
+
         for param in param_lst:
             # Chosen Model
-            model = model_selection(model_name, param, features_label, target_label)
-            
+            model = utilities.model_selection(model_name, param, features_label, target_label)
+
             # Chain assembler and model in a Pipeline
             pipeline = Pipeline(stages=[model])
 
-            # Train model and calculate running time
+            # Train a model and calculate running time
             start = time.time()
             pipeline_model = pipeline.fit(train_data)
             end = time.time()
@@ -325,15 +374,17 @@ def hyperparameter_tuning(dataset, params, proportion_lst, model_name, model_typ
             predictions = pipeline_model.transform(valid_data).select(target_label, "prediction", 'timestamp')
 
             # Compute validation error by several evaluators
-            eval_res = model_evaluation(target_label, predictions)
-        
+            eval_res = utilities.model_evaluation(target_label, predictions)
+
             # Use dict to store each result
             results = {
                 "Model": model_name,
                 "Type": model_type,
+                "Cv": cv_info['cv_type'],
                 "Features": features_name,
-                "Proportion": proportion,
-                "Parameters": [list(param.values())],
+                "Splits": idx + 1,
+                "Train&Validation": (train_size,valid_size),                
+                "Parameters": list(param.values()),
                 "RMSE": eval_res['rmse'],
                 "MSE": eval_res['mse'],
                 "MAE": eval_res['mae'],
@@ -342,24 +393,25 @@ def hyperparameter_tuning(dataset, params, proportion_lst, model_name, model_typ
                 "Adjusted_R2": eval_res['adj_r2'],
                 "Time": end - start,
             }
-            
             # Store the result with the lowest RMSE and the associated parameters
-            if results['RMSE'] < result_best['RMSE']:
-                result_best = results
-                params_best = dict({key: [value] for key, value in param.items()})
+            if results['RMSE'] < best_result['RMSE']:
+                best_result = results
 
         # Release Cache
         train_data.unpersist()
         valid_data.unpersist()
-        
+
+        best_split_result.append(best_result) 
+        print(best_result)
+
     # Transform dict to pandas dataset
-    result_best_df = pd.DataFrame(result_best)
+    best_split_result_df = pd.DataFrame(best_split_result)
 
-    return result_best_df, params_best
+    return best_split_result_df
 
-####################
-# CROSS VALIDATION #
-####################
+############################
+# --- CROSS VALIDATION --- #
+############################
 
 '''
 Description: Multiple splits cross validation on time series data
@@ -418,33 +470,49 @@ def block_splits(num, n_splits):
 
     return split_position_df
 
-'''
-Description: Walk forward cross validation
-Args:
-    num: Number of DataSet
-    min_obser: Minimum number of observations
-    sliding_window: Sliding Window
-Return: 
-    split_position_df: All sets of split positions in a Pandas dataset.
-''' 
-def walk_forward_splits(num, min_obser, sliding_window):
-    split_position_lst = []
+# '''
+# Description: Walk forward cross validation
+# Args:
+#     num: Number of DataSet
+#     min_obser: Minimum number of observations
+#     sliding_window: Sliding Window
+# Return: 
+#     split_position_df: All sets of split positions in a Pandas dataset.
+# ''' 
+# def walk_forward_splits(num, min_obser, sliding_window):
+#     split_position_lst = []
 
-    # Calculate the split position for each time 
-    for i in range(min_obser, num, sliding_window):
-        # Calculate the start/split/end point for each fold
-        start = 0
-        split = i
-        end = split + sliding_window
+#     # Calculate the split position for each time 
+#     for i in range(min_obser, num, sliding_window):
+#         # Calculate the start/split/end point for each fold
+#         start = 0
+#         split = i
+#         end = split + sliding_window
         
-        # Avoid to beyond the whole number of dataSet
-        if end > num:
-            end = num
-        split_position_lst.append((start, split, end))
+#         # Avoid to beyond the whole number of dataSet
+#         if end > num:
+#             end = num
+#         split_position_lst.append((start, split, end))
         
-    # Transform the split position list to a Pandas Dataframe
-    split_position_df = pd.DataFrame(split_position_lst, columns=['start', 'split', 'end'])
+#     # Transform the split position list to a Pandas Dataframe
+#     split_position_df = pd.DataFrame(split_position_lst, columns=['start', 'split', 'end'])
     
+#     return split_position_df
+
+# Takes the total number of samples, the minimum number of observations, and the sliding window size as input 
+# and returns a list of tuples containing the start, split, and end positions for each walk-forward split. 
+# We then add an index column to the dataset using the monotonically_increasing_id function and calculate 
+# the total number of samples. Finally, we iterate over the generated split positions, create training and 
+# validation datasets, and train and evaluate the model on each split.
+def walk_forward_splits(num, min_obser, sliding_window):
+    split_positions = []
+    start = 0
+    while start + min_obser + sliding_window <= num:
+        split_positions.append((start, start + min_obser, start + min_obser + sliding_window))
+        start += sliding_window
+
+    split_position_df = pd.DataFrame(split_positions, columns=['start', 'split', 'end'])
+
     return split_position_df
     
 '''
@@ -462,7 +530,7 @@ Args:
 Return: 
     results_lst_df: All the splits performances in a pandas dataset
 '''
-def cross_validation(dataset, params, cv_info, model_name, features_normalization, features, features_name, features_label, target_label):
+def cross_validation(dataset, params, cv_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
     # Select the type of features to be used
     dataset = select_features(dataset, features_normalization, features, features_label, target_label)
 
@@ -472,39 +540,42 @@ def cross_validation(dataset, params, cv_info, model_name, features_normalizatio
     # Save results in a list
     results_lst = []
 
-    # All combination of params
-    param_lst = [dict(zip(params, param)) for param in product(*params.values())]
+    # Initialize an empty list to store predictions
+    predictions_list = []  
 
-    for param in param_lst:
-        # Chosen Model
-        model = model_selection(model_name, param, features_label, target_label)
+    # Identify the type of cross validation 
+    if cv_info['cv_type'] == 'multi_splits':
+        split_position_df = multi_splits(num, cv_info['splits'])
+    elif cv_info['cv_type'] == 'block_splits':
+        split_position_df = block_splits(num, cv_info['splits'])
+    elif cv_info['cv_type'] == 'walk_forward_splits':
+        split_position_df = walk_forward_splits(num, cv_info['min_obser'], cv_info['sliding_window'])
 
-        # Identify the type of cross validation 
-        if cv_info['cv_type'] == 'multi_splits':
-            split_position_df = multi_splits(num, cv_info['splits'])
-        elif cv_info['cv_type'] == 'block_splits':
-            split_position_df = block_splits(num, cv_info['splits'])
-        elif cv_info['cv_type'] == 'walk_forward_splits':
-            split_position_df = walk_forward_splits(num, cv_info['min_obser'], cv_info['sliding_window'])
+    for position in split_position_df.itertuples():
+        # Get the start/split/end position based on the type of cross validation
+        start = getattr(position, 'start')
+        splits = getattr(position, 'split')
+        end = getattr(position, 'end')
+        idx  = getattr(position, 'Index')
+        
+        # Train / validation size
+        train_size = splits - start
+        valid_size = end - splits
 
-        for position in split_position_df.itertuples():
-            # Get the start/split/end position based on the type of cross validation
-            start = getattr(position, 'start')
-            splits = getattr(position, 'split')
-            end = getattr(position, 'end')
-            idx  = getattr(position, 'Index')
-            
-            # Train / validation size
-            train_size = splits - start
-            valid_size = end - splits
+        # Get training data and validation data
+        train_data = dataset.filter(dataset['id'].between(start, splits-1))
+        valid_data = dataset.filter(dataset['id'].between(splits, end-1))
 
-            # Get training data and validation data
-            train_data = dataset.filter(dataset['id'].between(start, splits-1))
-            valid_data = dataset.filter(dataset['id'].between(splits, end-1))
+        # Cache them
+        train_data.cache()
+        valid_data.cache()
+        
+        # All combination of params
+        param_lst = [dict(zip(params, param)) for param in product(*params.values())]
 
-            # Cache them
-            train_data.cache()
-            valid_data.cache()
+        for param in param_lst:
+            # Chosen Model
+            model = model_selection(model_name, param, features_label, target_label)
 
             # Chain assembler and model in a Pipeline
             pipeline = Pipeline(stages=[model])
@@ -516,6 +587,9 @@ def cross_validation(dataset, params, cv_info, model_name, features_normalizatio
 
             # Make predictions
             predictions = pipeline_model.transform(valid_data).select(target_label, "prediction", 'timestamp')
+            
+            # Append predictions to the list
+            predictions_list.append(predictions)  
 
             # Compute validation error by several evaluators
             eval_res = model_evaluation(target_label, predictions)
@@ -523,7 +597,8 @@ def cross_validation(dataset, params, cv_info, model_name, features_normalizatio
             # Use dict to store each result
             results = {
                 "Model": model_name,
-                "Type": cv_info['cv_type'],
+                "Type": model_type,
+                "Cv": cv_info['cv_type'],
                 "Features": features_name,
                 "Splits": idx + 1,
                 "Train&Validation": (train_size,valid_size),                
@@ -539,19 +614,27 @@ def cross_validation(dataset, params, cv_info, model_name, features_normalizatio
 
             # Store results for each split
             results_lst.append(results)
+            print(results)
 
-            # Release Cache
-            train_data.unpersist()
-            valid_data.unpersist()
+        # Release Cache
+        train_data.unpersist()
+        valid_data.unpersist()
 
     # Transform dict to pandas dataset
     results_lst_df = pd.DataFrame(results_lst)
 
-    return results_lst_df
+    # Create an empty DataFrame with the same schema as the predictions dataset
+    final_predictions = spark.createDataFrame([], schema=predictions_list[0].schema)
 
-#####################
-# TRAIN FINAL MODEL #
-#####################
+    # Iterate over the list of DataFrames and union them with the merged DataFrame
+    for pred in predictions_list:
+        final_predictions = final_predictions.union(pred)
+
+    return results_lst_df, final_predictions
+
+#################
+# --- FINAL --- #
+#################
 
 '''
 Description: Cross validation on time series data
@@ -572,14 +655,14 @@ Return:
 '''
 def evaluate_trained_model(dataset, params, model_name, model_type, features_normalization, features, features_name, features_label, target_label):    
     # Select the type of features to be used
-    dataset = select_features(dataset, features_normalization, features, features_label, target_label)
+    dataset = utilities.select_features(dataset, features_normalization, features, features_label, target_label)
   
     # All combination of params
     param_lst = [dict(zip(params, param)) for param in product(*params.values())]
     
     for param in param_lst:
         # Chosen Model
-        model = model_selection(model_name, param, features_label, target_label)
+        model = utilities.model_selection(model_name, param, features_label, target_label)
         
         # Chain assembler and model in a Pipeline
         pipeline = Pipeline(stages=[model])
@@ -593,12 +676,13 @@ def evaluate_trained_model(dataset, params, model_name, model_type, features_nor
         predictions = pipeline_model.transform(dataset).select(target_label, "prediction", 'timestamp')
 
         # Compute validation error by several evaluators
-        eval_res = model_evaluation(target_label, predictions)
+        eval_res = utilities.model_evaluation(target_label, predictions)
 
         # Use dict to store each result
         results = {
             "Model": model_name,
             "Type": model_type,
+            "Cv": "none",
             "Features": features_name,
             "Parameters": [list(param.values())],
             "RMSE": eval_res['rmse'],
@@ -613,4 +697,35 @@ def evaluate_trained_model(dataset, params, model_name, model_type, features_nor
     # Transform dict to pandas dataset
     results_df = pd.DataFrame(results)
         
-    return results_df, pipeline_model, predictions.toPandas()
+    return results_df, pipeline_model, predictions
+
+'''
+Description: How good the models are at predicting whether the price will go up or down
+Args:
+    dataset: The dataset which needs to be splited
+    model_name: Model name selected
+    model_type: Model type [simple | simple_norm | hyp_tuning | final_validated | final_trained]
+Return: 
+    accuracy: Return the percentage of correct predictions
+'''
+def model_accuracy(dataset):    
+    # Compute the number of total rows in the DataFrame.
+    total_rows = dataset.count()
+
+    # Create a column "correct_prediction" which is worth 1 if the prediction is correct, otherwise 0
+    dataset = dataset.withColumn(
+        "correct_prediction",
+        (
+            (col("market-price") < col("next-market-price")) & (col("market-price") < col("prediction"))
+        ) | (
+            (col("market-price") > col("next-market-price")) & (col("market-price") > col("prediction"))
+        )
+    )
+
+    # Count the number of correct predictions
+    correct_predictions = dataset.filter(col("correct_prediction")).count()
+
+    # Compite percentage of correct predictions
+    accuracy = (correct_predictions / total_rows) * 100
+        
+    return accuracy
