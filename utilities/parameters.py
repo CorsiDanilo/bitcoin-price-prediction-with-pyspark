@@ -91,18 +91,11 @@ def get_model_grid_params(model_name):
         }
     elif (model_name == 'GBTRegressor'):
         params = {
-            'maxIter' : [10, 20, 30],
-            'maxDepth' : [3, 5, 8],
-            'stepSize': [0.1, 0.4, 0.7],
+            'maxIter' : [20, 40, 60],
+            'maxDepth' : [5, 8, 10],
+            'stepSize': [0.1, 0.3, 0.5, 0.7],
             'seed' : [RANDOM_SEED]
         }
-        # TRY THIS ❗
-        # params = {
-        #     'maxIter' : [20, 40, 60],
-        #     'maxDepth' : [5, 8, 10],
-        #     'stepSize': [0.1, 0.3, 0.5, 0.7]
-        #     'seed' : [RANDOM_SEED]
-        # }
 
     return params
 
