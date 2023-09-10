@@ -4,35 +4,6 @@ from imports import *
 # --- SHARED --- #
 ##################
 
-# '''
-# Description: Return the dataset with the selected features
-# Args:
-#     dataset: The dataset from which to extract the features
-#     features_normalization: Indicates whether features should be normalized (True) or not (False)
-#     features: list of features to be extracted
-#     features_label: The column name of features
-#     target_label: The column name of target variable
-# Return: 
-#     dataset: Dataset with the selected features
-# '''
-# def select_features(dataset, features_normalization, features, features_label, target_label):
-#     if features_normalization:
-#         # Assemble the columns into a vector column
-#         assembler = VectorAssembler(inputCols = features, outputCol = "raw_features")
-#         df_vector  = assembler.transform(dataset).select("timestamp", "id", "raw_features", target_label)
-
-#         # Create a Normalizer instance
-#         normalizer = Normalizer(inputCol="raw_features", outputCol=features_label)
-
-#         # Fit and transform the data
-#         dataset = normalizer.transform(df_vector).select("timestamp", "id", features_label, target_label)
-#     else:
-#         # Assemble the columns into a vector column
-#         vectorAssembler = VectorAssembler(inputCols = features, outputCol = features_label)
-#         dataset = vectorAssembler.transform(dataset).select("timestamp", "id", features_label, target_label)
-
-#     return dataset
-
 '''
 Description: Return the dataset with the selected features
 Args:
@@ -190,7 +161,7 @@ def model_selection(model_name, param, features_label, target_label):
                                         maxDepth = param["maxDepth"], \
                                         seed=param['seed'])
 
-    elif model_name == "GBTRegressor":
+    elif model_name == "GradientBoostingTreeRegressor":
         model = GBTRegressor(featuresCol=features_label, \
                                 labelCol=target_label, \
                                 maxIter = param['maxIter'], \
@@ -273,7 +244,7 @@ def model_train_valid(dataset, params, model_name, model_type, features_normaliz
         end = time.time()
 
         # Make predictions
-        predictions = pipeline_model.transform(valid_data).select(target_label, "prediction", 'timestamp')
+        predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
 
         # Compute validation error by several evaluators
         eval_res = model_evaluation(target_label, predictions)
@@ -319,7 +290,7 @@ Return:
 '''
 def hyperparameter_tuning(dataset, params, cv_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
     # Select the type of features to be used
-    dataset = utilities.select_features(dataset, features_normalization, features, features_label, target_label)
+    dataset = select_features(dataset, features_normalization, features, features_label, target_label)
 
     best_split_result = []
 
@@ -328,11 +299,11 @@ def hyperparameter_tuning(dataset, params, cv_info, model_name, model_type, feat
 
     # Identify the type of cross validation 
     if cv_info['cv_type'] == 'multi_splits':
-        split_position_df = utilities.multi_splits(num, cv_info['splits'])
+        split_position_df = multi_splits(num, cv_info['splits'])
     elif cv_info['cv_type'] == 'block_splits':
-        split_position_df = utilities.block_splits(num, cv_info['splits'])
+        split_position_df = block_splits(num, cv_info['splits'])
     elif cv_info['cv_type'] == 'walk_forward_splits':
-        split_position_df = walk_forward_splits_new(num, cv_info['min_obser'], cv_info['sliding_window'])
+        split_position_df = walk_forward_splits(num, cv_info['min_obser'], cv_info['sliding_window'])
 
     for position in split_position_df.itertuples():
         best_result = {"RMSE": float('inf')}
@@ -360,7 +331,7 @@ def hyperparameter_tuning(dataset, params, cv_info, model_name, model_type, feat
 
         for param in param_lst:
             # Chosen Model
-            model = utilities.model_selection(model_name, param, features_label, target_label)
+            model = model_selection(model_name, param, features_label, target_label)
 
             # Chain assembler and model in a Pipeline
             pipeline = Pipeline(stages=[model])
@@ -371,10 +342,10 @@ def hyperparameter_tuning(dataset, params, cv_info, model_name, model_type, feat
             end = time.time()
 
             # Make predictions
-            predictions = pipeline_model.transform(valid_data).select(target_label, "prediction", 'timestamp')
+            predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
 
             # Compute validation error by several evaluators
-            eval_res = utilities.model_evaluation(target_label, predictions)
+            eval_res = model_evaluation(target_label, predictions)
 
             # Use dict to store each result
             results = {
@@ -445,7 +416,7 @@ def multi_splits(num, n_splits):
     return split_position_df
 
 '''
-Description: Blocked time series cross validation
+Description: Block splits time series cross validation
 Args:
     num: Number of datasets
     n_splits: Split times
@@ -470,47 +441,24 @@ def block_splits(num, n_splits):
 
     return split_position_df
 
-# '''
-# Description: Walk forward cross validation
-# Args:
-#     num: Number of DataSet
-#     min_obser: Minimum number of observations
-#     sliding_window: Sliding Window
-# Return: 
-#     split_position_df: All sets of split positions in a Pandas dataset.
-# ''' 
-# def walk_forward_splits(num, min_obser, sliding_window):
-#     split_position_lst = []
-
-#     # Calculate the split position for each time 
-#     for i in range(min_obser, num, sliding_window):
-#         # Calculate the start/split/end point for each fold
-#         start = 0
-#         split = i
-#         end = split + sliding_window
-        
-#         # Avoid to beyond the whole number of dataSet
-#         if end > num:
-#             end = num
-#         split_position_lst.append((start, split, end))
-        
-#     # Transform the split position list to a Pandas Dataframe
-#     split_position_df = pd.DataFrame(split_position_lst, columns=['start', 'split', 'end'])
-    
-#     return split_position_df
-
-# Takes the total number of samples, the minimum number of observations, and the sliding window size as input 
-# and returns a list of tuples containing the start, split, and end positions for each walk-forward split. 
-# We then add an index column to the dataset using the monotonically_increasing_id function and calculate 
-# the total number of samples. Finally, we iterate over the generated split positions, create training and 
-# validation datasets, and train and evaluate the model on each split.
+'''
+Description: Walk forward time series cross validation
+Args:
+    num: Number of dataset
+    min_obser: Minimum number of observations
+    sliding_window: Sliding Window
+Return: 
+    split_position_df: All sets of split positions in a Pandas dataset.
+''' 
 def walk_forward_splits(num, min_obser, sliding_window):
+    # Calculate the split position for each fold 
     split_positions = []
     start = 0
     while start + min_obser + sliding_window <= num:
         split_positions.append((start, start + min_obser, start + min_obser + sliding_window))
         start += sliding_window
 
+    # Transform the split position list to a Pandas dataset
     split_position_df = pd.DataFrame(split_positions, columns=['start', 'split', 'end'])
 
     return split_position_df
@@ -586,7 +534,7 @@ def cross_validation(dataset, params, cv_info, model_name, model_type, features_
             end = time.time()
 
             # Make predictions
-            predictions = pipeline_model.transform(valid_data).select(target_label, "prediction", 'timestamp')
+            predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
             
             # Append predictions to the list
             predictions_list.append(predictions)  
@@ -623,12 +571,12 @@ def cross_validation(dataset, params, cv_info, model_name, model_type, features_
     # Transform dict to pandas dataset
     results_lst_df = pd.DataFrame(results_lst)
 
-    # Create an empty DataFrame with the same schema as the predictions dataset
-    final_predictions = spark.createDataFrame([], schema=predictions_list[0].schema)
+    # Initialize an empty dataset in Pandas
+    final_predictions = pd.DataFrame()
 
-    # Iterate over the list of DataFrames and union them with the merged DataFrame
+    # Iterate for each predictions dataset and concatenate it with the final one
     for pred in predictions_list:
-        final_predictions = final_predictions.union(pred)
+        final_predictions = pd.concat([final_predictions, pred.select("*").toPandas()], ignore_index=True)
 
     return results_lst_df, final_predictions
 
@@ -655,14 +603,14 @@ Return:
 '''
 def evaluate_trained_model(dataset, params, model_name, model_type, features_normalization, features, features_name, features_label, target_label):    
     # Select the type of features to be used
-    dataset = utilities.select_features(dataset, features_normalization, features, features_label, target_label)
+    dataset = select_features(dataset, features_normalization, features, features_label, target_label)
   
     # All combination of params
     param_lst = [dict(zip(params, param)) for param in product(*params.values())]
     
     for param in param_lst:
         # Chosen Model
-        model = utilities.model_selection(model_name, param, features_label, target_label)
+        model = model_selection(model_name, param, features_label, target_label)
         
         # Chain assembler and model in a Pipeline
         pipeline = Pipeline(stages=[model])
@@ -673,10 +621,10 @@ def evaluate_trained_model(dataset, params, model_name, model_type, features_nor
         end = time.time()
 
         # Make predictions
-        predictions = pipeline_model.transform(dataset).select(target_label, "prediction", 'timestamp')
+        predictions = pipeline_model.transform(dataset).select(target_label, "market-price", "prediction", 'timestamp')
 
         # Compute validation error by several evaluators
-        eval_res = utilities.model_evaluation(target_label, predictions)
+        eval_res = model_evaluation(target_label, predictions)
 
         # Use dict to store each result
         results = {

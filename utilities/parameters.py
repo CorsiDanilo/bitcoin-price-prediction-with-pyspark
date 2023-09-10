@@ -52,7 +52,7 @@ def get_defaults_model_params(model_name):
             'maxDepth' : [5],
             'seed' : [RANDOM_SEED]
             }
-    elif (model_name == 'GBTRegressor'):
+    elif (model_name == 'GradientBoostingTreeRegressor'):
         params = {
             'maxIter' : [20],
             'maxDepth' : [5],
@@ -89,7 +89,7 @@ def get_model_grid_params(model_name):
             'maxDepth' : [3, 5, 10],
             'seed' : [RANDOM_SEED]
         }
-    elif (model_name == 'GBTRegressor'):
+    elif (model_name == 'GradientBoostingTreeRegressor'):
         params = {
             'maxIter' : [3, 5, 10, 20, 30],
             'maxDepth' : [3, 5, 10],
@@ -110,23 +110,23 @@ def get_best_model_params(model_name):
     if (model_name == 'LinearRegression'):
         params = {
             'maxIter' : [5],
-            'regParam' : [0.2],
+            'regParam' : [0.8],
             'elasticNetParam' : [0.0]
         }   
     if (model_name == 'GeneralizedLinearRegression'):
         params = {
             'maxIter' : [5],
-            'regParam' : [0.2],
+            'regParam' : [0.1],
             'family': ['gaussian'],
             'link': ['log']
         }
     elif (model_name == 'RandomForestRegressor'):
         params = {
             'numTrees' : [3],
-            'maxDepth' : [5],
+            'maxDepth' : [10],
             'seed' : [RANDOM_SEED]
             }
-    elif (model_name == 'GBTRegressor'):
+    elif (model_name == 'GradientBoostingTreeRegressor'):
         params = {
             'maxIter' : [30],
             'maxDepth' : [3],
