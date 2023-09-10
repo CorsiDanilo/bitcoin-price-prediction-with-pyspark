@@ -110,19 +110,19 @@ def get_best_model_params(model_name):
     if (model_name == 'LinearRegression'):
         params = {
             'maxIter' : [5],
-            'regParam' : [0.8],
+            'regParam' : [0.0],
             'elasticNetParam' : [0.0]
         }   
     if (model_name == 'GeneralizedLinearRegression'):
         params = {
             'maxIter' : [5],
-            'regParam' : [0.1],
+            'regParam' : [0.2],
             'family': ['gaussian'],
             'link': ['log']
         }
     elif (model_name == 'RandomForestRegressor'):
         params = {
-            'numTrees' : [3],
+            'numTrees' : [10],
             'maxDepth' : [10],
             'seed' : [RANDOM_SEED]
             }
