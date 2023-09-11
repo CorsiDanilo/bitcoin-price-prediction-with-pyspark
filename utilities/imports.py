@@ -1,4 +1,4 @@
-# Pyspark
+# PySpark
 import pyspark
 from pyspark.sql import *
 from pyspark.sql.types import *
@@ -37,5 +37,4 @@ import shutil
 import functools
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
-from google.colab import autoviz
 from sklearn.metrics import mean_absolute_percentage_error

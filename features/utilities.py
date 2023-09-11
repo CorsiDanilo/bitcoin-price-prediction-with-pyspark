@@ -116,7 +116,7 @@ Args:
     model_info: The model information to show
     evaluator_lst: The evaluator metrics to show
 Return:
-    comparison_df: Average of the results in a Pandas dataframe
+    comparison_df: Average of the results in a Pandas dataset
 '''
 def model_comparison(results, model_info, evaluator_lst):
     # Calculate mean of all results
@@ -199,7 +199,7 @@ def model_evaluation(target_label, predictions):
     return results
 
 ################
-# SIMPLE MODEL #
+# DEFAULT MODEL #
 ################
 
 '''
@@ -208,7 +208,7 @@ Args:
     dataset: Data on which to train and make predictions
     params: Parameters of the selected model
     model_name: Model name selected
-    model_type: Model type [simple | simple_norm | hyp_tuning | final_validated | final_trained]
+    model_type: Model type [default | default_norm | hyp_tuning | final_validated | final_trained]
     features_normalization: Indicates whether features should be normalized (True) or not (False)
     features: Features to be used to make predictions
     features_name: Name of features used
@@ -276,7 +276,7 @@ Args:
     dataset: The dataSet which needs to be splited
     params: Parameters which want to test 
     model_name: Model name selected
-    model_type: Model type [simple | simple_norm | hyp_tuning | final_validated | final_trained]
+    model_type: Model type [default | default_norm | hyp_tuning | final_validated | final_trained]
     proportion_lst: A list represents the split proportion
     features_normalization: Indicates whether features should be normalized (True) or not (False)
     features: Features to be used to make predictions
@@ -525,7 +525,7 @@ Args:
     dataset: The dataset which needs to be splited
     params: Parameters which want to test 
     model_name: Model name selected
-    model_type: Model type [simple | simple_norm | hyp_tuning | final_validated | final_trained]
+    model_type: Model type [default | default_norm | hyp_tuning | final_validated | final_trained]
     features_normalization: Indicates whether features should be normalized (True) or not (False)
     features: Features to be used to make predictions
     features_name: Name of features used
