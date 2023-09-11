@@ -58,11 +58,11 @@ As evaluation framework I will use **RMSE (Root Mean Squared Error)**, **MSE (
 ├── datasets
 │  │
 │  ├── output
-│  │  ├── bitcoin_blockchain_data_30min_test.parquet
-│  │  ├── bitcoin_blockchain_data_30min_train_valid.parquet
+│  │  ├── bitcoin_blockchain_data_15min_test.parquet
+│  │  ├── bitcoin_blockchain_data_15min_train_valid.parquet
 │  │
 │  │── raw
-│     ├── bitcoin_blockchain_data_30min.parquet
+│     ├── bitcoin_blockchain_data_15min.parquet
 │
 ├── features
 │  ├── all_features.json
@@ -102,9 +102,9 @@ As evaluation framework I will use **RMSE (Root Mean Squared Error)**, **MSE (
 
 ### **Datasets folder: contains the original and processed datasets**
 
-- **bitcoin_blockchain_data_30min_test.parquet:** dataset used in the final phase of the project to perform price prediction on never-before-seen data
-- **bitcoin_blockchain_data_30min_train_validation.parquet:** dataset used to train and validate the models used
-- **bitcoin_blockchain_data_30min.parquet:** original dataset obtained by making calls to the Blockchain.com API
+- **bitcoin_blockchain_data_15min_test.parquet:** dataset used in the final phase of the project to perform price prediction on never-before-seen data
+- **bitcoin_blockchain_data_15min_train_validation.parquet:** dataset used to train and validate the models used
+- **bitcoin_blockchain_data_15min.parquet:** original dataset obtained by making calls to the Blockchain.com API
 
 ### **Features folder: contains the features used throughout the project**
 
