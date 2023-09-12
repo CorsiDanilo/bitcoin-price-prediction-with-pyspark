@@ -4,26 +4,24 @@ from imports import *
 RANDOM_SEED = 42
 
 '''
-Description: Returns the  parameters of the selected cross validation type
+Description: Returns the  parameters of the selected splitting type
 Args:
-    cv_type: Type of cross validation
+    split_type: Type of splitting
 Return: 
-    params: Parameters of the selected cross validation type
+    params: Parameters of the selected splitting type
 '''
-def get_cross_validation_params(cv_type):
-    if cv_type == "multi_splits":
-        # Multiple splits time series cross validation parameters
-        params = {'cv_type':'multi_splits',
-                  'splits': 5}
-    elif cv_type == "block_splits":
-        # Blocked time series cross validation parameters
-        params = {'cv_type':'block_splits',
+def get_splitting_params(split_type):
+    if split_type == "block_splits":
+        # Block split time series
+        params = {'split_type':'block_splits',
                   'splits': 10}
-    elif cv_type == "walk_forward_splits":
-        # Walk forward cross validation parameters
-        params = {'cv_type':'walk_forward_splits',
+    elif split_type == "walk_forward_splits":
+        # Walk forward split time series
+        params = {'split_type':'walk_forward_splits',
                   'min_obser': 10000,
                   'sliding_window': 5000}
+    # elif split_type == "short_term_split":
+    #     return
 
     return params
 

@@ -1,1 +1,1 @@
-["sma-20-days", "sma-50-days", "n-unique-addresses", "difficulty", "hash-rate", "avg-block-size", "transaction-fees-usd", "trade-volume", "n-transactions-per-block", "n-transactions", "rate-of-change"]
+["trade-volume", "sma-50-days", "transaction-fees-usd", "difficulty", "hash-rate", "avg-block-size", "rate-of-change", "n-transactions-per-block", "n-transactions"]

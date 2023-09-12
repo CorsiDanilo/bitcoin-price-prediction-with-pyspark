@@ -110,7 +110,7 @@ def show_results(results, model_name):
   iplot(fig, filename = model_name + " predicitons")
 
 '''
-Description: Returns the average of the results obtained (usually for the results of cross validation)
+Description: Returns the average of the results obtained
 Args:
     results: Obtained results from the model
     model_info: The model information to show
@@ -278,7 +278,7 @@ Description: Cross validation on time series data
 Args:
     dataset: The dataset which needs to be splited
     params: Parameters which want to test 
-    cv_info: The type of cross validation [multi_splits | block_splits]
+    splitting_info: The splitting type method [block_splits | walk_forward_splits | short_term_split]
     model_name: Model name selected
     features_normalization: Indicates whether features should be normalized (True) or not (False)
     features: Features to be used to make predictions
@@ -288,7 +288,7 @@ Args:
 Return: 
     results_lst_df: All the splits performances in a pandas dataset
 '''
-def hyperparameter_tuning(dataset, params, cv_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
+def hyperparameter_tuning(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
     # Select the type of features to be used
     dataset = select_features(dataset, features_normalization, features, features_label, target_label)
 
@@ -297,18 +297,18 @@ def hyperparameter_tuning(dataset, params, cv_info, model_name, model_type, feat
     # Get the number of samples
     num = dataset.count()
 
-    # Identify the type of cross validation 
-    if cv_info['cv_type'] == 'multi_splits':
-        split_position_df = multi_splits(num, cv_info['splits'])
-    elif cv_info['cv_type'] == 'block_splits':
-        split_position_df = block_splits(num, cv_info['splits'])
-    elif cv_info['cv_type'] == 'walk_forward_splits':
-        split_position_df = walk_forward_splits(num, cv_info['min_obser'], cv_info['sliding_window'])
+
+    # Identify the splitting type
+    if splitting_info['split_type'] == 'block_splits':
+        split_position_df = block_splits(num, splitting_info['splits'])
+    elif splitting_info['split_type'] == 'walk_forward_splits':
+        split_position_df = walk_forward_splits(num, splitting_info['min_obser'], splitting_info['sliding_window'])
+    # elif splitting_info['split_type'] == 'short_term_split':
 
     for position in split_position_df.itertuples():
         best_result = {"RMSE": float('inf')}
 
-        # Get the start/split/end position based on the type of cross validation
+        # Get the start/split/end position based on the splitting type
         start = getattr(position, 'start')
         splits = getattr(position, 'split')
         end = getattr(position, 'end')
@@ -351,7 +351,7 @@ def hyperparameter_tuning(dataset, params, cv_info, model_name, model_type, feat
             results = {
                 "Model": model_name,
                 "Type": model_type,
-                "Cv": cv_info['cv_type'],
+                "Splitting": splitting_info['split_type'],
                 "Features": features_name,
                 "Splits": idx + 1,
                 "Train&Validation": (train_size,valid_size),                
@@ -383,37 +383,6 @@ def hyperparameter_tuning(dataset, params, cv_info, model_name, model_type, feat
 ############################
 # --- CROSS VALIDATION --- #
 ############################
-
-'''
-Description: Multiple splits cross validation on time series data
-Args:
-    num: Number of datasets
-    n_splits: Split times
-Return: 
-    split_position_df: All sets of split positions in a Pandas dataset.
-'''
-def multi_splits(num, n_splits):
-    # Calculate the split position for each fold 
-    split_position_lst = []
-    for i in range(1, n_splits+1):
-        # Calculate train size and validation size
-        train_size = i * num // (n_splits + 1) + num % (n_splits + 1)
-        valid_size = num //(n_splits + 1)
-
-        # Calculate the start/split/end point for each fold
-        start = 0
-        split = train_size
-        end = train_size + valid_size
-        
-        # Avoid exceeding integer number of datasets
-        if end > num:
-            end = num
-        split_position_lst.append((start, split, end))
-        
-    # Transforms the list of split locations into a Pandas dataset
-    split_position_df = pd.DataFrame(split_position_lst, columns=['start', 'split', 'end'])
-
-    return split_position_df
 
 '''
 Description: Block splits time series cross validation
@@ -468,7 +437,7 @@ Description: Cross validation on time series data
 Args:
     dataset: The dataset which needs to be splited
     params: Parameters which want to test 
-    cv_info: The type of cross validation [multi_splits | block_splits]
+    splitting_info: The splitting type method [block_splits | walk_forward_splits | short_term_split]
     model_name: Model name selected
     features_normalization: Indicates whether features should be normalized (True) or not (False)
     features: Features to be used to make predictions
@@ -478,7 +447,7 @@ Args:
 Return: 
     results_lst_df: All the splits performances in a pandas dataset
 '''
-def cross_validation(dataset, params, cv_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
+def cross_validation(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
     # Select the type of features to be used
     dataset = select_features(dataset, features_normalization, features, features_label, target_label)
 
@@ -491,16 +460,15 @@ def cross_validation(dataset, params, cv_info, model_name, model_type, features_
     # Initialize an empty list to store predictions
     predictions_list = []  
 
-    # Identify the type of cross validation 
-    if cv_info['cv_type'] == 'multi_splits':
-        split_position_df = multi_splits(num, cv_info['splits'])
-    elif cv_info['cv_type'] == 'block_splits':
-        split_position_df = block_splits(num, cv_info['splits'])
-    elif cv_info['cv_type'] == 'walk_forward_splits':
-        split_position_df = walk_forward_splits(num, cv_info['min_obser'], cv_info['sliding_window'])
+    # Identify the splitting type
+    if splitting_info['split_type'] == 'block_splits':
+        split_position_df = block_splits(num, splitting_info['splits'])
+    elif splitting_info['split_type'] == 'walk_forward_splits':
+        split_position_df = walk_forward_splits(num, splitting_info['min_obser'], splitting_info['sliding_window'])
+    # elif splitting_info['split_type'] == 'short_term_split':
 
     for position in split_position_df.itertuples():
-        # Get the start/split/end position based on the type of cross validation
+        # Get the start/split/end position based on the splitting type
         start = getattr(position, 'start')
         splits = getattr(position, 'split')
         end = getattr(position, 'end')
@@ -546,7 +514,7 @@ def cross_validation(dataset, params, cv_info, model_name, model_type, features_
             results = {
                 "Model": model_name,
                 "Type": model_type,
-                "Cv": cv_info['cv_type'],
+                "Splitting": splitting_info['split_type'],
                 "Features": features_name,
                 "Splits": idx + 1,
                 "Train&Validation": (train_size,valid_size),                
@@ -585,7 +553,7 @@ def cross_validation(dataset, params, cv_info, model_name, model_type, features_
 #################
 
 '''
-Description: Cross validation on time series data
+Description: Evaluation of the final trained model
 Args:
     dataset: The dataset which needs to be splited
     params: Parameters which want to test 
@@ -630,7 +598,7 @@ def evaluate_trained_model(dataset, params, model_name, model_type, features_nor
         results = {
             "Model": model_name,
             "Type": model_type,
-            "Cv": "none",
+            "Splitting": "none",
             "Features": features_name,
             "Parameters": [list(param.values())],
             "RMSE": eval_res['rmse'],
