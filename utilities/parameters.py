@@ -20,8 +20,10 @@ def get_splitting_params(split_type):
         params = {'split_type':'walk_forward_splits',
                   'min_obser': 10000,
                   'sliding_window': 5000}
-    # elif split_type == "short_term_split":
-    #     return
+    elif split_type == "short_term_split":
+        params = {'split_type':'short_term_split',
+                  'split_num': 1,
+                  'proportion': 3}
 
     return params
 
