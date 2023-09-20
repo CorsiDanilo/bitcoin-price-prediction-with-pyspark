@@ -86,11 +86,10 @@ As evaluation framework I will use **RMSE (Root Mean Squared Error)**, **MSE (
 │  ├── 7. Final predictions.ipynb
 │
 ├── results
-│  ├── final.csv
-│  ├── GBTRegressor.csv
-│  ├── GeneralizedLinearRegression.csv
-│  ├── LinearRegression.csv
-│  └── RandomForestRegressor.csv
+|  ├── block_splits
+|  ├── walk_forward_splits
+|  ├── short_term_split
+│
 │
 └── utilities
    ├── imports.py
@@ -119,10 +118,10 @@ As evaluation framework I will use **RMSE (Root Mean Squared Error)**, **MSE (
 
 - **1. Data crawling.ipynb:** data crawling on Bitcoin blochckain by querying Blockchain.com website.
 - **2. Feature Engineering.ipynb:** adding useful features regardings the price of Bitcoin, visualizing data and performing feature selection
-- **3 - 6. <model_name>.ipynb:** executing the chosen model, first with default values, then choosing the best parameters by performing hyperparameter tuning with cross validation, performance evaluation and training of the final model
+- **3 - 6. [<splitting_method>] <model_name>.ipynb:** executing the chosen model, first with default values, then choosing the best parameters by performing hyperparameter tuning with cross validation, performance evaluation and training of the final model using different splitting methods of the train / validation set
 - **7. Final predictions.ipynb:** making predictions on the test set with the final models trained on the whole train/validation set
 
-### **Results folder: contains all results obtained from each individual model and final predictions**
+### **Results folder: contains all results obtained from each individual model based on the different splittng method**
 
 ### **Utilities folder: contains files defined by me used by most notebooks to reuse the code**
 

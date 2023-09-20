@@ -1,7 +1,7 @@
 from imports import *
 
 ##################
-# --- SHARED --- #
+# --- COMMONS --- #
 ##################
 
 '''
@@ -183,9 +183,40 @@ def model_evaluation(target_label, predictions):
 
     return results
 
-#############################
-# --- SPLITTING METHODS --- #
-#############################
+'''
+Description: How good the models are at predicting whether the price will go up or down
+Args:
+    dataset: The dataset which needs to be splited
+    model_name: Model name selected
+    model_type: Model type [default | default_norm | hyp_tuning | cross_val | final_trained]
+Return: 
+    accuracy: Return the percentage of correct predictions
+'''
+def model_accuracy(dataset):    
+    # Compute the number of total rows in the DataFrame.
+    total_rows = dataset.count()
+
+    # Create a column "correct_prediction" which is worth 1 if the prediction is correct, otherwise 0
+    dataset = dataset.withColumn(
+        "correct_prediction",
+        (
+            (col("market-price") < col("next-market-price")) & (col("market-price") < col("prediction"))
+        ) | (
+            (col("market-price") > col("next-market-price")) & (col("market-price") > col("prediction"))
+        )
+    )
+
+    # Count the number of correct predictions
+    correct_predictions = dataset.filter(col("correct_prediction")).count()
+
+    # Compite percentage of correct predictions
+    accuracy = (correct_predictions / total_rows) * 100
+        
+    return accuracy
+
+####################################################
+# --- BLOCK AND WALK FORWARD TIME SERIES SPLIT --- #
+####################################################
 
 '''
 Description: Block splits time series cross validation
@@ -236,39 +267,13 @@ def walk_forward_splits(num, min_obser, sliding_window):
     return split_position_df
 
 '''
-Description: Split and keep the original time-series order based on a split point 
-Args:
-    dataset: The dataset which needs to be splited
-    proportion: A number represents the split proportion
-Return: 
-    train_data: The train dataset
-    valid_data: The valid dataset
-'''
-def short_term_split(dataset, proportion):
-    # Retrieve the last timestamp value
-    last_value = dataset.agg(last("timestamp")).collect()[0][0]
-
-    # Subtract three month from the last timestamp value
-    split_date = last_value - relativedelta(months=proportion)
-
-    # Split the dataset based on the desired date
-    train_data = dataset[dataset['timestamp'] <= split_date]
-    test_df = dataset[dataset['timestamp'] > split_date]
-
-    return train_data, test_df
-
-#####################################################
-# --- HYPERPARAMETER TUNING w/ CROSS VALIDATION --- #
-#####################################################
-
-'''
 Description: Cross validation on time series data
 Args:
     dataset: The dataset which needs to be splited
     params: Parameters which want to test 
     splitting_info: The splitting type method [block_splits | walk_forward_splits | short_term_split]
     model_name: Model name selected
-    model_type: Model type [simple | simple_norm | hyp_tuning | final_validated | final_trained]
+    model_type: Model type [default | default_norm | hyp_tuning | cross_val | final_trained]
     features_normalization: Indicates whether features should be normalized (True) or not (False)
     features: Features to be used to make predictions
     features_name: Name of features used
@@ -335,12 +340,10 @@ def hyp_tuning_w_cross_validation(dataset, params, splitting_info, model_name, m
 
             # Make predictions
             predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
+            
             if model_type == "cross_val":
                 # Append predictions to the list	
-                predictions_list.append(predictions)
-
-            # Append predictions to the list
-            predictions_list.append(predictions)  
+                predictions_list.append(predictions) 
 
             # Compute validation error by several evaluators
             eval_res = model_evaluation(target_label, predictions)
@@ -376,18 +379,18 @@ def hyp_tuning_w_cross_validation(dataset, params, splitting_info, model_name, m
         train_data.unpersist()
         valid_data.unpersist()
 
-    if model_type == "hyp_tuning":
-        # Store the best result for each split
-        best_split_result.append(best_result) 
-        print(best_result)
-
+        if model_type == "hyp_tuning":
+            # Store the best result for each split
+            best_split_result.append(best_result) 
+            print(best_result)
 
     if model_type == "hyp_tuning":
         # Transform dict to pandas dataset
         best_split_result_df = pd.DataFrame(best_split_result)
 
         return best_split_result_df
-    else:
+    
+    if model_type == "cross_val":
         # Transform dict to pandas dataset
         results_lst_df = pd.DataFrame(results_lst)
 
@@ -400,11 +403,6 @@ def hyp_tuning_w_cross_validation(dataset, params, splitting_info, model_name, m
 
         return results_lst_df, final_predictions
 
-
-#################################
-# --- HYPERPARAMETER TUNING --- #
-#################################
-
 '''
 Description: Cross validation on time series data
 Args:
@@ -412,7 +410,7 @@ Args:
     params: Parameters which want to test 
     splitting_info: The splitting type method [block_splits | walk_forward_splits | short_term_split]
     model_name: Model name selected
-    model_type: Model type [simple | simple_norm | hyp_tuning | final_validated | final_trained]
+    model_type: Model type [default | default_norm | hyp_tuning | cross_val | final_trained]
     features_normalization: Indicates whether features should be normalized (True) or not (False)
     features: Features to be used to make predictions
     features_name: Name of features used
@@ -510,10 +508,6 @@ def hyperparameter_tuning(dataset, params, splitting_info, model_name, model_typ
     best_split_result_df = pd.DataFrame(best_split_result)
 
     return best_split_result_df
-
-############################
-# --- CROSS VALIDATION --- #
-############################
     
 '''
 Description: Cross validation on time series data
@@ -522,7 +516,7 @@ Args:
     params: Parameters which want to test 
     splitting_info: The splitting type method [block_splits | walk_forward_splits | short_term_split]
     model_name: Model name selected
-    model_type: Model type [simple | simple_norm | hyp_tuning | final_validated | final_trained]
+    model_type: Model type [default | default_norm | hyp_tuning | cross_val | final_trained]
     features_normalization: Indicates whether features should be normalized (True) or not (False)
     features: Features to be used to make predictions
     features_name: Name of features used
@@ -631,100 +625,216 @@ def cross_validation(dataset, params, splitting_info, model_name, model_type, fe
 
     return results_lst_df, final_predictions
 
-#################
-# --- FINAL --- #
-#################
+########################################
+# --- SHORT TERM TIME SERIES SPLIT --- #
+########################################
 
-# '''
-# Description: Evaluation of the final trained model
-# Args:
-#     dataset: The dataset which needs to be splited
-#     params: Parameters which want to test 
-#     model_name: Model name selected
-#     model_type: Model type [simple | simple_norm | hyp_tuning | final_validated | final_trained]
-#     features_normalization: Indicates whether features should be normalized (True) or not (False)
-#     features: Features to be used to make predictions
-#     features_name: Name of features used
-#     features_label: The column name of features
-#     target_label: The column name of target variable
-# Return: 
-#     results_df: Results obtained from the evaluation
-#     pipeline_model: Final trained model
-#     predictions: Predictions obtained from the model
-# '''
-# def evaluate_trained_model(dataset, params, model_name, model_type, features_normalization, features, features_name, features_label, target_label):    
-#     # Select the type of features to be used
-#     dataset = select_features(dataset, features_normalization, features, features_label, target_label)
-  
-#     # All combination of params
-#     param_lst = [dict(zip(params, param)) for param in product(*params.values())]
+'''
+Description: Split and keep the original time-series order based on a split point 
+Args:
+    dataset: The dataset which needs to be splited
+    proportion: A number represents the split proportion
+Return: 
+    train_data: The train dataset
+    valid_data: The valid dataset
+'''
+def short_term_split(dataset, proportion):
+    # Retrieve the last timestamp value
+    last_value = dataset.agg(last("timestamp")).collect()[0][0]
+
+    # Subtract three month from the last timestamp value
+    split_date = last_value - relativedelta(months=proportion)
+
+    # Split the dataset based on the desired date
+    train_data = dataset[dataset['timestamp'] <= split_date]
+    test_df = dataset[dataset['timestamp'] > split_date]
+
+    return train_data, test_df
+
+'''
+Description: Cross validation on time series data
+Args:
+    dataset: The dataset which needs to be splited
+    params: Parameters which want to test 
+    splitting_info: The splitting type method [block_splits | walk_forward_splits | short_term_split]
+    model_name: Model name selected
+    model_type: Model type [default | default_norm | hyp_tuning | cross_val | final_trained]
+    features_normalization: Indicates whether features should be normalized (True) or not (False)
+    features: Features to be used to make predictions
+    features_name: Name of features used
+    features_label: The column name of features
+    target_label: The column name of target variable
+Return: 
+    results_lst_df: All the splits performances in a pandas dataset
+'''
+def short_term_split_training(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
+    # Select the type of features to be used
+    dataset = select_features(dataset, features_normalization, features, features_label, target_label)
+
+    # Get the number of samples
+    num = dataset.count()
     
-#     for param in param_lst:
-#         # Chosen Model
-#         model = model_selection(model_name, param, features_label, target_label)
+    # Save results in a list
+    results_lst = []
+    best_split_result = []
+
+    # Initialize an empty list to store predictions
+    predictions_list = []  
+
+    # Identify the splitting type
+    if splitting_info['split_type'] == 'short_term_split':
+        # Get training data and validation data
+        train_data, valid_data = short_term_split(dataset, splitting_info['proportion'])
         
-#         # Chain assembler and model in a Pipeline
-#         pipeline = Pipeline(stages=[model])
+        # Train / validation size
+        train_size = train_size.count()
+        valid_size = valid_size.count()
 
-#         # Train a model and calculate running time
-#         start = time.time()
-#         pipeline_model = pipeline.fit(dataset)
-#         end = time.time()
-
-#         # Make predictions
-#         predictions = pipeline_model.transform(dataset).select(target_label, "market-price", "prediction", 'timestamp')
-
-#         # Compute validation error by several evaluators
-#         eval_res = model_evaluation(target_label, predictions)
-
-#         # Use dict to store each result
-#         results = {
-#             "Model": model_name,
-#             "Type": model_type,
-#             "Splitting": "none",
-#             "Features": features_name,
-#             "Parameters": [list(param.values())],
-#             "RMSE": eval_res['rmse'],
-#             "MSE": eval_res['mse'],
-#             "MAE": eval_res['mae'],
-#             "MAPE": eval_res['mape'],
-#             "R2": eval_res['r2'],
-#             "Adjusted_R2": eval_res['adj_r2'],
-#             "Time": end - start,
-#         }
-
-#     # Transform dict to pandas dataset
-#     results_df = pd.DataFrame(results)
+        # Cache them
+        train_data.cache()
+        valid_data.cache()
         
-#     return results_df, pipeline_model, predictions
+        # All combination of params
+        param_lst = [dict(zip(params, param)) for param in product(*params.values())]
 
-# '''
-# Description: How good the models are at predicting whether the price will go up or down
-# Args:
-#     dataset: The dataset which needs to be splited
-#     model_name: Model name selected
-#     model_type: Model type [simple | simple_norm | hyp_tuning | final_validated | final_trained]
-# Return: 
-#     accuracy: Return the percentage of correct predictions
-# '''
-# def model_accuracy(dataset):    
-#     # Compute the number of total rows in the DataFrame.
-#     total_rows = dataset.count()
+        for param in param_lst:
+            # Chosen Model
+            model = model_selection(model_name, param, features_label, target_label)
 
-#     # Create a column "correct_prediction" which is worth 1 if the prediction is correct, otherwise 0
-#     dataset = dataset.withColumn(
-#         "correct_prediction",
-#         (
-#             (col("market-price") < col("next-market-price")) & (col("market-price") < col("prediction"))
-#         ) | (
-#             (col("market-price") > col("next-market-price")) & (col("market-price") > col("prediction"))
-#         )
-#     )
+            # Chain assembler and model in a Pipeline
+            pipeline = Pipeline(stages=[model])
 
-#     # Count the number of correct predictions
-#     correct_predictions = dataset.filter(col("correct_prediction")).count()
+            # Train a model and calculate running time
+            start = time.time()
+            pipeline_model = pipeline.fit(train_data)
+            end = time.time()
 
-#     # Compite percentage of correct predictions
-#     accuracy = (correct_predictions / total_rows) * 100
+            # Make predictions
+            predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
+            
+            if model_type == "cross_val":
+                # Append predictions to the list	
+                predictions_list.append(predictions) 
+
+            # Compute validation error by several evaluators
+            eval_res = model_evaluation(target_label, predictions)
+
+            # Use dict to store each result
+            results = {
+                "Model": model_name,
+                "Type": model_type,
+                "Splitting": splitting_info['split_type'],
+                "Features": features_name,
+                "Splits": "1",
+                "Train&Validation": (train_size,valid_size),                
+                "Parameters": list(param.values()),
+                "RMSE": eval_res['rmse'],
+                "MSE": eval_res['mse'],
+                "MAE": eval_res['mae'],
+                "MAPE": eval_res['mape'],
+                "R2": eval_res['r2'],
+                "Adjusted_R2": eval_res['adj_r2'],
+                "Time": end - start,
+            }
+
+        if model_type == "hyp_tuning":
+            # Store the result with the lowest RMSE and the associated parameters
+            if results['RMSE'] < best_result['RMSE']:
+                best_result = results
+
+        # Store results for each split
+        results_lst.append(results)
+        print(results)
+
+        # Release Cache
+        train_data.unpersist()
+        valid_data.unpersist()
+
+        if model_type == "hyp_tuning":
+            # Store the best result for each split
+            best_split_result.append(best_result) 
+            print(best_result)
+
+    if model_type == "hyp_tuning":
+        # Transform dict to pandas dataset
+        best_split_result_df = pd.DataFrame(best_split_result)
+
+        return best_split_result_df
+    
+    if model_type == "cross_val":
+        # Transform dict to pandas dataset
+        results_lst_df = pd.DataFrame(results_lst)
+
+        # Initialize an empty dataset in Pandas
+        final_predictions = pd.DataFrame()
+
+        # Iterate for each predictions dataset and concatenate it with the final one
+        for pred in predictions_list:
+            final_predictions = pd.concat([final_predictions, pred.select("*").toPandas()], ignore_index=True)
+
+        return results_lst_df, final_predictions
+
+'''
+Description: Evaluation of the final trained model
+Args:
+    dataset: The dataset which needs to be splited
+    params: Parameters which want to test 
+    model_name: Model name selected
+    model_type: Model type [default | default_norm | hyp_tuning | cross_val | final_trained]
+    features_normalization: Indicates whether features should be normalized (True) or not (False)
+    features: Features to be used to make predictions
+    features_name: Name of features used
+    features_label: The column name of features
+    target_label: The column name of target variable
+Return: 
+    results_df: Results obtained from the evaluation
+    pipeline_model: Final trained model
+    predictions: Predictions obtained from the model
+'''
+def evaluate_trained_model(dataset, params, model_name, model_type, features_normalization, features, features_name, features_label, target_label):    
+    # Select the type of features to be used
+    dataset = select_features(dataset, features_normalization, features, features_label, target_label)
+  
+    # All combination of params
+    param_lst = [dict(zip(params, param)) for param in product(*params.values())]
+    
+    for param in param_lst:
+        # Chosen Model
+        model = model_selection(model_name, param, features_label, target_label)
         
-#     return accuracy
+        # Chain assembler and model in a Pipeline
+        pipeline = Pipeline(stages=[model])
+
+        # Train a model and calculate running time
+        start = time.time()
+        pipeline_model = pipeline.fit(dataset)
+        end = time.time()
+
+        # Make predictions
+        predictions = pipeline_model.transform(dataset).select(target_label, "market-price", "prediction", 'timestamp')
+
+        # Compute validation error by several evaluators
+        eval_res = model_evaluation(target_label, predictions)
+
+        #  Use dict to store each result
+        results = {
+            "Model": model_name,
+            "Type": model_type,
+            "Splitting": "0",
+            "Features": features_name,
+            "Splits": "1",
+            "Train&Validation": (dataset.count()),                
+            "Parameters": list(param.values()),
+            "RMSE": eval_res['rmse'],
+            "MSE": eval_res['mse'],
+            "MAE": eval_res['mae'],
+            "MAPE": eval_res['mape'],
+            "R2": eval_res['r2'],
+            "Adjusted_R2": eval_res['adj_r2'],
+            "Time": end - start,
+        }
+
+    # Transform dict to pandas dataset
+    results_df = pd.DataFrame(results)
+        
+    return results_df, pipeline_model, predictions
