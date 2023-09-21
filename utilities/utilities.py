@@ -267,7 +267,7 @@ def walk_forward_splits(num, min_obser, sliding_window):
     return split_position_df
 
 '''
-Description: Cross validation on time series data
+Description: ???
 Args:
     dataset: The dataset which needs to be splited
     params: Parameters which want to test 
@@ -282,7 +282,7 @@ Args:
 Return: 
     results_lst_df: All the splits performances in a pandas dataset
 '''
-def hyp_tuning_w_cross_validation(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
+def block_and_walking_forward_split_training(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
     # Select the type of features to be used
     dataset = select_features(dataset, features_normalization, features, features_label, target_label)
 
@@ -341,7 +341,7 @@ def hyp_tuning_w_cross_validation(dataset, params, splitting_info, model_name, m
             # Make predictions
             predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
             
-            if model_type == "cross_val":
+            if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
                 # Append predictions to the list	
                 predictions_list.append(predictions) 
 
@@ -366,15 +366,16 @@ def hyp_tuning_w_cross_validation(dataset, params, splitting_info, model_name, m
                 "Time": end - start,
             }
 
-        if model_type == "hyp_tuning":
-            # Store the result with the lowest RMSE and the associated parameters
-            if results['RMSE'] < best_result['RMSE']:
-                best_result = results
+            if model_type == "hyp_tuning":
+                # Store the result with the lowest RMSE and the associated parameters
+                if results['RMSE'] < best_result['RMSE']:
+                    best_result = results
 
-        # Store results for each split
-        results_lst.append(results)
-        print(results)
-
+            if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
+                # Store results for each split
+                results_lst.append(results)
+                print(results)
+        
         # Release Cache
         train_data.unpersist()
         valid_data.unpersist()
@@ -390,7 +391,7 @@ def hyp_tuning_w_cross_validation(dataset, params, splitting_info, model_name, m
 
         return best_split_result_df
     
-    if model_type == "cross_val":
+    if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
         # Transform dict to pandas dataset
         results_lst_df = pd.DataFrame(results_lst)
 
@@ -652,7 +653,7 @@ def short_term_split(dataset, proportion):
     return train_data, test_df
 
 '''
-Description: Cross validation on time series data
+Description: ????
 Args:
     dataset: The dataset which needs to be splited
     params: Parameters which want to test 
@@ -681,79 +682,80 @@ def short_term_split_training(dataset, params, splitting_info, model_name, model
     # Initialize an empty list to store predictions
     predictions_list = []  
 
-    # Identify the splitting type
-    if splitting_info['split_type'] == 'short_term_split':
-        # Get training data and validation data
-        train_data, valid_data = short_term_split(dataset, splitting_info['proportion'])
+    # Get training data and validation data
+    train_data, valid_data = short_term_split(dataset, splitting_info['proportion'])
+    
+    # Train / validation size
+    train_size = train_data.count()
+    valid_size = valid_data.count()
+
+    # Cache them
+    train_data.cache()
+    valid_data.cache()
+    
+    # All combination of params
+    param_lst = [dict(zip(params, param)) for param in product(*params.values())]
+
+    for param in param_lst:
+        best_result = {"RMSE": float('inf')}
+
+        # Chosen Model
+        model = model_selection(model_name, param, features_label, target_label)
+
+        # Chain assembler and model in a Pipeline
+        pipeline = Pipeline(stages=[model])
+
+        # Train a model and calculate running time
+        start = time.time()
+        pipeline_model = pipeline.fit(train_data)
+        end = time.time()
+
+        # Make predictions
+        predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
         
-        # Train / validation size
-        train_size = train_size.count()
-        valid_size = valid_size.count()
+        if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
+            # Append predictions to the list	
+            predictions_list.append(predictions) 
 
-        # Cache them
-        train_data.cache()
-        valid_data.cache()
+        # Compute validation error by several evaluators
+        eval_res = model_evaluation(target_label, predictions)
+
+        # Use dict to store each result
+        results = {
+            "Model": model_name,
+            "Type": model_type,
+            "Splitting": splitting_info['split_type'],
+            "Features": features_name,
+            "Splits": "1",
+            "Train&Validation": (train_size,valid_size),                
+            "Parameters": list(param.values()),
+            "RMSE": eval_res['rmse'],
+            "MSE": eval_res['mse'],
+            "MAE": eval_res['mae'],
+            "MAPE": eval_res['mape'],
+            "R2": eval_res['r2'],
+            "Adjusted_R2": eval_res['adj_r2'],
+            "Time": end - start,
+        }
         
-        # All combination of params
-        param_lst = [dict(zip(params, param)) for param in product(*params.values())]
-
-        for param in param_lst:
-            # Chosen Model
-            model = model_selection(model_name, param, features_label, target_label)
-
-            # Chain assembler and model in a Pipeline
-            pipeline = Pipeline(stages=[model])
-
-            # Train a model and calculate running time
-            start = time.time()
-            pipeline_model = pipeline.fit(train_data)
-            end = time.time()
-
-            # Make predictions
-            predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
-            
-            if model_type == "cross_val":
-                # Append predictions to the list	
-                predictions_list.append(predictions) 
-
-            # Compute validation error by several evaluators
-            eval_res = model_evaluation(target_label, predictions)
-
-            # Use dict to store each result
-            results = {
-                "Model": model_name,
-                "Type": model_type,
-                "Splitting": splitting_info['split_type'],
-                "Features": features_name,
-                "Splits": "1",
-                "Train&Validation": (train_size,valid_size),                
-                "Parameters": list(param.values()),
-                "RMSE": eval_res['rmse'],
-                "MSE": eval_res['mse'],
-                "MAE": eval_res['mae'],
-                "MAPE": eval_res['mape'],
-                "R2": eval_res['r2'],
-                "Adjusted_R2": eval_res['adj_r2'],
-                "Time": end - start,
-            }
-
         if model_type == "hyp_tuning":
             # Store the result with the lowest RMSE and the associated parameters
             if results['RMSE'] < best_result['RMSE']:
                 best_result = results
 
-        # Store results for each split
-        results_lst.append(results)
-        print(results)
+        if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
+            # Store results for each split
+            results_lst.append(results)
+            print(results)
+        
+    # Release Cache
+    train_data.unpersist()
+    valid_data.unpersist()
 
-        # Release Cache
-        train_data.unpersist()
-        valid_data.unpersist()
-
-        if model_type == "hyp_tuning":
-            # Store the best result for each split
-            best_split_result.append(best_result) 
-            print(best_result)
+    if model_type == "hyp_tuning":
+        # Store the best result for each split
+        best_split_result.append(best_result) 
+        print(best_result)
 
     if model_type == "hyp_tuning":
         # Transform dict to pandas dataset
@@ -761,7 +763,7 @@ def short_term_split_training(dataset, params, splitting_info, model_name, model
 
         return best_split_result_df
     
-    if model_type == "cross_val":
+    if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
         # Transform dict to pandas dataset
         results_lst_df = pd.DataFrame(results_lst)
 
@@ -773,7 +775,6 @@ def short_term_split_training(dataset, params, splitting_info, model_name, model
             final_predictions = pd.concat([final_predictions, pred.select("*").toPandas()], ignore_index=True)
 
         return results_lst_df, final_predictions
-
 '''
 Description: Evaluation of the final trained model
 Args:
@@ -837,4 +838,4 @@ def evaluate_trained_model(dataset, params, model_name, model_type, features_nor
     # Transform dict to pandas dataset
     results_df = pd.DataFrame(results)
         
-    return results_df, pipeline_model, predictions
+    return results_df, pipeline_model, predictions.toPandas()
