@@ -40,17 +40,17 @@ Args:
     model_name: Model name selected
 Return: None
 '''
-def show_results(results, model_name):
+def show_results(dataset, model_name):
   trace1 = go.Scatter(
-      x = results['timestamp'],
-      y = results['next-market-price'].astype(float),
+      x = dataset['timestamp'],
+      y = dataset['next-market-price'].astype(float),
       mode = 'lines',
       name = 'Next Market price (usd)'
   )
 
   trace2 = go.Scatter(
-      x = results['timestamp'],
-      y = results['prediction'].astype(float),
+      x = dataset['timestamp'],
+      y = dataset['prediction'].astype(float),
       mode = 'lines',
       name = 'Predicted next makert price (usd)'
   )
@@ -215,7 +215,7 @@ def model_accuracy(dataset):
     return accuracy
 
 ####################################################
-# --- BLOCK AND WALK FORWARD TIME SERIES SPLIT --- #
+# --- MULTIPLE SPLITS --- #
 ####################################################
 
 '''
@@ -282,7 +282,7 @@ Args:
 Return: 
     results_lst_df: All the splits performances in a pandas dataset
 '''
-def block_and_walking_forward_split_training(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
+def multiple_splits(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
     # Select the type of features to be used
     dataset = select_features(dataset, features_normalization, features, features_label, target_label)
 
@@ -627,7 +627,7 @@ def cross_validation(dataset, params, splitting_info, model_name, model_type, fe
     return results_lst_df, final_predictions
 
 ########################################
-# --- SHORT TERM TIME SERIES SPLIT --- #
+# --- SINGLE SPLIT --- #
 ########################################
 
 '''
@@ -668,7 +668,7 @@ Args:
 Return: 
     results_lst_df: All the splits performances in a pandas dataset
 '''
-def short_term_split_training(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
+def single_split(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
     # Select the type of features to be used
     dataset = select_features(dataset, features_normalization, features, features_label, target_label)
 
@@ -775,6 +775,7 @@ def short_term_split_training(dataset, params, splitting_info, model_name, model
             final_predictions = pd.concat([final_predictions, pred.select("*").toPandas()], ignore_index=True)
 
         return results_lst_df, final_predictions
+        
 '''
 Description: Evaluation of the final trained model
 Args:

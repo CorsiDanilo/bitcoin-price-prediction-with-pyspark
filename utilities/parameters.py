@@ -18,7 +18,7 @@ def get_splitting_params(split_type):
     elif split_type == "walk_forward_splits":
         # Walk forward split time series
         params = {'split_type':'walk_forward_splits',
-                  'min_obser': 10000,
+                  'min_obser': 1000,
                   'sliding_window': 5000}
     elif split_type == "short_term_split":
         params = {'split_type':'short_term_split',
