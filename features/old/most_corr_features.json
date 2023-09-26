@@ -1,1 +1,1 @@
-["market-price", "market-cap", "miners-revenue", "sma-5-days", "sma-7-days", "estimated-transaction-volume-usd", "sma-10-days", "n-transactions-total", "blocks-size", "sma-100-days", "total-bitcoins"]
+["market-price", "market-cap", "miners-revenue", "sma-5-days", "sma-7-days", "sma-10-days", "estimated-transaction-volume-usd", "sma-20-days", "trade-volume"]

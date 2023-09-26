@@ -66,9 +66,9 @@ As evaluation framework I will use **RMSE (Root Mean Squared Error)**, **MSE (
 │
 ├── features
 │  ├── all_features.json
-│  ├── features_correlation.json
-│  ├── least_corr_features.json
-│  └── most_corr_features.json
+│  ├── features_relevance.json
+│  ├── least_rel_features.json
+│  └── most_rel_features.json
 │
 ├── models
 │  ├── GBTRegressor
@@ -107,19 +107,19 @@ As evaluation framework I will use **RMSE (Root Mean Squared Error)**, **MSE (
 
 ### **Features folder: contains the features used throughout the project**
 
-- **features_correlation.json:** contains features name and their correlation value
+- **features_relevance.json:** contains features name and their relevance value
 - **all_features.json:** contains the name of all features
-- **less_rel_features.json:** contains the name of the features most correlated to the price of Bitcoin
-- **more_rel_features.json:** contains the name of the features least correlated to the price of Bitcoin
+- **less_rel_features.json:** contains the name of the most relevant features most with respect to the price of Bitcoin
+- **more_rel_features.json:** contains the name of the least relevant features most with respect to the price of Bitcoin
 
 ### **Models folder: contains files related to the trained models with the best parameters, ready to be used to perform price prediction on never-before-seen data**
 
 ### **Notebooks folder: contains notebooks produced**
 
-- **1. Data crawling.ipynb:** data crawling on Bitcoin blochckain by querying Blockchain.com website.
+- **1. Data crawling.ipynb:** crawling data on bitcoin's blochckain by querying blockchain.com
 - **2. Feature Engineering.ipynb:** adding useful features regardings the price of Bitcoin, visualizing data and performing feature selection
-- **3 - 6. [<splitting_method>] <model_name>.ipynb:** executing the chosen model, first with default values, then choosing the best parameters by performing hyperparameter tuning with cross validation, performance evaluation and training of the final model using different splitting methods of the train / validation set
-- **7. Final predictions.ipynb:** making predictions on the test set with the final models trained on the whole train/validation set
+- **3 - 6. [<splitting_method>] <model_name>.ipynb:** executing the chosen model, first with default values, then by choosing the best parameters by performing hyperparameter tuning with cross validation and performance evaluation
+- **7. Final scores.ipynb:** display of final scores andmaking predictions on the test set with the models trained on the whole train / validation set
 
 ### **Results folder: contains all results obtained from each individual model based on the different splittng method**
 

@@ -6,30 +6,32 @@ RANDOM_SEED = 42
 '''
 Description: Returns the  parameters of the selected splitting type
 Args:
-    split_type: Type of splitting
+    split_type: Type of splitting [block_splits | walk_forward_splits |single_split]
 Return: 
     params: Parameters of the selected splitting type
 '''
 def get_splitting_params(split_type):
     if split_type == "block_splits":
-        # Block split time series
+        # Block splits time series
         params = {'split_type':'block_splits',
-                  'splits': 10}
+                  'splits': 5}
     elif split_type == "walk_forward_splits":
-        # Walk forward split time series
+        # Walk forward splits time series
         params = {'split_type':'walk_forward_splits',
-                  'min_obser': 1000,
+                  'min_obser': 20000,
                   'sliding_window': 5000}
-    elif split_type == "short_term_split":
-        params = {'split_type':'short_term_split',
-                  'proportion': 3}
+    elif split_type == "single_split":
+        # Single split time series
+        params = {'split_type':'single_split',
+                  'split_label':'months',
+                  'split_value': 1}
 
     return params
 
 '''
 Description: Returns the default parameters of the selected model
 Args:
-    model_name: Name of the selected model
+    model_name: Name of the selected model [LinearRegression | GeneralizedLinearRegression | RandomForestRegressor | GradientBoostingTreeRegressor]
 Return: 
     params: Parameters list of the selected model
 '''
@@ -64,7 +66,7 @@ def get_defaults_model_params(model_name):
 '''
 Description: Returns the model grid parameters of the selected model
 Args:
-    model_name: Name of the selected model
+    model_name: Name of the selected model [LinearRegression | GeneralizedLinearRegression | RandomForestRegressor | GradientBoostingTreeRegressor]
 Return: 
     params: Parameters list of the selected model
 '''
@@ -101,7 +103,7 @@ def get_model_grid_params(model_name):
 '''
 Description: Returns the best model parameters
 Args:
-    parameters: Name of the selected model
+    parameters: Input parameters
 Return: 
     grouped_scores: Scores of all parameters
     best_params: Parameters with the best score
@@ -149,7 +151,7 @@ def choose_best_params(parameters):
 Description: Returns the best model parameters of the selected model
 Args:
     parameters: Parameters to be entered in the parameter grid of the selected model
-    model_name: Name of the selected model
+    model_name: Name of the selected model [LinearRegression | GeneralizedLinearRegression | RandomForestRegressor | GradientBoostingTreeRegressor]
 Return: 
     params: Parameters list of the selected model
 '''

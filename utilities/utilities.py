@@ -267,13 +267,13 @@ def walk_forward_splits(num, min_obser, sliding_window):
     return split_position_df
 
 '''
-Description: ???
+Description: Perform train / validation using multiple splitting methods
 Args:
     dataset: The dataset which needs to be splited
     params: Parameters which want to test 
-    splitting_info: The splitting type method [block_splits | walk_forward_splits | short_term_split]
+    splitting_info: The splitting type method [block_splits | walk_forward_splits]
     model_name: Model name selected
-    model_type: Model type [default | default_norm | hyp_tuning | cross_val | final_trained]
+    model_type: Model type [default | default_norm | hyp_tuning | cross_val]
     features_normalization: Indicates whether features should be normalized (True) or not (False)
     features: Features to be used to make predictions
     features_name: Name of features used
@@ -288,7 +288,7 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
 
     # Get the number of samples
     num = dataset.count()
-    
+
     # Save results in a list
     results_lst = []
     best_split_result = []
@@ -395,236 +395,12 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
         # Transform dict to pandas dataset
         results_lst_df = pd.DataFrame(results_lst)
 
-        # Initialize an empty dataset in Pandas
-        final_predictions = pd.DataFrame()
-
         # Iterate for each predictions dataset and concatenate it with the final one
+        final_predictions = pd.DataFrame()
         for pred in predictions_list:
             final_predictions = pd.concat([final_predictions, pred.select("*").toPandas()], ignore_index=True)
 
         return results_lst_df, final_predictions
-
-'''
-Description: Cross validation on time series data
-Args:
-    dataset: The dataset which needs to be splited
-    params: Parameters which want to test 
-    splitting_info: The splitting type method [block_splits | walk_forward_splits | short_term_split]
-    model_name: Model name selected
-    model_type: Model type [default | default_norm | hyp_tuning | cross_val | final_trained]
-    features_normalization: Indicates whether features should be normalized (True) or not (False)
-    features: Features to be used to make predictions
-    features_name: Name of features used
-    features_label: The column name of features
-    target_label: The column name of target variable
-Return: 
-    results_lst_df: All the splits performances in a pandas dataset
-'''
-def hyperparameter_tuning(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
-    # Select the type of features to be used
-    dataset = select_features(dataset, features_normalization, features, features_label, target_label)
-
-    best_split_result = []
-
-    # Get the number of samples
-    num = dataset.count()
-
-    # Identify the splitting type
-    if splitting_info['split_type'] == 'block_splits':
-        split_position_df = block_splits(num, splitting_info['splits'])
-    elif splitting_info['split_type'] == 'walk_forward_splits':
-        split_position_df = walk_forward_splits(num, splitting_info['min_obser'], splitting_info['sliding_window'])
-
-    for position in split_position_df.itertuples():
-        best_result = {"RMSE": float('inf')}
-
-        # Get the start/split/end position based on the splitting type
-        start = getattr(position, 'start')
-        splits = getattr(position, 'split')
-        end = getattr(position, 'end')
-        idx  = getattr(position, 'Index')
-        
-        # Train / validation size
-        train_size = splits - start
-        valid_size = end - splits
-
-        # Get training data and validation data
-        train_data = dataset.filter(dataset['id'].between(start, splits-1))
-        valid_data = dataset.filter(dataset['id'].between(splits, end-1))
-
-        # Cache them
-        train_data.cache()
-        valid_data.cache()
-
-        # All combination of params
-        param_lst = [dict(zip(params, param)) for param in product(*params.values())]
-
-        for param in param_lst:
-            # Chosen Model
-            model = model_selection(model_name, param, features_label, target_label)
-
-            # Chain assembler and model in a Pipeline
-            pipeline = Pipeline(stages=[model])
-
-            # Train a model and calculate running time
-            start = time.time()
-            pipeline_model = pipeline.fit(train_data)
-            end = time.time()
-
-            # Make predictions
-            predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
-
-            # Compute validation error by several evaluators
-            eval_res = model_evaluation(target_label, predictions)
-
-            # Use dict to store each result
-            results = {
-                "Model": model_name,
-                "Type": model_type,
-                "Splitting": splitting_info['split_type'],
-                "Features": features_name,
-                "Splits": idx + 1,
-                "Train&Validation": (train_size,valid_size),                
-                "Parameters": list(param.values()),
-                "RMSE": eval_res['rmse'],
-                "MSE": eval_res['mse'],
-                "MAE": eval_res['mae'],
-                "MAPE": eval_res['mape'],
-                "R2": eval_res['r2'],
-                "Adjusted_R2": eval_res['adj_r2'],
-                "Time": end - start,
-            }
-            # Store the result with the lowest RMSE and the associated parameters
-            if results['RMSE'] < best_result['RMSE']:
-                best_result = results
-
-        # Release Cache
-        train_data.unpersist()
-        valid_data.unpersist()
-
-        best_split_result.append(best_result) 
-        print(best_result)
-
-    # Transform dict to pandas dataset
-    best_split_result_df = pd.DataFrame(best_split_result)
-
-    return best_split_result_df
-    
-'''
-Description: Cross validation on time series data
-Args:
-    dataset: The dataset which needs to be splited
-    params: Parameters which want to test 
-    splitting_info: The splitting type method [block_splits | walk_forward_splits | short_term_split]
-    model_name: Model name selected
-    model_type: Model type [default | default_norm | hyp_tuning | cross_val | final_trained]
-    features_normalization: Indicates whether features should be normalized (True) or not (False)
-    features: Features to be used to make predictions
-    features_name: Name of features used
-    features_label: The column name of features
-    target_label: The column name of target variable
-Return: 
-    results_lst_df: All the splits performances in a pandas dataset
-'''
-def cross_validation(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
-    # Select the type of features to be used
-    dataset = select_features(dataset, features_normalization, features, features_label, target_label)
-
-    # Get the number of samples
-    num = dataset.count()
-    
-    # Save results in a list
-    results_lst = []
-
-    # Initialize an empty list to store predictions
-    predictions_list = []  
-
-    # Identify the splitting type
-    if splitting_info['split_type'] == 'block_splits':
-        split_position_df = block_splits(num, splitting_info['splits'])
-    elif splitting_info['split_type'] == 'walk_forward_splits':
-        split_position_df = walk_forward_splits(num, splitting_info['min_obser'], splitting_info['sliding_window'])
-
-    for position in split_position_df.itertuples():
-        # Get the start/split/end position based on the splitting type
-        start = getattr(position, 'start')
-        splits = getattr(position, 'split')
-        end = getattr(position, 'end')
-        idx  = getattr(position, 'Index')
-        
-        # Train / validation size
-        train_size = splits - start
-        valid_size = end - splits
-
-        # Get training data and validation data
-        train_data = dataset.filter(dataset['id'].between(start, splits-1))
-        valid_data = dataset.filter(dataset['id'].between(splits, end-1))
-
-        # Cache them
-        train_data.cache()
-        valid_data.cache()
-        
-        # All combination of params
-        param_lst = [dict(zip(params, param)) for param in product(*params.values())]
-
-        for param in param_lst:
-            # Chosen Model
-            model = model_selection(model_name, param, features_label, target_label)
-
-            # Chain assembler and model in a Pipeline
-            pipeline = Pipeline(stages=[model])
-
-            # Train a model and calculate running time
-            start = time.time()
-            pipeline_model = pipeline.fit(train_data)
-            end = time.time()
-
-            # Make predictions
-            predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
-            
-            # Append predictions to the list
-            predictions_list.append(predictions)  
-
-            # Compute validation error by several evaluators
-            eval_res = model_evaluation(target_label, predictions)
-
-            # Use dict to store each result
-            results = {
-                "Model": model_name,
-                "Type": model_type,
-                "Splitting": splitting_info['split_type'],
-                "Features": features_name,
-                "Splits": idx + 1,
-                "Train&Validation": (train_size,valid_size),                
-                "Parameters": list(param.values()),
-                "RMSE": eval_res['rmse'],
-                "MSE": eval_res['mse'],
-                "MAE": eval_res['mae'],
-                "MAPE": eval_res['mape'],
-                "R2": eval_res['r2'],
-                "Adjusted_R2": eval_res['adj_r2'],
-                "Time": end - start,
-            }
-
-            # Store results for each split
-            results_lst.append(results)
-            print(results)
-
-        # Release Cache
-        train_data.unpersist()
-        valid_data.unpersist()
-
-    # Transform dict to pandas dataset
-    results_lst_df = pd.DataFrame(results_lst)
-
-    # Initialize an empty dataset in Pandas
-    final_predictions = pd.DataFrame()
-
-    # Iterate for each predictions dataset and concatenate it with the final one
-    for pred in predictions_list:
-        final_predictions = pd.concat([final_predictions, pred.select("*").toPandas()], ignore_index=True)
-
-    return results_lst_df, final_predictions
 
 ########################################
 # --- SINGLE SPLIT --- #
@@ -634,17 +410,26 @@ def cross_validation(dataset, params, splitting_info, model_name, model_type, fe
 Description: Split and keep the original time-series order based on a split point 
 Args:
     dataset: The dataset which needs to be splited
+    label: Type of splitting [weeks | months | years]
     proportion: A number represents the split proportion
 Return: 
     train_data: The train dataset
     valid_data: The valid dataset
 '''
-def short_term_split(dataset, proportion):
+def short_term_split(dataset, split_label, split_value):
     # Retrieve the last timestamp value
     last_value = dataset.agg(last("timestamp")).collect()[0][0]
 
-    # Subtract three month from the last timestamp value
-    split_date = last_value - relativedelta(months=proportion)
+    # Subtract the value from the last timestamp based on the label
+    match split_label:
+        case "weeks":
+            split_date = last_value - relativedelta(weeks=split_value)
+        case "months":
+            split_date = last_value - relativedelta(months=split_value)
+        case "years":
+            split_date = last_value - relativedelta(years=split_value)
+        case _:
+            return 
 
     # Split the dataset based on the desired date
     train_data = dataset[dataset['timestamp'] <= split_date]
@@ -653,11 +438,11 @@ def short_term_split(dataset, proportion):
     return train_data, test_df
 
 '''
-Description: ????
+Description: Perform train / validation using single split method
 Args:
     dataset: The dataset which needs to be splited
     params: Parameters which want to test 
-    splitting_info: The splitting type method [block_splits | walk_forward_splits | short_term_split]
+    splitting_info: The splitting type method [short_term_split]
     model_name: Model name selected
     model_type: Model type [default | default_norm | hyp_tuning | cross_val | final_trained]
     features_normalization: Indicates whether features should be normalized (True) or not (False)
@@ -683,7 +468,7 @@ def single_split(dataset, params, splitting_info, model_name, model_type, featur
     predictions_list = []  
 
     # Get training data and validation data
-    train_data, valid_data = short_term_split(dataset, splitting_info['proportion'])
+    train_data, valid_data = short_term_split(dataset, splitting_info['split_label'], splitting_info['split_value'])
     
     # Train / validation size
     train_size = train_data.count()
@@ -713,7 +498,7 @@ def single_split(dataset, params, splitting_info, model_name, model_type, featur
         # Make predictions
         predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
         
-        if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
+        if model_type == "default" or model_type == "default_norm" or model_type == "cross_val" or model_type == "final_validated":
             # Append predictions to the list	
             predictions_list.append(predictions) 
 
@@ -725,9 +510,7 @@ def single_split(dataset, params, splitting_info, model_name, model_type, featur
             "Model": model_name,
             "Type": model_type,
             "Splitting": splitting_info['split_type'],
-            "Features": features_name,
-            "Splits": "1",
-            "Train&Validation": (train_size,valid_size),                
+            "Features": features_name,          
             "Parameters": list(param.values()),
             "RMSE": eval_res['rmse'],
             "MSE": eval_res['mse'],
@@ -743,7 +526,7 @@ def single_split(dataset, params, splitting_info, model_name, model_type, featur
             if results['RMSE'] < best_result['RMSE']:
                 best_result = results
 
-        if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
+        if model_type == "default" or model_type == "default_norm" or model_type == "cross_val" or model_type == "final_validated":
             # Store results for each split
             results_lst.append(results)
             print(results)
@@ -763,14 +546,12 @@ def single_split(dataset, params, splitting_info, model_name, model_type, featur
 
         return best_split_result_df
     
-    if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
+    if model_type == "default" or model_type == "default_norm" or model_type == "cross_val" or model_type == "final_validated":
         # Transform dict to pandas dataset
         results_lst_df = pd.DataFrame(results_lst)
 
-        # Initialize an empty dataset in Pandas
-        final_predictions = pd.DataFrame()
-
         # Iterate for each predictions dataset and concatenate it with the final one
+        final_predictions = pd.DataFrame()
         for pred in predictions_list:
             final_predictions = pd.concat([final_predictions, pred.select("*").toPandas()], ignore_index=True)
 
@@ -822,11 +603,9 @@ def evaluate_trained_model(dataset, params, model_name, model_type, features_nor
         results = {
             "Model": model_name,
             "Type": model_type,
-            "Splitting": "0",
-            "Features": features_name,
-            "Splits": "1",
-            "Train&Validation": (dataset.count()),                
-            "Parameters": list(param.values()),
+            "Splitting": "whole_train_valid",
+            "Features": features_name,              
+            "Parameters": [list(param.values())],
             "RMSE": eval_res['rmse'],
             "MSE": eval_res['mse'],
             "MAE": eval_res['mae'],
@@ -836,7 +615,9 @@ def evaluate_trained_model(dataset, params, model_name, model_type, features_nor
             "Time": end - start,
         }
 
+
     # Transform dict to pandas dataset
     results_df = pd.DataFrame(results)
+    print(results_df)
         
     return results_df, pipeline_model, predictions.toPandas()
