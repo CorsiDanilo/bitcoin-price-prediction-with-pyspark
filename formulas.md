@@ -6,19 +6,19 @@ To select the best parameters to be used in the final model I assign a score to 
 * Normalize the split weights to a scale of 0 to 1, where 1 represents the highest split weight.
 * Calculate the RMSE weight for each value in the "Parameters" column, where a lower RMSE value corresponds to a higher weight.
 * Normalize the RMSE weights to a scale of 0 to 1, where 1 represents the highest RMSE weight.
-* Calculate the overall score for each value in the "Parameters" column by combining the normalized frequency, split weight, and RMSE weight.
 
-I take into consideration the parameters that have the highest score.
+Then calculate the overall score for each value in the "Parameters" column by combining the normalized frequency, split weight, and RMSE weight and take into consideration the parameters that have the highest score.
 
 
-# Accuracy
-Finally let's se how good the model is at predicting whether the price will go up or down. 
+# ❗Model accuracy
 
-For each row let's consider the current market-price, the next-market-price (the next day's market price), and our prediction (referred to next-market-price).
-We compute whether the current prediction is correct or not this way:
+Since predicting the price accurately is very difficult let's se how good the model is at predicting whether the price will go up or down. 
+
+For each row in our predictions let's consider the actual market-price, next-market-price and our predicted next-market-price (prediction).
+We compute whether the current prediction is correct (1) or not (0):
 
 $$ 
-correct\_prediction
+prediction\_is\_correct
 = 
 \begin{cases}
 0 \text{ if [(market-price > next-market-price) and (market-price < prediction)] or [(market-price < next-market-price) and (market-price > prediction)]} \\
@@ -26,7 +26,14 @@ correct\_prediction
 \end{cases}
 $$
 
-This procedure is performed for the entire set under consideration, after that we calculate the percentage of accuracy of the model in this way:
+After that we count the number of correct prediction:
+$$ 
+correct\_predictions
+= 
+\sum_{i=0}^{total\_rows} prediction\_is\_correct
+$$
+
+Finally we compute the percentage of accuracy of the model:
 $$
 \\ 
 accuracy 
@@ -34,7 +41,3 @@ accuracy
 (correct\_predictions / total\_rows) 
 * 100
 $$
-
-where:
-* correct\_predictions contains the number of correct predictions (1).
-* total\_rows contains the number of total predictions
