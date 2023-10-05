@@ -1,0 +1,2 @@
+Model,Features,Splitting,Accuracy
+LinearRegression,most_rel_features,walk_forward_splits,48.21454545454545

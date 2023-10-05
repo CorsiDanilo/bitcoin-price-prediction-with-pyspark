@@ -1,0 +1,2 @@
+Model,Features,Splitting,Accuracy
+GeneralizedLinearRegression,most_rel_features,block_splits,50.076190476190476
