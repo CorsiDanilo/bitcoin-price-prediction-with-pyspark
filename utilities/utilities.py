@@ -187,8 +187,6 @@ def model_evaluation(target_label, predictions):
 Description: How good the models are at predicting whether the price will go up or down
 Args:
     dataset: The dataset which needs to be splited
-    model_name: Model name selected
-    model_type: Model type [default | default_norm | hyp_tuning | cross_val | final_trained]
 Return: 
     accuracy: Return the percentage of correct predictions
 '''
