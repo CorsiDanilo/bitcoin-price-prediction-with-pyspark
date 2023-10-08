@@ -28,8 +28,8 @@ def select_features(dataset, features_normalization, features, features_label, t
         dataset = normalizer.transform(df_vector).select("timestamp", "id", "market-price",features_label, target_label)
     else:
         # Assemble the columns into a vector column
-        vectorAssembler = VectorAssembler(inputCols = features, outputCol = features_label)
-        dataset = vectorAssembler.transform(dataset).select("timestamp", "id", "market-price", features_label, target_label)
+        assembler = VectorAssembler(inputCols = features, outputCol = features_label)
+        dataset = assembler.transform(dataset).select("timestamp", "id", "market-price", features_label, target_label)
 
     return dataset
 
