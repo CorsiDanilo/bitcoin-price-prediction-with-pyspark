@@ -25,7 +25,7 @@ def select_features(dataset, features_normalization, features, features_label, t
         normalizer = Normalizer(inputCol="raw_features", outputCol=features_label)
 
         # Fit and transform the data
-        dataset = normalizer.transform(df_vector).select("timestamp", "id", "market-price",features_label, target_label)
+        dataset = normalizer.transform(df_vector).select("timestamp", "id", "market-price", features_label, target_label)
     else:
         # Assemble the columns into a vector column
         assembler = VectorAssembler(inputCols = features, outputCol = features_label)
