@@ -125,19 +125,17 @@ $$
 │  ├── raw
 │  │  └── bitcoin_blockchain_data_15min.parquet
 │  └── temp
-│
 ├── features
 │  ├── all_features.json
 │  ├── features_relevance.json
 │  ├── least_rel_features.json
 │  └── most_rel_features.json
-|
 ├── models
 │  ├── GeneralizedLinearRegression
 │  ├── GradientBoostingTreeRegressor
 │  ├── LinearRegression
 │  └── RandomForestRegressor
-|
+│     
 ├── notebooks
 │  ├── 1 - Data crawling.ipynb
 │  ├── 2 - Feature Engineering.ipynb
@@ -156,16 +154,13 @@ $$
 │  ├── 7 - Final scores.ipynb
 │  └── images
 │     ├── block-splits.png
+│     ├── Drawings.excalidraw
 │     ├── single-split.png
-│     ├── walk-forward-splits.png
-│     └── Drawings.excalidraw
-|
+│     └── walk-forward-splits.png
 ├── presentation
 │  ├── presentation.pptx
 │  └── speech.docx
-|
 ├── README.md
-|
 ├── results
 │  ├── block_splits
 │  │  ├── GeneralizedLinearRegression.csv
@@ -181,7 +176,6 @@ $$
 │  │  ├── final.png
 │  │  ├── final_accuracy.csv
 │  │  └── final_accuracy.png
-│  │ 
 │  ├── single_split
 │  │  ├── GeneralizedLinearRegression.csv
 │  │  ├── GeneralizedLinearRegression_accuracy.csv
@@ -200,7 +194,6 @@ $$
 │     ├── LinearRegression_accuracy.csv
 │     ├── RandomForestRegressor.csv
 │     └── RandomForestRegressor_accuracy.csv
-│ 
 └── utilities
    ├── imports.py
    ├── parameters.py
