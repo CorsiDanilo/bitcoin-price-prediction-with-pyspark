@@ -101,7 +101,7 @@ def get_model_grid_params(model_name):
     return params
 
 '''
-Description: Returns the best model parameters
+Description: Choose the best model parameters
 Args:
     parameters: Input parameters
 Return: 
@@ -130,7 +130,7 @@ def choose_best_params(parameters):
     # Normalize the frequencies to a scale of 0 to 1
     freq_norm = freq / freq.max()
 
-    # create a new column called "Frequency" with the normalized frequencies
+    # Create a new column called "Frequency" with the normalized frequencies
     parameters['Frequency weight'] = parameters['Parameters'].map(freq_norm)
 
     # Group the rows by the "Parameters" column and calculate the average of the other columns
@@ -148,7 +148,7 @@ def choose_best_params(parameters):
     return grouped_scores, best_params
 
 '''
-Description: Returns the best model parameters of the selected model
+Description: Returns the best model parameters
 Args:
     parameters: Parameters to be entered in the parameter grid of the selected model
     model_name: Name of the selected model [LinearRegression | GeneralizedLinearRegression | RandomForestRegressor | GradientBoostingTreeRegressor]

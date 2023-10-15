@@ -1,8 +1,8 @@
 from imports import *
 
-##################
+###################
 # --- COMMONS --- #
-##################
+###################
 
 '''
 Description: Return the dataset with the selected features
@@ -184,7 +184,7 @@ def model_evaluation(target_label, predictions):
     return results
 
 '''
-Description: How good the models are at predicting whether the price will go up or down
+Description: Tell how good the models are at predicting whether the price will go up or down
 Args:
     dataset: The dataset which needs to be splited
 Return: 
@@ -212,12 +212,12 @@ def model_accuracy(dataset):
         
     return accuracy
 
-####################################################
+###########################
 # --- MULTIPLE SPLITS --- #
-####################################################
+###########################
 
 '''
-Description: Block splits time series cross validation
+Description: Block splits time series split
 Args:
     num: Number of datasets
     n_splits: Split times
@@ -243,7 +243,7 @@ def block_splits(num, n_splits):
     return split_position_df
 
 '''
-Description: Walk forward time series cross validation
+Description: Walk forward time series split
 Args:
     num: Number of dataset
     min_obser: Minimum number of observations
@@ -272,7 +272,7 @@ Args:
     splitting_info: The splitting type method [block_splits | walk_forward_splits]
     model_name: Model name selected
     model_type: Model type [default | default_norm | hyp_tuning | cross_val]
-    features_normalization: Indicates whether features should be normalized (True) or not (False)
+    features_normalization: Indicates whether features should be normalized or not
     features: Features to be used to make predictions
     features_name: Name of features used
     features_label: The column name of features
@@ -400,12 +400,12 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
 
         return results_lst_df, final_predictions
 
-########################################
+########################
 # --- SINGLE SPLIT --- #
-########################################
+########################
 
 '''
-Description: Split and keep the original time-series order based on a split point 
+Description: Short term time series split
 Args:
     dataset: The dataset which needs to be splited
     label: Type of splitting [weeks | months | years]
@@ -442,14 +442,14 @@ Args:
     params: Parameters which want to test 
     splitting_info: The splitting type method [short_term_split]
     model_name: Model name selected
-    model_type: Model type [default | default_norm | hyp_tuning | cross_val | final_trained]
-    features_normalization: Indicates whether features should be normalized (True) or not (False)
+    model_type: Model type [default | default_norm | final_validated]
+    features_normalization: Indicates whether features should be normalized or not
     features: Features to be used to make predictions
     features_name: Name of features used
     features_label: The column name of features
     target_label: The column name of target variable
 Return: 
-    results_lst_df: All the splits performances in a pandas dataset
+    results_lst_df: Performances in a pandas dataset
 '''
 def single_split(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
     # Select the type of features to be used
@@ -561,8 +561,8 @@ Args:
     dataset: The dataset which needs to be splited
     params: Parameters which want to test 
     model_name: Model name selected
-    model_type: Model type [default | default_norm | hyp_tuning | cross_val | final_trained]
-    features_normalization: Indicates whether features should be normalized (True) or not (False)
+    model_type: Model type [final_trained]
+    features_normalization: Indicates whether features should be normalized or not
     features: Features to be used to make predictions
     features_name: Name of features used
     features_label: The column name of features

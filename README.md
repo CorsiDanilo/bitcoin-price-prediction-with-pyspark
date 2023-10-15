@@ -40,9 +40,9 @@ I chose to collect data on the Bitcoin blockchain using the API of the website B
    - **estimated-transaction-volume-usd:** the total estimated value in USD of transactions on the blockchain.
 
 Later on will be added some new features that could help us predict the Bitcoin price:
-*   **Next market price:** represents the price of Bitcoin for the next day (this will be the target variable on which to make predictions)
-*   **Rate of change:** indicator that measures the percentage of price changes over a period of time, allows investors to spot security momentum and other trends
-*   **Simple Moving Averages:** indicators that calculate the average price over a specified number of days. They are commonly used by traders to identify trends and potential buy or sell signals
+*   **next-market-price:** represents the price of Bitcoin for the next day (this will be the target variable on which to make predictions)
+*   **rate-of-change:** indicator that measures the percentage of price changes over a period of time, allows investors to spot security momentum and other trends
+*   **sma-x-days:** indicators that calculate the average price over a specified number of days. They are commonly used by traders to identify trends and potential buy or sell signals
 
 All these features will be divided into 3 groups based on their correlation and importance with respect to the market price using the Pearson method and Random Forest Regressor to see the differences according to their use:
 * **All:** contains all features
