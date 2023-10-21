@@ -418,7 +418,7 @@ def short_term_split(dataset, split_label, split_value):
     # Retrieve the last timestamp value
     last_value = dataset.agg(last("timestamp")).collect()[0][0]
 
-    # Subtract the value from the last timestamp based on the label
+    # Subtract the value from the last timestamp based on the split label
     match split_label:
         case "weeks":
             split_date = last_value - relativedelta(weeks=split_value)
