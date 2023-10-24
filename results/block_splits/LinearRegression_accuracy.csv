@@ -1,2 +1,2 @@
 Model,Features,Splitting,Accuracy
-LinearRegression,most_rel_features,block_splits,49.988571428571426
+LinearRegression,all_features,block_splits,53.6

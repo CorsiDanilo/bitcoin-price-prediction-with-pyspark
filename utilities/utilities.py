@@ -37,10 +37,10 @@ def select_features(dataset, features_normalization, features, features_label, t
 Description: Plot the results obtained
 Args:
     results: Results to be displayed
-    model_name: Model name selected
+    title: Chart title
 Return: None
 '''
-def show_results(dataset, model_name):
+def show_results(dataset, title):
   trace1 = go.Scatter(
       x = dataset['timestamp'],
       y = dataset['next-market-price'].astype(float),
@@ -56,7 +56,7 @@ def show_results(dataset, model_name):
   )
 
   layout = dict(
-      title= model_name + " predicitons",
+      title= title,
       xaxis=dict(
           rangeselector=dict(
               buttons=list([
@@ -89,7 +89,7 @@ def show_results(dataset, model_name):
 
   data = [trace1,trace2]
   fig = dict(data=data, layout=layout)
-  iplot(fig, filename = model_name + " predicitons")
+  iplot(fig, filename = title)
 
 '''
 Description: Returns the average of the results obtained
@@ -338,6 +338,9 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
 
             # Make predictions
             predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
+
+            if (splitting_info['split_type'] == "block_splits"):
+                show_results(predictions.toPandas(), model_name + " predictions on split " +  str(idx + 1))
             
             if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
                 # Append predictions to the list	

@@ -1,2 +1,2 @@
 Model,Features,Splitting,Accuracy
-LinearRegression,most_rel_features,single_split,54.83870967741935
+LinearRegression,all_features,single_split,45.16129032258064
