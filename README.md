@@ -114,6 +114,13 @@ accuracy
 * 100
 $$
 
+# **Project flow**
+The project to be executed from start to finish follows the following pipeline:
+* 1. **Data crawling:** Bitcoin data retrieval via API call to Blockchain.com
+* 2. **Feature engineering:** manipulation, visualization and feature extraction
+* 3. **Models’ train / validation:** to train the models and evaluate them by performing hyperparameter tuning and cross validation based on different methods of splitting the dataset. 
+* 4. **Final scores:** Test the final models and compare the results to answer the initial question
+
 # **Project structure**
 
 ```
@@ -135,7 +142,6 @@ $$
 │  ├── GradientBoostingTreeRegressor
 │  ├── LinearRegression
 │  └── RandomForestRegressor
-│     
 ├── notebooks
 │  ├── 1 - Data crawling.ipynb
 │  ├── 2 - Feature Engineering.ipynb
@@ -200,7 +206,6 @@ $$
    └── utilities.py
 ```
 
-# **Files / folder description**
 ### **Datasets folder: contains the original, temporary and processed datasets**
 - **bitcoin_blockchain_data_15min_test.parquet:** dataset used in the final phase of the project to perform price prediction on never-before-seen data
 - **bitcoin_blockchain_data_15min_train_validation.parquet:** dataset used to train and validate the models used
@@ -230,7 +235,7 @@ $$
 - **parameters.py:** contains the parameters used by the models during the train / validation phase
 - **utilities.py:** contains functions that are used by the models during the train / validation phase
 
-# Final results
+# Final results ❗
 **RMSE (The lower the better)**
 ![image info](./results/final/final.png)
 **Accuracy (The higher the better)**
