@@ -40,56 +40,70 @@ Args:
     title: Chart title
 Return: None
 '''
-def show_results(dataset, title):
-  trace1 = go.Scatter(
-      x = dataset['timestamp'],
-      y = dataset['next-market-price'].astype(float),
-      mode = 'lines',
-      name = 'Next Market price (usd)'
-  )
+def show_results(train, valid, title):
+    trace1 = go.Scatter(
+        x = train['timestamp'],
+        y = train['next-market-price'].astype(float),
+        mode = 'lines',
+        name = '[TRAIN] Next Market price (usd)'
+    )
 
-  trace2 = go.Scatter(
-      x = dataset['timestamp'],
-      y = dataset['prediction'].astype(float),
-      mode = 'lines',
-      name = 'Predicted next makert price (usd)'
-  )
+    trace2 = go.Scatter(
+        x = train['timestamp'],
+        y = train['prediction'].astype(float),
+        mode = 'lines',
+        name = '[TRAIN] Predicted next makert price (usd)'
+    )
 
-  layout = dict(
-      title= title,
-      xaxis=dict(
-          rangeselector=dict(
-              buttons=list([
-                  # Change the count to desired amount of months.
-                  dict(count=1,
-                      label='1m',
-                      step='month',
-                      stepmode='backward'),
-                  dict(count=6,
-                      label='6m',
-                      step='month',
-                      stepmode='backward'),
-                  dict(count=12,
-                      label='1y',
-                      step='month',
-                      stepmode='backward'),
-                  dict(count=36,
-                      label='3y',
-                      step='month',
-                      stepmode='backward'),
-                  dict(step='all')
-              ])
-          ),
-          rangeslider=dict(
-              visible = True
-          ),
-          type='date'
-      )
-  )
+    trace3 = go.Scatter(
+        x = valid['timestamp'],
+        y = valid['next-market-price'].astype(float),
+        mode = 'lines',
+        name = '[VALID] Next Market price (usd)'
+    )
 
-  data = [trace1,trace2]
-  fig = dict(data=data, layout=layout)
-  iplot(fig, filename = title)
+    trace4 = go.Scatter(
+        x = valid['timestamp'],
+        y = valid['prediction'].astype(float),
+        mode = 'lines',
+        name = '[VALID] Predicted next makert price (usd)'
+    )
+
+    layout = dict(
+        title= title,
+        xaxis=dict(
+            rangeselector=dict(
+                buttons=list([
+                    # Change the count to desired amount of months.
+                    dict(count=1,
+                        label='1m',
+                        step='month',
+                        stepmode='backward'),
+                    dict(count=6,
+                        label='6m',
+                        step='month',
+                        stepmode='backward'),
+                    dict(count=12,
+                        label='1y',
+                        step='month',
+                        stepmode='backward'),
+                    dict(count=36,
+                        label='3y',
+                        step='month',
+                        stepmode='backward'),
+                    dict(step='all')
+                ])
+            ),
+            rangeslider=dict(
+                visible = True
+            ),
+            type='date'
+        )
+    )
+
+    data = [trace1,trace2,trace3,trace4]
+    fig = dict(data=data, layout=layout)
+    iplot(fig, filename = title)
 
 '''
 Description: Returns the average of the results obtained
@@ -292,7 +306,8 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
     best_split_result = []
 
     # Initialize an empty list to store predictions
-    predictions_list = []  
+    train_predictions_lst = []  
+    valid_predictions_lst = [] 
 
     # Identify the splitting type
     if splitting_info['split_type'] == 'block_splits':
@@ -337,20 +352,23 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
             end = time.time()
 
             # Make predictions
-            predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
+            train_predictions = pipeline_model.transform(train_data).select(target_label, "market-price", "prediction", 'timestamp')
+            valid_predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
 
             if (splitting_info['split_type'] == "block_splits"):
-                show_results(predictions.toPandas(), model_name + " predictions on split " +  str(idx + 1))
+                show_results(train_predictions.toPandas(), valid_predictions.toPandas(), model_name + " predictions on split " +  str(idx + 1))
             
             if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
-                # Append predictions to the list	
-                predictions_list.append(predictions) 
+                # Append predictions to the list
+                train_predictions_lst.append(train_predictions) 
+                valid_predictions_lst.append(valid_predictions)
 
             # Compute validation error by several evaluators
-            eval_res = model_evaluation(target_label, predictions)
+            train_eval_res = model_evaluation(target_label, train_predictions)
+            valid_eval_res = model_evaluation(target_label, valid_predictions)
 
             # Use dict to store each result
-            results = {
+            train_results = {
                 "Model": model_name,
                 "Type": model_type,
                 "Splitting": splitting_info['split_type'],
@@ -358,24 +376,41 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
                 "Splits": idx + 1,
                 "Train&Validation": (train_size,valid_size),                
                 "Parameters": list(param.values()),
-                "RMSE": eval_res['rmse'],
-                "MSE": eval_res['mse'],
-                "MAE": eval_res['mae'],
-                "MAPE": eval_res['mape'],
-                "R2": eval_res['r2'],
-                "Adjusted_R2": eval_res['adj_r2'],
+                "RMSE": train_eval_res['rmse'],
+                "MSE": train_eval_res['mse'],
+                "MAE": train_eval_res['mae'],
+                "MAPE": train_eval_res['mape'],
+                "R2": train_eval_res['r2'],
+                "Adjusted_R2": train_eval_res['adj_r2'],
+                "Time": end - start,
+            }
+
+            valid_results = {
+                "Model": model_name,
+                "Type": model_type,
+                "Splitting": splitting_info['split_type'],
+                "Features": features_name,
+                "Splits": idx + 1,
+                "Train&Validation": (train_size,valid_size),                
+                "Parameters": list(param.values()),
+                "RMSE": valid_eval_res['rmse'],
+                "MSE": valid_eval_res['mse'],
+                "MAE": valid_eval_res['mae'],
+                "MAPE": valid_eval_res['mape'],
+                "R2": valid_eval_res['r2'],
+                "Adjusted_R2": valid_eval_res['adj_r2'],
                 "Time": end - start,
             }
 
             if model_type == "hyp_tuning":
                 # Store the result with the lowest RMSE and the associated parameters
-                if results['RMSE'] < best_result['RMSE']:
-                    best_result = results
+                if valid_results['RMSE'] < best_result['RMSE']:
+                    best_result = valid_results
 
             if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
                 # Store results for each split
-                results_lst.append(results)
-                print(results)
+                results_lst.append(valid_results)
+                print(valid_results)
         
         # Release Cache
         train_data.unpersist()
@@ -397,11 +432,11 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
         results_lst_df = pd.DataFrame(results_lst)
 
         # Iterate for each predictions dataset and concatenate it with the final one
-        final_predictions = pd.DataFrame()
-        for pred in predictions_list:
-            final_predictions = pd.concat([final_predictions, pred.select("*").toPandas()], ignore_index=True)
+        final_valid_predictions = pd.DataFrame()
+        for pred in valid_predictions_lst:
+            final_valid_predictions = pd.concat([final_valid_predictions, pred.select("*").toPandas()], ignore_index=True)
 
-        return results_lst_df, final_predictions
+        return results_lst_df, final_valid_predictions
 
 ########################
 # --- SINGLE SPLIT --- #
