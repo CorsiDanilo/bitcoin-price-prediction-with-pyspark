@@ -1,2 +1,0 @@
-Model,Features,Splitting,Accuracy (default),Accuracy (validated)
-GeneralizedLinearRegression,all_features,walk_forward_splits,49.33,49.33

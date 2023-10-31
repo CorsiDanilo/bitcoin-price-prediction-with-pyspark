@@ -292,7 +292,11 @@ Args:
     features_label: The column name of features
     target_label: The column name of target variable
 Return: 
-    results_lst_df: All the splits performances in a pandas dataset
+    train_results_df: All the train splits performances in a pandas dataset
+    valid_results_df: All the validations splits performances in a pandas dataset
+    train_predictions_df: All the train splits predictions in a pandas dataset
+    valid_predictions_df: All the validations splits predictions in a pandas dataset
+
 '''
 def multiple_splits(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
     # Select the type of features to be used
@@ -302,12 +306,13 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
     num = dataset.count()
 
     # Save results in a list
-    results_lst = []
+    all_train_results = []
+    all_valid_results = []
     best_split_result = []
 
     # Initialize an empty list to store predictions
-    train_predictions_lst = []  
-    valid_predictions_lst = [] 
+    all_train_predictions = []  
+    all_valid_predictions = [] 
 
     # Identify the splitting type
     if splitting_info['split_type'] == 'block_splits':
@@ -355,13 +360,13 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
             train_predictions = pipeline_model.transform(train_data).select(target_label, "market-price", "prediction", 'timestamp')
             valid_predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
 
-            if (splitting_info['split_type'] == "block_splits"):
+            if (splitting_info['split_type'] == "block_splits") and (model_type != "hyp_tuning"):
                 show_results(train_predictions.toPandas(), valid_predictions.toPandas(), model_name + " predictions on split " +  str(idx + 1))
             
             if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
                 # Append predictions to the list
-                train_predictions_lst.append(train_predictions) 
-                valid_predictions_lst.append(valid_predictions)
+                all_train_predictions.append(train_predictions) 
+                all_valid_predictions.append(valid_predictions)
 
             # Compute validation error by several evaluators
             train_eval_res = model_evaluation(target_label, train_predictions)
@@ -371,10 +376,11 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
             train_results = {
                 "Model": model_name,
                 "Type": model_type,
+                "Dataset": 'train',
                 "Splitting": splitting_info['split_type'],
                 "Features": features_name,
                 "Splits": idx + 1,
-                "Train&Validation": (train_size,valid_size),                
+                "Train / Validation": (train_size,valid_size),                
                 "Parameters": list(param.values()),
                 "RMSE": train_eval_res['rmse'],
                 "MSE": train_eval_res['mse'],
@@ -388,10 +394,11 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
             valid_results = {
                 "Model": model_name,
                 "Type": model_type,
+                "Dataset": 'valid',
                 "Splitting": splitting_info['split_type'],
                 "Features": features_name,
                 "Splits": idx + 1,
-                "Train&Validation": (train_size,valid_size),                
+                "Train / Validation": (train_size,valid_size),                
                 "Parameters": list(param.values()),
                 "RMSE": valid_eval_res['rmse'],
                 "MSE": valid_eval_res['mse'],
@@ -409,7 +416,9 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
 
             if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
                 # Store results for each split
-                results_lst.append(valid_results)
+                all_train_results.append(train_results)
+                all_valid_results.append(valid_results)
+                print(train_results)
                 print(valid_results)
         
         # Release Cache
@@ -429,14 +438,19 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
     
     if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
         # Transform dict to pandas dataset
-        results_lst_df = pd.DataFrame(results_lst)
+        all_train_results_df = pd.DataFrame(all_train_results)
+        all_valid_results_df = pd.DataFrame(all_valid_results)
 
-        # Iterate for each predictions dataset and concatenate it with the final one
-        final_valid_predictions = pd.DataFrame()
-        for pred in valid_predictions_lst:
-            final_valid_predictions = pd.concat([final_valid_predictions, pred.select("*").toPandas()], ignore_index=True)
+        # Iterate for each train and validation predictions and concatenate it with the final one
+        all_train_predictions_df = pd.DataFrame()
+        for pred in all_train_predictions:
+            all_train_predictions_df = pd.concat([all_train_predictions_df, pred.select("*").toPandas()], ignore_index=True)
 
-        return results_lst_df, final_valid_predictions
+        all_valid_predictions_df = pd.DataFrame()
+        for pred in all_valid_predictions:
+            all_valid_predictions_df = pd.concat([all_valid_predictions_df, pred.select("*").toPandas()], ignore_index=True)
+
+        return all_train_results_df, all_valid_results_df, all_train_predictions_df, all_valid_predictions_df
 
 ########################
 # --- SINGLE SPLIT --- #
