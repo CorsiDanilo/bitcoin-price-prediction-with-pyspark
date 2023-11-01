@@ -302,6 +302,10 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
     # Select the type of features to be used
     dataset = select_features(dataset, features_normalization, features, features_label, target_label)
 
+    # Plot to show
+    current_plot = 0
+    next_plot = 1
+
     # Get the number of samples
     num = dataset.count()
 
@@ -360,9 +364,12 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
             train_predictions = pipeline_model.transform(train_data).select(target_label, "market-price", "prediction", 'timestamp')
             valid_predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
 
-            if (splitting_info['split_type'] == "block_splits") and (model_type != "hyp_tuning"):
+            # Show plots
+            if (model_type != "hyp_tuning") and (current_plot == 1 or current_plot % 5 == 0 or next_plot % 5 == 0 or splitting_info['split_type'] == "block_splits"):
                 show_results(train_predictions.toPandas(), valid_predictions.toPandas(), model_name + " predictions on split " +  str(idx + 1))
-            
+            current_plot = current_plot + 1
+            next_plot = next_plot + 1
+
             if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
                 # Append predictions to the list
                 all_train_predictions.append(train_predictions) 
@@ -418,8 +425,6 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
                 # Store results for each split
                 all_train_results.append(train_results)
                 all_valid_results.append(valid_results)
-                print(train_results)
-                print(valid_results)
         
         # Release Cache
         train_data.unpersist()
@@ -428,7 +433,7 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
         if model_type == "hyp_tuning":
             # Store the best result for each split
             best_split_result.append(best_result) 
-            print(best_result)
+            print("Best parameters chosen for split " + str(idx + 1) + ": " + str(best_result["Parameters"]))
 
     if model_type == "hyp_tuning":
         # Transform dict to pandas dataset
