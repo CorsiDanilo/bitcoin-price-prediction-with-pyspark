@@ -116,7 +116,7 @@ def show_results(dataset, train, valid, title, onlyTrain):
 
     fig = dict(data=data, layout=layout)
     iplot(fig, filename = title)
-
+   
 '''
 Description: Returns the average of the results obtained
 Args:
@@ -377,7 +377,7 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
 
             # Show plots
             if (model_type != "hyp_tuning") and (current_plot == 1 or current_plot % 5 == 0 or next_plot % 5 == 0 or splitting_info['split_type'] == "block_splits"):
-                show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), model_name + " predictions on split " +  str(idx + 1), False)
+                show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), model_name + " predictions on split " +  str(idx + 1), False)            
             current_plot = current_plot + 1
             next_plot = next_plot + 1
 
