@@ -40,35 +40,43 @@ Args:
     title: Chart title
 Return: None
 '''
-def show_results(train, valid, title):
-    trace1 = go.Scatter(
-        x = train['timestamp'],
-        y = train['next-market-price'].astype(float),
-        mode = 'lines',
-        name = '[TRAIN] Next Market price (usd)'
-    )
+def show_results(dataset, train, valid, title, onlyTrain):
+    if not onlyTrain:     
+        trace1 = go.Scatter(
+            x = dataset['timestamp'],
+            y = dataset['next-market-price'].astype(float),
+            mode = 'lines',
+            name = 'Next Market price (usd)'
+        )
 
-    trace2 = go.Scatter(
-        x = train['timestamp'],
-        y = train['prediction'].astype(float),
-        mode = 'lines',
-        name = '[TRAIN] Predicted next makert price (usd)'
-    )
+        trace2 = go.Scatter(
+            x = train['timestamp'],
+            y = train['prediction'].astype(float),
+            mode = 'lines',
+            name = '(Train) Predicted next makert price (usd)'
+        )
 
-    trace3 = go.Scatter(
-        x = valid['timestamp'],
-        y = valid['next-market-price'].astype(float),
-        mode = 'lines',
-        name = '[VALID] Next Market price (usd)'
-    )
+        trace3 = go.Scatter(
+            x = valid['timestamp'],
+            y = valid['prediction'].astype(float),
+            mode = 'lines',
+            name = '(Valid) Next Market price (usd)'
+        )
+    else:
+        trace1 = go.Scatter(
+            x = train['timestamp'],
+            y = train['next-market-price'].astype(float),
+            mode = 'lines',
+            name = 'Next Market price (usd)'
+        )
 
-    trace4 = go.Scatter(
-        x = valid['timestamp'],
-        y = valid['prediction'].astype(float),
-        mode = 'lines',
-        name = '[VALID] Predicted next makert price (usd)'
-    )
-
+        trace2 = go.Scatter(
+            x = train['timestamp'],
+            y = train['prediction'].astype(float),
+            mode = 'lines',
+            name = 'Predicted next makert price (usd)'
+        )
+        
     layout = dict(
         title= title,
         xaxis=dict(
@@ -101,7 +109,11 @@ def show_results(train, valid, title):
         )
     )
 
-    data = [trace1,trace2,trace3,trace4]
+    if not onlyTrain:     
+        data = [trace1,trace2,trace3]
+    else:
+        data = [trace1,trace2]
+
     fig = dict(data=data, layout=layout)
     iplot(fig, filename = title)
 
@@ -296,7 +308,6 @@ Return:
     valid_results_df: All the validations splits performances in a pandas dataset
     train_predictions_df: All the train splits predictions in a pandas dataset
     valid_predictions_df: All the validations splits predictions in a pandas dataset
-
 '''
 def multiple_splits(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
     # Select the type of features to be used
@@ -366,7 +377,7 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
 
             # Show plots
             if (model_type != "hyp_tuning") and (current_plot == 1 or current_plot % 5 == 0 or next_plot % 5 == 0 or splitting_info['split_type'] == "block_splits"):
-                show_results(train_predictions.toPandas(), valid_predictions.toPandas(), model_name + " predictions on split " +  str(idx + 1))
+                show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), model_name + " predictions on split " +  str(idx + 1), False)
             current_plot = current_plot + 1
             next_plot = next_plot + 1
 
@@ -506,7 +517,10 @@ Args:
     features_label: The column name of features
     target_label: The column name of target variable
 Return: 
-    results_lst_df: Performances in a pandas dataset
+    train_results_df: All the train splits performances in a pandas dataset
+    valid_results_df: All the validations splits performances in a pandas dataset
+    train_predictions_df: All the train splits predictions in a pandas dataset
+    valid_predictions_df: All the validations splits predictions in a pandas dataset
 '''
 def single_split(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
     # Select the type of features to be used
@@ -514,13 +528,6 @@ def single_split(dataset, params, splitting_info, model_name, model_type, featur
 
     # Get the number of samples
     num = dataset.count()
-    
-    # Save results in a list
-    results_lst = []
-    best_split_result = []
-
-    # Initialize an empty list to store predictions
-    predictions_list = []  
 
     # Get training data and validation data
     train_data, valid_data = short_term_split(dataset, splitting_info['split_label'], splitting_info['split_value'])
@@ -551,66 +558,60 @@ def single_split(dataset, params, splitting_info, model_name, model_type, featur
         end = time.time()
 
         # Make predictions
-        predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
+        train_predictions = pipeline_model.transform(train_data).select(target_label, "market-price", "prediction", 'timestamp')
+        valid_predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
         
-        if model_type == "default" or model_type == "default_norm" or model_type == "cross_val" or model_type == "final_validated":
-            # Append predictions to the list	
-            predictions_list.append(predictions) 
+        # Show plots
+        show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), model_name + " predictions", False)
 
         # Compute validation error by several evaluators
-        eval_res = model_evaluation(target_label, predictions)
+        train_eval_res = model_evaluation(target_label, train_predictions)
+        valid_eval_res = model_evaluation(target_label, valid_predictions)
 
         # Use dict to store each result
-        results = {
+        train_results = {
             "Model": model_name,
             "Type": model_type,
+            "Dataset": 'train',
             "Splitting": splitting_info['split_type'],
-            "Features": features_name,          
+            "Features": features_name,
+            "Train / Validation": (train_size,valid_size),                
             "Parameters": list(param.values()),
-            "RMSE": eval_res['rmse'],
-            "MSE": eval_res['mse'],
-            "MAE": eval_res['mae'],
-            "MAPE": eval_res['mape'],
-            "R2": eval_res['r2'],
-            "Adjusted_R2": eval_res['adj_r2'],
+            "RMSE": train_eval_res['rmse'],
+            "MSE": train_eval_res['mse'],
+            "MAE": train_eval_res['mae'],
+            "MAPE": train_eval_res['mape'],
+            "R2": train_eval_res['r2'],
+            "Adjusted_R2": train_eval_res['adj_r2'],
             "Time": end - start,
         }
-        
-        if model_type == "hyp_tuning":
-            # Store the result with the lowest RMSE and the associated parameters
-            if results['RMSE'] < best_result['RMSE']:
-                best_result = results
 
-        if model_type == "default" or model_type == "default_norm" or model_type == "cross_val" or model_type == "final_validated":
-            # Store results for each split
-            results_lst.append(results)
-            print(results)
+        valid_results = {
+            "Model": model_name,
+            "Type": model_type,
+            "Dataset": 'valid',
+            "Splitting": splitting_info['split_type'],
+            "Features": features_name,
+            "Train / Validation": (train_size,valid_size),                
+            "Parameters": list(param.values()),
+            "RMSE": valid_eval_res['rmse'],
+            "MSE": valid_eval_res['mse'],
+            "MAE": valid_eval_res['mae'],
+            "MAPE": valid_eval_res['mape'],
+            "R2": valid_eval_res['r2'],
+            "Adjusted_R2": valid_eval_res['adj_r2'],
+            "Time": end - start,
+        }
         
     # Release Cache
     train_data.unpersist()
     valid_data.unpersist()
 
-    if model_type == "hyp_tuning":
-        # Store the best result for each split
-        best_split_result.append(best_result) 
-        print(best_result)
+    # Store train and validation results into pandas dataset
+    train_results_df = pd.DataFrame.from_dict(train_results, orient='index').T
+    valid_results_df = pd.DataFrame.from_dict(valid_results, orient='index').T
 
-    if model_type == "hyp_tuning":
-        # Transform dict to pandas dataset
-        best_split_result_df = pd.DataFrame(best_split_result)
-
-        return best_split_result_df
-    
-    if model_type == "default" or model_type == "default_norm" or model_type == "cross_val" or model_type == "final_validated":
-        # Transform dict to pandas dataset
-        results_lst_df = pd.DataFrame(results_lst)
-
-        # Iterate for each predictions dataset and concatenate it with the final one
-        final_predictions = pd.DataFrame()
-        for pred in predictions_list:
-            final_predictions = pd.concat([final_predictions, pred.select("*").toPandas()], ignore_index=True)
-
-        return results_lst_df, final_predictions
+    return train_results_df, valid_results_df, train_predictions.toPandas(), valid_predictions.toPandas()
         
 '''
 Description: Evaluation of the final trained model
@@ -658,8 +659,9 @@ def evaluate_trained_model(dataset, params, model_name, model_type, features_nor
         results = {
             "Model": model_name,
             "Type": model_type,
+            "Dataset": 'train',
             "Splitting": "whole_train_valid",
-            "Features": features_name,              
+            "Features": features_name,   
             "Parameters": [list(param.values())],
             "RMSE": eval_res['rmse'],
             "MSE": eval_res['mse'],
@@ -670,9 +672,10 @@ def evaluate_trained_model(dataset, params, model_name, model_type, features_nor
             "Time": end - start,
         }
 
-
     # Transform dict to pandas dataset
     results_df = pd.DataFrame(results)
-    print(results_df)
+
+    # Show plots
+    show_results(None, predictions.toPandas(), None, model_name + " prediction on the whole train / validation set", True)
         
     return results_df, pipeline_model, predictions.toPandas()
