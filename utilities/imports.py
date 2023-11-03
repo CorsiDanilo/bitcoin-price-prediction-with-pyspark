@@ -20,6 +20,7 @@ from pyspark.ml import PipelineModel
 import plotly.express as px
 import matplotlib.pyplot as plt
 from plotly.offline import init_notebook_mode, iplot, plot
+import plotly.io as pio
 import plotly.graph_objs as go
 import seaborn as sns
 

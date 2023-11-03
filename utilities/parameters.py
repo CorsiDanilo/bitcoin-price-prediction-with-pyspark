@@ -1,5 +1,16 @@
 from imports import *
 
+# Models
+LR = "LinearRegression"
+GLR = "GeneralizedLinearRegression"
+RF = "RandomForestRegressor"
+GBTR = "GradientBoostingTreeRegressor"
+
+#Spltting methods
+BS = "block_splits"
+WFS = "walk_forward_splits"
+SS = "single_split"
+
 # For reproducibility
 RANDOM_SEED = 42
 
@@ -11,19 +22,19 @@ Return:
     params: Parameters of the selected splitting type
 '''
 def get_splitting_params(split_type):
-    if split_type == "block_splits":
+    if split_type == BS:
         # Block splits time series
-        params = {'split_type':'block_splits',
+        params = {'split_type': BS,
                   'splits': 5}
-    elif split_type == "walk_forward_splits":
+    elif split_type == WFS:
         # Walk forward splits time series
-        params = {'split_type':'walk_forward_splits',
+        params = {'split_type': WFS,
                   'min_obser': 20000,
                   'sliding_window': 5000}
-    elif split_type == "single_split":
+    elif split_type == SS:
         # Single split time series
-        params = {'split_type':'single_split',
-                  'split_label':'months',
+        params = {'split_type': SS,
+                  'split_label': 'months',
                   'split_value': 1}
 
     return params
@@ -36,24 +47,24 @@ Return:
     params: Parameters list of the selected model
 '''
 def get_defaults_model_params(model_name):
-    if (model_name == 'LinearRegression'):
+    if (model_name == LR):
         params = {
             'maxIter' : [100],
             'regParam' : [0.0],
             'elasticNetParam' : [0.0]
         }   
-    if (model_name == 'GeneralizedLinearRegression'):
+    if (model_name == GLR):
         params = {
             'maxIter' : [25],
             'regParam' : [0]
         }
-    elif (model_name == 'RandomForestRegressor'):
+    elif (model_name == RF):
         params = {
             'numTrees' : [20],
             'maxDepth' : [5],
             'seed' : [RANDOM_SEED]
             }
-    elif (model_name == 'GradientBoostingTreeRegressor'):
+    elif (model_name == GBTR):
         params = {
             'maxIter' : [20],
             'maxDepth' : [5],
@@ -71,26 +82,26 @@ Return:
     params: Parameters list of the selected model
 '''
 def get_model_grid_params(model_name):
-    if (model_name == 'LinearRegression'):
+    if (model_name == LR):
         params = {
             'maxIter' : [5, 10, 50, 80, 100],
             'regParam' : np.arange(0,1,0.2).round(decimals=2),
             'elasticNetParam' : np.arange(0,1,0.2).round(decimals=2)
         }
-    if (model_name == 'GeneralizedLinearRegression'):
+    if (model_name == GLR):
         params = {
             'maxIter' : [5, 10, 50, 80],
             'regParam' : [0, 0.1, 0.2],
             'family': ['gaussian', 'gamma'],
             'link': ['log', 'identity', 'inverse']
         }
-    elif (model_name == 'RandomForestRegressor'):
+    elif (model_name == RF):
         params = {
             'numTrees' : [3, 5, 10, 20, 30],
             'maxDepth' : [3, 5, 10],
             'seed' : [RANDOM_SEED]
         }
-    elif (model_name == 'GradientBoostingTreeRegressor'):
+    elif (model_name == GBTR):
         params = {
             'maxIter' : [3, 5, 10, 20, 30],
             'maxDepth' : [3, 5, 10],
@@ -156,26 +167,26 @@ Return:
     params: Parameters list of the selected model
 '''
 def get_best_model_params(parameters, model_name):
-    if (model_name == 'LinearRegression'):
+    if (model_name == LR):
         params = {
             'maxIter' : [parameters[0]],
             'regParam' : [parameters[1]],
             'elasticNetParam' : [parameters[2]]
         }   
-    if (model_name == 'GeneralizedLinearRegression'):
+    if (model_name == GLR):
         params = {
             'maxIter' : [parameters[0]],
             'regParam' : [parameters[1]],
             'family': [parameters[2]],
             'link': [parameters[3]]
         }
-    elif (model_name == 'RandomForestRegressor'):
+    elif (model_name == RF):
         params = {
             'numTrees' : [parameters[0]],
             'maxDepth' : [parameters[1]],
             'seed' : [parameters[2]]
             }
-    elif (model_name == 'GradientBoostingTreeRegressor'):
+    elif (model_name == GBTR):
         params = {
             'maxIter' : [parameters[0]],
             'maxDepth' : [parameters[1]],

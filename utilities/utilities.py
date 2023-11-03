@@ -1,4 +1,5 @@
 from imports import *
+import parameters
 
 ###################
 # --- COMMONS --- #
@@ -149,27 +150,27 @@ Return:
     model: Initialized model
 '''
 def model_selection(model_name, param, features_label, target_label):
-    if model_name == "LinearRegression":
+    if model_name == parameters.LR:
         model = LinearRegression(featuresCol=features_label, \
                                     labelCol=target_label, \
                                     maxIter=param['maxIter'], \
                                     regParam=param['regParam'], \
                                     elasticNetParam=param['elasticNetParam'])
         
-    elif model_name == "GeneralizedLinearRegression":
+    elif model_name == parameters.GLR:
         model = GeneralizedLinearRegression(featuresCol=features_label, \
                                             labelCol=target_label, \
                                             maxIter=param['maxIter'], \
                                             regParam=param['regParam'])
 
-    elif model_name == "RandomForestRegressor":
+    elif model_name == parameters.RF:
         model = RandomForestRegressor(featuresCol=features_label, \
                                         labelCol=target_label, \
                                         numTrees = param["numTrees"], \
                                         maxDepth = param["maxDepth"], \
                                         seed=param['seed'])
 
-    elif model_name == "GradientBoostingTreeRegressor":
+    elif model_name == parameters.GBTR:
         model = GBTRegressor(featuresCol=features_label, \
                                 labelCol=target_label, \
                                 maxIter = param['maxIter'], \
@@ -330,9 +331,9 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
     all_valid_predictions = [] 
 
     # Identify the splitting type
-    if splitting_info['split_type'] == 'block_splits':
+    if splitting_info['split_type'] == parameters.BS:
         split_position_df = block_splits(num, splitting_info['splits'])
-    elif splitting_info['split_type'] == 'walk_forward_splits':
+    elif splitting_info['split_type'] == parameters.WFS:
         split_position_df = walk_forward_splits(num, splitting_info['min_obser'], splitting_info['sliding_window'])
 
     for position in split_position_df.itertuples():
@@ -375,8 +376,8 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
             train_predictions = pipeline_model.transform(train_data).select(target_label, "market-price", "prediction", 'timestamp')
             valid_predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
 
-            # Show plots
-            if (model_type != "hyp_tuning") and (current_plot == 1 or current_plot % 5 == 0 or next_plot % 5 == 0 or splitting_info['split_type'] == "block_splits"):
+            # Show plots in pairs of 2, only if the split is a multiple of 5 (in case of block_split show them all) except for hyperparameter tuning
+            if (model_type != "hyp_tuning") and (current_plot == 1 or current_plot % 5 == 0 or next_plot % 5 == 0 or splitting_info['split_type'] == parameters.BS):
                 show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), model_name + " predictions on split " +  str(idx + 1), False)            
             current_plot = current_plot + 1
             next_plot = next_plot + 1
