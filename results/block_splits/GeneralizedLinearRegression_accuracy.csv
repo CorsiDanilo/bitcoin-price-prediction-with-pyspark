@@ -1,0 +1,2 @@
+Model,Features,Splitting,Accuracy (default),Accuracy (validated)
+GeneralizedLinearRegression,all_features,block_splits,51.72571428571429,51.72571428571429
