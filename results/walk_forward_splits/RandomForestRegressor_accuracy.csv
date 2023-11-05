@@ -1,0 +1,2 @@
+Model,Features,Splitting,Accuracy (default),Accuracy (validated)
+RandomForestRegressor,all_features,walk_forward_splits,46.57272727272727,47.25636363636364
