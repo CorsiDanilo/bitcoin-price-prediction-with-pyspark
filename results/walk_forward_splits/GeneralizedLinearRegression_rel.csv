@@ -1,3 +1,3 @@
-Model,Type,Splitting,Features,Parameters,RMSE,MSE,MAE,MAPE,R2,Adjusted_R2,Time
-GeneralizedLinearRegression,default_norm,walk_forward_splits,all_features,"[25, 0]",2547.8560942595873,18360147.69289412,2145.693637139703,0.062407728907126064,-0.5050447148765951,-0.5062499558895094,0.4053913246501576
-GeneralizedLinearRegression,cross_val,walk_forward_splits,all_features,"[5, 0, 'gaussian', 'log']",2547.8560942595873,18360147.69289412,2145.693637139703,0.062407728907126064,-0.5050447148765951,-0.5062499558895094,0.34930955279957165
+Model,Type,Dataset,Splitting,Features,Parameters,RMSE,MSE,MAE,MAPE,R2,Adjusted_R2,Time
+GeneralizedLinearRegression,default_norm,valid,walk_forward_splits,most_rel_features_norm,"[25, 0]",9119.947926552186,190866543.34457338,7993.093986125549,0.24069218985097615,-28.99250959748778,-29.01652762319147,0.26610100269317627
+GeneralizedLinearRegression,cross_val,valid,walk_forward_splits,most_rel_features_norm,"[5, 0.2, 'gaussian', 'log']",9083.817925877149,189161836.2044839,7974.021442944291,0.2393251883781384,-28.726855362025063,-28.750660651604274,0.21272533590143378

@@ -391,6 +391,11 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
             train_eval_res = model_evaluation(target_label, train_predictions)
             valid_eval_res = model_evaluation(target_label, valid_predictions)
 
+            # Shows whether features are normalised or not
+            if features_normalization:
+                new_features_name = features_name + "_norm"
+                features_name = new_features_name
+
             # Use dict to store each result
             train_results = {
                 "Model": model_name,
@@ -569,6 +574,11 @@ def single_split(dataset, params, splitting_info, model_name, model_type, featur
         train_eval_res = model_evaluation(target_label, train_predictions)
         valid_eval_res = model_evaluation(target_label, valid_predictions)
 
+        # Shows whether features are normalised or not
+        if features_normalization:
+            new_features_name = features_name + "_norm"
+            features_name = new_features_name
+
         # Use dict to store each result
         train_results = {
             "Model": model_name,
@@ -655,6 +665,11 @@ def evaluate_trained_model(dataset, params, model_name, model_type, features_nor
 
         # Compute validation error by several evaluators
         eval_res = model_evaluation(target_label, predictions)
+
+        # Shows whether features are normalised or not
+        if features_normalization:
+            new_features_name = features_name + "_norm"
+            features_name = new_features_name
 
         #  Use dict to store each result
         results = {
