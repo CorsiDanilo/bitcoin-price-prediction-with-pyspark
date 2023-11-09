@@ -17,6 +17,7 @@ The cryptocurrency Bitcoin has attracted the attention of many people in recent 
 I chose to collect data on the Bitcoin blockchain using the API of the website Blockchain.org, the most relevant information was retrieved from the last four years to the present day (a period for which there were moments of high volatility but also a lot of price lateralization). The procedure has been made as automatic as possible so that the same periods are considered each time the entire procedure is run. The features taken under consideration were divided into several categories:
 
 - **Currency Statistics**
+   - **ohlcv:** stands for “Open, High, Low, Close and Volume”and it's a list of the five types of data that are most common in financial analysis.
    - **market-price:** the average USD market price across major bitcoin exchanges.
    - **trade-volume:** the total USD value of trading volume on major bitcoin exchanges.
    - **total-bitcoins:** the total number of mined bitcoin that are currently circulating on the network.
