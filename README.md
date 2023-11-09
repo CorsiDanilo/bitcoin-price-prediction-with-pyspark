@@ -19,7 +19,7 @@ I chose to collect data on the Bitcoin blockchain using the API of the website B
 - **Currency Statistics**
    - **ohlcv:** stands for “Open, High, Low, Close and Volume”and it's a list of the five types of data that are most common in financial analysis.
    - **market-price:** the average USD market price across major bitcoin exchanges.
-   - **trade-volume:** the total USD value of trading volume on major bitcoin exchanges.
+   - **trade-volume-usd:** the total USD value of trading volume on major bitcoin exchanges.
    - **total-bitcoins:** the total number of mined bitcoin that are currently circulating on the network.
    - **market-cap:** the total USD value of bitcoin in circulation.
 
