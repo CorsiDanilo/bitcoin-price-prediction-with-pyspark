@@ -383,7 +383,7 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
 
             # Show plots in pairs of 2, only if the split is a multiple of 5 (in case of block_split show them all) except for hyperparameter tuning
             if (model_type != "hyp_tuning") and (current_plot == 1 or current_plot % 5 == 0 or next_plot % 5 == 0 or splitting_info['split_type'] == parameters.BS):
-                show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), model_name + " predictions on split " +  str(idx + 1), False)            
+                show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), model_name + " predictions on split " +  str(idx + 1) + " with " + features_name, False)            
             current_plot = current_plot + 1
             next_plot = next_plot + 1
 
@@ -573,7 +573,7 @@ def single_split(dataset, params, splitting_info, model_name, model_type, featur
         valid_predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
         
         # Show plots
-        show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), model_name + " predictions", False)
+        show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), model_name + " predictions with " + features_name , False)
 
         # Compute validation error by several evaluators
         train_eval_res = model_evaluation(target_label, train_predictions)
