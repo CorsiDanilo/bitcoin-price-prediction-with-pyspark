@@ -14,10 +14,10 @@ La Sapienza, University of Rome
 The cryptocurrency Bitcoin has attracted the attention of many people in recent years. However, it's price fluctuation can be extremely unpredictable, which makes it difficult to predict when the right time to buy or sell this digital currency will be. In this context, prediction Bitcoin prices can be a competitive advantage for investors and traders, as it could allow them to make informed decisions on the right time to enter or exit the market. In this project, I will analyze some machine learning techniques to understand, through the processing of historical data, how accurately the price of Bitcoin can be predicted and whether this can provide added value to cryptocurrency investors and traders.
 
 ## **Dataset**
-I chose to collect data on the Bitcoin blockchain using the API of the website Blockchain.org, the most relevant information was retrieved from the last four years to the present day (a period for which there were moments of high volatility but also a lot of price lateralization). The procedure has been made as automatic as possible so that the same periods are considered each time the entire procedure is run. The features taken under consideration were divided into several categories:
+o	I chose to collect data on the Bitcoin blockchain using the API of the website Blockchain.org and the price information from two famous exchange Binance and Kraken, the most relevant information was retrieved from the last four years to the present day (a period for which there were moments of high volatility but also a lot of price lateralization). The procedure has been made as automatic as possible so that the same periods are considered each time the entire procedure is run. The features taken under consideration were divided into several categories:
 
 - **Currency Statistics**
-   - **ohlcv:** stands for “Open, High, Low, Close and Volume”and it's a list of the five types of data that are most common in financial analysis.
+   - **ohlcv:** stands for “Open, High, Low, Close and Volume” and it's a list of the five types of data that are most common in financial analysis regarding price.
    - **market-price:** the average USD market price across major bitcoin exchanges.
    - **trade-volume-usd:** the total USD value of trading volume on major bitcoin exchanges.
    - **total-bitcoins:** the total number of mined bitcoin that are currently circulating on the network.
@@ -45,10 +45,15 @@ Later on will be added some new features that could help us predict the Bitcoin 
 *   **rate-of-change:** indicator that measures the percentage of price changes over a period of time, allows investors to spot security momentum and other trends
 *   **sma-x-days:** indicators that calculate the average price over a specified number of days. They are commonly used by traders to identify trends and potential buy or sell signals
 
-All these features will be divided into 3 groups based on their correlation and importance with respect to the market price using the Pearson method and Random Forest Regressor to see the differences according to their use:
-* **All:** contains all features
-* **Most relevant:** contains features that have a relevance value > 0.5
-* **Least relevant:** contains the features that have a relevance value <= 0.5
+All the features will be divided into two distinct groups:
+* **Currency features:** contains currency statistics and ohlcv statistics
+* **Currency and blockchain features:** contains the currency features plus the blockchain features divided based on their correlation value: 
+   * If >= 0.5, then then they will be considered the **most correlated**
+   * If < 0.5, then then they will be considered the **least correlated**
+
+The strategy for will be as follows:
+*	Test models with currency features
+*	See if by adding the blockchain most and least correlated features to them improves the situation
 
 The whole dataset will be splitted into two sets:
 * **Train / Validation set:** will be used to train the models and validate the performances
@@ -86,9 +91,9 @@ For each approach the train / validation set will be split according to the chos
 ## **Evaluation framework:**
 Different types of metrics will be used, including: **RMSE (Root Mean Squared Error)**, **MSE (Mean Squared Error)**, **MAE (Mean Absolute Error)**, **MAPE (Mean Absolute Percentage Error)**, **R2 (R-squared)** and **Adjusted R2** to get a complete picture of the performance of the various models.
 
-Since predicting the price accurately is very difficult we will see also how good the models are at predicting whether the price will go up or down. 
+Since predicting the price accurately is very difficult I will see also how good the models are at predicting whether the price will go up or down. 
 For each row in our predictions let's consider the actual market-price, next-market-price and our predicted next-market-price (prediction).
-We compute whether each prediction is correct (1) or not (0):
+I compute whether each prediction is correct (1) or not (0):
 
 $$ 
 prediction\_is\_correct
@@ -99,14 +104,14 @@ prediction\_is\_correct
 \end{cases}
 $$
 
-Then we count the number of correct prediction:
+Then I count the number of correct prediction:
 $$ 
 correct\_predictions
 = 
 \sum_{i=0}^{total\_rows} prediction\_is\_correct
 $$
 
-Finally we compute the percentage of **accuracy** of the model:
+Finally I compute the percentage of **accuracy** of the model:
 $$
 \\ 
 accuracy 
@@ -235,9 +240,3 @@ The project to be executed from start to finish follows the following pipeline:
 - **imports.py:** contains imports of external libraries
 - **parameters.py:** contains the parameters used by the models during the train / validation phase
 - **utilities.py:** contains functions that are used by the models during the train / validation phase
-
-# Final results ❗
-**RMSE (The lower the better)**
-![image info](./results/final/final.png)
-**Accuracy (The higher the better)**
-![image info](./results/final/final_accuracy.png)
