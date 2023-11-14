@@ -42,7 +42,6 @@ o	I chose to collect data on the Bitcoin blockchain using the API of the website
 
 Later on will be added some new features that could help us predict the Bitcoin price:
 *   **next-market-price:** represents the price of Bitcoin for the next day (this will be the target variable on which to make predictions)
-*   **rate-of-change:** indicator that measures the percentage of price changes over a period of time, allows investors to spot security momentum and other trends
 *   **sma-x-days:** indicators that calculate the average price over a specified number of days. They are commonly used by traders to identify trends and potential buy or sell signals
 
 All the features will be divided into two distinct groups:
