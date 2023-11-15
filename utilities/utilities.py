@@ -310,7 +310,7 @@ Return:
     train_predictions_df: All the train splits predictions in a pandas dataset
     valid_predictions_df: All the validations splits predictions in a pandas dataset
 '''
-def multiple_splits(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
+def multiple_splits(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label, slow_operations):
     # Select the type of features to be used
     dataset = select_features(dataset, features_normalization, features, features_label, target_label)
 
@@ -382,10 +382,12 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
             valid_predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
 
             # Show plots in pairs of 2, only if the split is a multiple of 5 (in case of block_split show them all) except for hyperparameter tuning
-            if (model_type != "hyp_tuning") and (current_plot == 1 or current_plot % 5 == 0 or next_plot % 5 == 0 or splitting_info['split_type'] == parameters.BS):
-                show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), model_name + " predictions on split " +  str(idx + 1) + " with " + features_name, False)            
-            current_plot = current_plot + 1
-            next_plot = next_plot + 1
+            title = model_name + " predictions on split " +  str(idx + 1) + " with " + features_name
+            if slow_operations:
+                if (model_type != "hyp_tuning") and (current_plot == 1 or current_plot % 5 == 0 or next_plot % 5 == 0 or splitting_info['split_type'] == parameters.BS):
+                    show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), title, False)            
+                current_plot = current_plot + 1
+                next_plot = next_plot + 1
 
             if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
                 # Append predictions to the list
@@ -528,7 +530,7 @@ Return:
     train_predictions_df: All the train splits predictions in a pandas dataset
     valid_predictions_df: All the validations splits predictions in a pandas dataset
 '''
-def single_split(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label):
+def single_split(dataset, params, splitting_info, model_name, model_type, features_normalization, features, features_name, features_label, target_label, slow_operations):
     # Select the type of features to be used
     dataset = select_features(dataset, features_normalization, features, features_label, target_label)
 
@@ -573,7 +575,9 @@ def single_split(dataset, params, splitting_info, model_name, model_type, featur
         valid_predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
         
         # Show plots
-        show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), model_name + " predictions with " + features_name , False)
+        title = model_name + " predictions with " + features_name
+        if slow_operations:
+            show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), title, False)
 
         # Compute validation error by several evaluators
         train_eval_res = model_evaluation(target_label, train_predictions)

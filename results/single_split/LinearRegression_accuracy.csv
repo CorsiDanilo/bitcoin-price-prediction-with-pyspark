@@ -1,2 +1,2 @@
 Model,Features,Splitting,Accuracy (default),Accuracy (tuned)
-LinearRegression,least_rel_features,single_split,53.0241935483871,56.75403225806451
+LinearRegression,base_and_most_corr_features_norm,single_split,46.706989247311824,50.26881720430107

@@ -14,7 +14,7 @@ La Sapienza, University of Rome
 The cryptocurrency Bitcoin has attracted the attention of many people in recent years. However, it's price fluctuation can be extremely unpredictable, which makes it difficult to predict when the right time to buy or sell this digital currency will be. In this context, prediction Bitcoin prices can be a competitive advantage for investors and traders, as it could allow them to make informed decisions on the right time to enter or exit the market. In this project, I will analyze some machine learning techniques to understand, through the processing of historical data, how accurately the price of Bitcoin can be predicted and whether this can provide added value to cryptocurrency investors and traders.
 
 ## **Dataset**
-o	I chose to collect data on the Bitcoin blockchain using the API of the website Blockchain.org and the price information from two famous exchange Binance and Kraken, the most relevant information was retrieved from the last four years to the present day (a period for which there were moments of high volatility but also a lot of price lateralization). The procedure has been made as automatic as possible so that the same periods are considered each time the entire procedure is run. The features taken under consideration were divided into several categories:
+I chose to collect data on the Bitcoin blockchain using the API of the website Blockchain.org and the price information from two famous exchange Binance and Kraken, the most relevant information was retrieved from the last four years to the present day (a period for which there were moments of high volatility but also a lot of price lateralization). The procedure has been made as automatic as possible so that the same periods are considered each time the entire procedure is run. The features taken under consideration were divided into several categories:
 
 - **Currency Statistics**
    - **ohlcv:** stands for “Open, High, Low, Close and Volume” and it's a list of the five types of data that are most common in financial analysis regarding price.
@@ -43,16 +43,17 @@ o	I chose to collect data on the Bitcoin blockchain using the API of the website
 Later on will be added some new features that could help us predict the Bitcoin price:
 *   **next-market-price:** represents the price of Bitcoin for the next day (this will be the target variable on which to make predictions)
 *   **sma-x-days:** indicators that calculate the average price over a specified number of days. They are commonly used by traders to identify trends and potential buy or sell signals
+*   **avg-ohlc-price:** indicators that calculate the open, high, low and close average price over 7 days.
 
 All the features will be divided into two distinct groups:
-* **Currency features:** contains currency statistics and ohlcv statistics
-* **Currency and blockchain features:** contains the currency features plus the blockchain features divided based on their correlation value: 
-   * If >= 0.5, then then they will be considered the **most correlated**
-   * If < 0.5, then then they will be considered the **least correlated**
+- **Base features:** contains ohlcv and currency statistics
+- **Base and additional features:** contains the Base features plus the additional features divided based on their correlation value: 
+    - If >= 0.6, then then they will be considered the **most correlated**
+    - If < 0.6, then then they will be considered the **least correlated**
 
-The strategy for will be as follows:
-*	Test models with currency features
-*	See if by adding the blockchain most and least correlated features to them improves the situation
+The strategy for the next notebooks will be as follows:
+- Test models with base features
+- See if by adding the additional most and least correlated features to them improves the situation
 
 The whole dataset will be splitted into two sets:
 * **Train / Validation set:** will be used to train the models and validate the performances

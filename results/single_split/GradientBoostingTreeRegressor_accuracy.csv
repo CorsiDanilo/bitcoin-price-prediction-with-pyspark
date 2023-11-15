@@ -1,2 +1,2 @@
 Model,Features,Splitting,Accuracy (default),Accuracy (tuned)
-GradientBoostingTreeRegressor,least_rel_features_norm,single_split,54.200268817204304,55.0739247311828
+GradientBoostingTreeRegressor,base_and_least_corr_features,single_split,54.53629032258065,55.77956989247311
