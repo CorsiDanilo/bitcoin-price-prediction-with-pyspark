@@ -1,2 +1,2 @@
 Model,Features,Splitting,Accuracy (default),Accuracy (tuned)
-LinearRegression,most_rel_features_norm,walk_forward_splits,47.373636363636365,48.21454545454545
+LinearRegression,base_features_norm,walk_forward_splits,48.015454545454546,50.306363636363635

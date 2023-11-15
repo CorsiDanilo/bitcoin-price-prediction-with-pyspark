@@ -1,2 +1,2 @@
 Model,Features,Splitting,Accuracy (default),Accuracy (tuned)
-GradientBoostingTreeRegressor,most_rel_features,walk_forward_splits,49.02090909090909,49.480000000000004
+GradientBoostingTreeRegressor,base_features,walk_forward_splits,49.03272727272727,50.00818181818182

@@ -384,7 +384,7 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
             # Show plots in pairs of 2, only if the split is a multiple of 5 (in case of block_split show them all) except for hyperparameter tuning
             title = model_name + " predictions on split " +  str(idx + 1) + " with " + features_name
             if slow_operations:
-                if (model_type != "hyp_tuning") and (current_plot == 1 or current_plot % 5 == 0 or next_plot % 5 == 0 or splitting_info['split_type'] == parameters.BS):
+                if (model_type != "hyp_tuning") and (current_plot == 1 or current_plot == 9 or current_plot == 19 or current_plot % 5 == 0 or next_plot % 5 == 0 or splitting_info['split_type'] == parameters.BS):
                     show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), title, False)            
                 current_plot = current_plot + 1
                 next_plot = next_plot + 1
