@@ -1,2 +1,2 @@
-Model,Features,Splitting,Accuracy (default),Accuracy (validated)
-LinearRegression,all_features,block_splits,51.72571428571429,53.6
+Model,Features,Splitting,Accuracy (default),Accuracy (tuned)
+LinearRegression,base_and_least_corr_features_norm,block_splits,48.21197102554327,46.1646969119329

@@ -1,2 +1,2 @@
-Model,Features,Splitting,Accuracy (default),Accuracy (validated)
-GeneralizedLinearRegression,most_rel_features_norm,block_splits,50.076190476190476,50.076190476190476
+Model,Features,Splitting,Accuracy (default),Accuracy (tuned)
+GeneralizedLinearRegression,base_and_least_corr_features_norm,block_splits,48.21197102554327,48.21578345406024
