@@ -1,5 +1,31 @@
 from imports import *
 
+###################
+# --- COMMONS --- #
+###################
+
+'''
+Description: Display the dataset information
+Args:
+    dataset: Dataset to show
+Return: None
+'''
+def dataset_info(dataset):
+  # Print dataset
+  dataset.show(20)
+
+  # Get the number of rows
+  num_rows = dataset.count()
+
+  # Get the number of columns
+  num_columns = len(dataset.columns)
+
+  # Print the shape of the dataset
+  print("Shape:", (num_rows, num_columns))
+
+  # Print the schema of the dataset
+  dataset.printSchema()
+
 '''
 Description: Plot the division of the main dataset into train / validation and test set
 Args:

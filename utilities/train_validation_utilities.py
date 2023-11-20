@@ -1,9 +1,31 @@
 from imports import *
-import parameters
+import train_validation_parameters
 
 ###################
 # --- COMMONS --- #
 ###################
+
+'''
+Description: Display the dataset information
+Args:
+    dataset: Dataset to show
+Return: None
+'''
+def dataset_info(dataset):
+  # Print dataset
+  dataset.show(20)
+
+  # Get the number of rows
+  num_rows = dataset.count()
+
+  # Get the number of columns
+  num_columns = len(dataset.columns)
+
+  # Print the shape of the dataset
+  print("Shape:", (num_rows, num_columns))
+
+  # Print the schema of the dataset
+  dataset.printSchema()
 
 '''
 Description: Return the dataset with the selected features
@@ -150,27 +172,27 @@ Return:
     model: Initialized model
 '''
 def model_selection(model_name, param, features_label, target_label):
-    if model_name == parameters.LR:
+    if model_name == train_validation_parameters.LR:
         model = LinearRegression(featuresCol=features_label, \
                                     labelCol=target_label, \
                                     maxIter=param['maxIter'], \
                                     regParam=param['regParam'], \
                                     elasticNetParam=param['elasticNetParam'])
         
-    elif model_name == parameters.GLR:
+    elif model_name == train_validation_parameters.GLR:
         model = GeneralizedLinearRegression(featuresCol=features_label, \
                                             labelCol=target_label, \
                                             maxIter=param['maxIter'], \
                                             regParam=param['regParam'])
 
-    elif model_name == parameters.RF:
+    elif model_name == train_validation_parameters.RF:
         model = RandomForestRegressor(featuresCol=features_label, \
                                         labelCol=target_label, \
                                         numTrees = param["numTrees"], \
                                         maxDepth = param["maxDepth"], \
                                         seed=param['seed'])
 
-    elif model_name == parameters.GBTR:
+    elif model_name == train_validation_parameters.GBTR:
         model = GBTRegressor(featuresCol=features_label, \
                                 labelCol=target_label, \
                                 maxIter = param['maxIter'], \
@@ -336,9 +358,9 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
     all_valid_predictions = [] 
 
     # Identify the splitting type
-    if splitting_info['split_type'] == parameters.BS:
+    if splitting_info['split_type'] == train_validation_parameters.BS:
         split_position_df = block_splits(num, splitting_info['splits'])
-    elif splitting_info['split_type'] == parameters.WFS:
+    elif splitting_info['split_type'] == train_validation_parameters.WFS:
         split_position_df = walk_forward_splits(num, splitting_info['min_obser'], splitting_info['sliding_window'])
 
     for position in split_position_df.itertuples():
