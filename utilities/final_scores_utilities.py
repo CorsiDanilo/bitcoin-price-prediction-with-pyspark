@@ -1,4 +1,5 @@
 from imports import *
+from plotly.subplots import make_subplots
 
 ######################################
 # --- TRAIN / VALIDATION RESULTS --- #
@@ -26,36 +27,46 @@ def dataset_info(dataset):
   # Print the schema of the dataset
   dataset.printSchema()
 
+def train_val_bar_plot_results(grouped, colors, x, y, title):
+    fig = make_subplots(rows=3, cols=4, subplot_titles=[f'{model} ({splitting})' for ((splitting, model), _) in grouped])
 
-def train_val_bar_plot_results(grouped, colors, legend, x, y, title):
-    fig, axs = plt.subplots(3, 4, figsize=(15, 10))
-    axs = axs.flatten()
+    for i, ((splitting, model), group) in enumerate(grouped):
+        row = (i // 4) + 1
+        col = (i % 4) + 1
 
-    for ((splitting, model), group), ax in zip(grouped, axs):
-        bar_plot = group.plot.bar(x=x, y=y, ax=ax, title=f'{model} ({splitting})', color=colors, legend=False)
-        bar_plot.set_xticklabels(bar_plot.get_xticklabels(), rotation=0)
-        bar_plot.set_ylabel(y)
+        fig.add_trace(
+            go.Bar(x=group[x], y=group[y], name=model, marker_color=colors),
+            row=row, col=col
+        )
 
-    fig.suptitle(title, weight='bold')
+        fig.update_xaxes(title_text=x, row=row, col=col)
+        fig.update_yaxes(title_text=y, row=row, col=col)
 
-    plt.tight_layout()
-    plt.show()
+    fig.update_layout(title=title, showlegend=False, width=1500, height=1000, title_font=dict(size=24, color='black'))
+    fig.show()
 
-def train_val_bar_plot_accuracy(grouped, colors, legend, x, title):
-    fig, axs = plt.subplots(1, 3, figsize=(15, 5))
-    axs = axs.flatten()
+def train_val_bar_plot_accuracy(grouped, colors, legend, x, y1, y2, title):
+    fig = make_subplots(rows=1, cols=3, subplot_titles=[f'{splitting}' for splitting, _ in grouped])
 
-    for (name, group), ax in zip(grouped, axs):
-        bar_plot = group.plot.bar(x=x, title=name, ax=ax, legend=False, color=colors)
-        bar_plot.set_xticklabels(bar_plot.get_xticklabels(), rotation=0)
-        bar_plot.set_ylabel('Accuracy (%)')
+    for i, (splitting, group) in enumerate(grouped):
+        row = (i // 3) + 1
+        col = (i % 3) + 1
 
-    fig.legend(legend, loc='upper right', bbox_to_anchor=(1.1, 1))
-    fig.suptitle(title, weight='bold')
+        fig.add_trace(
+            go.Bar(x=group[x], y=group[y1], name=legend[0], marker_color=colors[0], showlegend=(i==0)),
+            row=row, col=col
+        )
 
-    plt.tight_layout()
-    plt.yscale('linear')
-    plt.show()
+        fig.add_trace(
+            go.Bar(x=group[x], y=group[y2], name=legend[1], marker_color=colors[1], showlegend=(i==0)),
+            row=row, col=col
+        )
+
+        fig.update_xaxes(title_text=x, row=row, col=col)
+        fig.update_yaxes(title_text='Accuracy', row=row, col=col)
+
+    fig.update_layout(title=title, showlegend=True, width=1500, height=500, title_font=dict(size=24, color='black'))
+    fig.show()
 
 ########################
 # --- TEST RESULTS --- #
@@ -330,17 +341,23 @@ def model_accuracy(dataset):
 
     return accuracy
 
-def test_bar_plot(grouped, colors, legend, x, y, title):
-    fig, axs = plt.subplots(1, 4, figsize=(15, 5))
-    axs = axs.flatten()
+def test_bar_plot(grouped, colors, x, y, title):
+    fig = make_subplots(rows=1, cols=4, subplot_titles=[f'{name}' for name, _ in grouped])
 
-    for (name, group), ax in zip(grouped, axs):
-        bar_plot = group.plot.bar(x=x, y=y, title=name, ax=ax, legend=False, color=colors)
-        bar_plot.set_xticklabels(bar_plot.get_xticklabels(), rotation=0)
-        bar_plot.set_ylabel(y)
+    for i, (name, group) in enumerate(grouped):
+        row = (i // 4) + 1
+        col = (i % 4) + 1
 
-    fig.suptitle(title, weight='bold')
+        # Create a list of colors for each bar in the plot
+        bar_colors = [colors[j%len(colors)] for j in range(len(group[x]))]
 
-    plt.tight_layout()
-    plt.yscale('linear')
-    plt.show()
+        fig.add_trace(
+            go.Bar(x=group[x], y=group[y], name=name, marker_color=bar_colors, showlegend=False),
+            row=row, col=col
+        )
+
+        fig.update_xaxes(title_text=x, row=row, col=col)
+        fig.update_yaxes(title_text=y, row=row, col=col)
+
+    fig.update_layout(title=title, showlegend=True, width=1500, height=500, title_font=dict(size=24, color='black'))
+    fig.show()
