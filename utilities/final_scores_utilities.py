@@ -1,5 +1,48 @@
 from imports import *
-from plotly.subplots import make_subplots
+
+#############################
+# --- USEFUL PARAMETERS --- #
+#############################
+
+#Plotting parameters
+colors = ['#636ffb', '#ef553b']
+legend = ["Default", "Tuned"]
+
+# Define the order for 'Splitting' and 'Model' columns
+splitting_order = ['Block splits', 'Walk-forward splits', 'Single split']
+model_order = ['LR', 'GLR', 'RF', 'GBTR']
+
+# Mapping for models names
+model_mapping = {
+    "LinearRegression": "LR",
+    "GeneralizedLinearRegression": "GLR",
+    "RandomForestRegressor": "RF",
+    "GradientBoostingTreeRegressor": "GBTR",
+}
+
+# Mapping for type names
+type_mapping = {
+    "default_norm": "Default",
+    "default": "Default",
+    "cross_val": "Tuned",
+    "tuned": "Tuned",
+}
+
+# Mapping for splits names
+splitting_mapping = {
+    "block_splits": "Block splits",
+    "walk_forward_splits": "Walk-forward splits",
+    "single_split": "Single split"
+}
+
+features_mapping = {
+    "base_features": "Base features",
+    "base_and_most_corr_features": "Base + most corr. features",
+    "base_and_least_corr_features": "Base + least corr. features",
+    "base__features_norm": "Base features(norm.)",
+    "base_and_most_corr_features_norm": "Base + most corr. features(norm.)",
+    "base_and_least_corr_features_norm": "Base + least corr. features (norm.)"
+}
 
 ######################################
 # --- TRAIN / VALIDATION RESULTS --- #
@@ -27,25 +70,73 @@ def dataset_info(dataset):
   # Print the schema of the dataset
   dataset.printSchema()
 
-def train_val_bar_plot_results(grouped, colors, x, y, title):
-    fig = make_subplots(rows=3, cols=4, subplot_titles=[f'{model} ({splitting})' for ((splitting, model), _) in grouped])
+def get_all_results(splits_list, models_list, result_dir):
+    dataset = pd.DataFrame(columns=['Model', 'Type', 'Dataset', 'Splitting', 'Features', 'Parameters', 'RMSE', 'MSE', 'MAE', 'MAPE', 'R2', 'Adjusted_R2', 'Time'])
 
-    for i, ((splitting, model), group) in enumerate(grouped):
-        row = (i // 4) + 1
-        col = (i % 4) + 1
+    for split in splits_list:
+        for model in models_list:
+            if split == splits_list[0]: # block_splits
+                dataset = pd.concat([dataset, pd.read_csv(result_dir + "/" + split + "/" + model + "_all.csv")], ignore_index=True)
+            elif split == splits_list[1]: # walk_forward_splits
+                dataset = pd.concat([dataset, pd.read_csv(result_dir + "/" + split + "/" + model + "_all.csv")], ignore_index=True)
+            elif split == splits_list[2]: # single_split
+                dataset = pd.concat([dataset, pd.read_csv(result_dir + "/" + split + "/" + model + "_all.csv")], ignore_index=True)
+    
+    return dataset
 
-        fig.add_trace(
-            go.Bar(x=group[x], y=group[y], name=model, marker_color=colors),
-            row=row, col=col
-        )
+def get_rel_results(splits_list, models_list, result_dir):
+    results = pd.DataFrame(columns=['Model', 'Type', 'Dataset', 'Splitting', 'Features', 'Parameters', 'RMSE', 'MSE', 'MAE', 'MAPE', 'R2', 'Adjusted_R2', 'Time'])
+    accuracy = pd.DataFrame(columns=['Model', 'Features', 'Splitting', 'Accuracy (default)', 'Accuracy (tuned)'])
+    for split in splits_list:
+        for model in models_list:
+            if split == splits_list[0]: # block_splits
+                results = pd.concat([results, pd.read_csv(result_dir + "/" + split + "/" + model + "_rel.csv")], ignore_index=True)
+                accuracy = pd.concat([accuracy, pd.read_csv(result_dir + "/" + split + "/" + model + "_accuracy.csv")], ignore_index=True)
+            elif split == splits_list[1]: # walk_forward_splits
+                results = pd.concat([results, pd.read_csv(result_dir + "/" + split + "/" + model + "_rel.csv")], ignore_index=True)
+                accuracy = pd.concat([accuracy, pd.read_csv(result_dir + "/" + split + "/" + model + "_accuracy.csv")], ignore_index=True)
+            elif split == splits_list[2]: # single_split
+                results = pd.concat([results, pd.read_csv(result_dir + "/" + split + "/" + model + "_rel.csv")], ignore_index=True)
+                accuracy = pd.concat([accuracy, pd.read_csv(result_dir + "/" + split + "/" + model + "_accuracy.csv")], ignore_index=True)
+    
+    return results, accuracy
 
-        fig.update_xaxes(title_text=x, row=row, col=col)
-        fig.update_yaxes(title_text=y, row=row, col=col)
 
-    fig.update_layout(title=title, showlegend=False, width=1500, height=1000, title_font=dict(size=24, color='black'))
-    fig.show()
+def dataset_fine_tuning(dataset, type):
+    if type == 'results':
+        # Replace results labels
+        dataset['Model'] = dataset['Model'].replace(model_mapping)
+        dataset['Type'] = dataset['Type'].replace(type_mapping)
+        dataset['Splitting'] = dataset['Splitting'].replace(splitting_mapping)
+        dataset['Features'] = dataset['Features'].replace(features_mapping)
+    elif type == 'accuracy':
+        # Replace accuracy labels
+        dataset['Model'] = dataset['Model'].replace(model_mapping)
+        dataset['Splitting'] = dataset['Splitting'].replace(splitting_mapping)
+        dataset['Features'] = dataset['Features'].replace(features_mapping)
 
-def train_val_bar_plot_accuracy(grouped, colors, legend, x, y1, y2, title):
+    # Convert the 'Splitting' and 'Model' columns to category type with defined order
+    dataset['Splitting'] = pd.Categorical(dataset['Splitting'], categories=splitting_order, ordered=True)
+    dataset['Model'] = pd.Categorical(dataset['Model'], categories=model_order, ordered=True)
+    
+    return dataset
+
+def train_val_bar_plot_results(grouped, colors, x, y1, y2, facet_col, title1, title2):
+    # Create a bar chart for RMSE 
+    fig_rmse = px.bar(grouped, x=x, y=y1, color=colors, facet_col=facet_col, title=title1)
+    fig_rmse.update_layout(barmode='group')
+    fig_rmse.update_layout(title_font=dict(size=24, color='black'))
+    fig_rmse.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+    fig_rmse.show()
+
+    # Create a bar chart for R2 
+    fig_r2 = px.bar(grouped, x=x, y=y2, color=colors, facet_col=facet_col, title=title2)
+    fig_r2.update_layout(barmode='group')
+    fig_r2.update_layout(title_font=dict(size=24, color='black'))
+    fig_r2.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+    fig_r2.show()
+
+def train_val_bar_plot_accuracy(grouped, x, y1, y2, title):
     fig = make_subplots(rows=1, cols=3, subplot_titles=[f'{splitting}' for splitting, _ in grouped])
 
     for i, (splitting, group) in enumerate(grouped):
