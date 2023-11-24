@@ -1,5 +1,191 @@
 from imports import *
-import train_validation_parameters
+from config import *
+
+######################
+# --- PARAMETERS --- #
+######################
+
+'''
+Description: Returns the  parameters of the selected splitting type
+Args:
+    split_type: Type of splitting [block_splits | walk_forward_splits |single_split]
+Return: 
+    params: Parameters of the selected splitting type
+'''
+def get_splitting_params(split_type):
+    if split_type == BS:
+        # Block splits time series
+        params = {'split_type': BS,
+                  'splits': 5}
+    elif split_type == WFS:
+        # Walk forward splits time series
+        params = {'split_type': WFS,
+                  'min_obser': 20000,
+                  'sliding_window': 5000}
+    elif split_type == SS:
+        # Single split time series
+        params = {'split_type': SS,
+                  'split_label': 'months',
+                  'split_value': 1}
+
+    return params
+
+'''
+Description: Returns the default parameters of the selected model
+Args:
+    model_name: Name of the selected model [LinearRegression | GeneralizedLinearRegression | RandomForestRegressor | GradientBoostingTreeRegressor]
+Return: 
+    params: Parameters list of the selected model
+'''
+def get_defaults_model_params(model_name):
+    if (model_name == LR):
+        params = {
+            'maxIter' : [100],
+            'regParam' : [0.0],
+            'elasticNetParam' : [0.0]
+        }   
+    if (model_name == GLR):
+        params = {
+            'maxIter' : [25],
+            'regParam' : [0]
+        }
+    elif (model_name == RF):
+        params = {
+            'numTrees' : [20],
+            'maxDepth' : [5],
+            'seed' : [RANDOM_SEED]
+            }
+    elif (model_name == GBTR):
+        params = {
+            'maxIter' : [20],
+            'maxDepth' : [5],
+            'stepSize': [0.1],
+            'seed' : [RANDOM_SEED]
+        }
+    
+    return params
+
+'''
+Description: Returns the model grid parameters of the selected model
+Args:
+    model_name: Name of the selected model [LinearRegression | GeneralizedLinearRegression | RandomForestRegressor | GradientBoostingTreeRegressor]
+Return: 
+    params: Parameters list of the selected model
+'''
+def get_model_grid_params(model_name):
+    if (model_name == LR):
+        params = {
+            'maxIter' : [5, 10, 50, 80, 100],
+            'regParam' : np.arange(0,1,0.2).round(decimals=2),
+            'elasticNetParam' : np.arange(0,1,0.2).round(decimals=2)
+        }
+    if (model_name == GLR):
+        params = {
+            'maxIter' : [5, 10, 50, 80],
+            'regParam' : [0, 0.1, 0.2],
+            'family': ['gaussian', 'gamma'],
+            'link': ['log', 'identity', 'inverse']
+        }
+    elif (model_name == RF):
+        params = {
+            'numTrees' : [3, 5, 10, 20, 30],
+            'maxDepth' : [3, 5, 10],
+            'seed' : [RANDOM_SEED]
+        }
+    elif (model_name == GBTR):
+        params = {
+            'maxIter' : [3, 5, 10, 20, 30],
+            'maxDepth' : [3, 5, 10],
+            'stepSize': [0.1, 0.3, 0.5, 0.7],
+            'seed' : [RANDOM_SEED]
+        }
+
+    return params
+
+'''
+Description: Choose the best model parameters
+Args:
+    parameters: Input parameters
+Return: 
+    grouped_scores: Scores of all parameters
+    best_params: Parameters with the best score
+'''
+def choose_best_params(parameters):
+    # Calculate the weight of each value in the "Splits" column
+    parameters['Split weight'] = parameters['Splits'].rank(ascending=True)
+
+    # Normalize the split weights to a scale of 0 to 1
+    parameters['Split weight'] = parameters['Split weight'] / parameters['Split weight'].max()
+    
+    # Normalize the RMSE values to a scale of 0 to 1
+    rmse_weight = 1 - (parameters['RMSE'] / parameters['RMSE'].max())
+
+    # Add the RMSE weight as a new column
+    parameters['RMSE weight'] = rmse_weight
+    
+    # To access the values of a tuple 
+    parameters['Parameters'] = parameters['Parameters'].apply(tuple)
+
+    # Calculate the frequency of each unique value in the "Parameters" column
+    freq = parameters['Parameters'].value_counts(normalize=True)
+
+    # Normalize the frequencies to a scale of 0 to 1
+    freq_norm = freq / freq.max()
+
+    # Create a new column called "Frequency" with the normalized frequencies
+    parameters['Frequency weight'] = parameters['Parameters'].map(freq_norm)
+
+    # Group the rows by the "Parameters" column and calculate the average of the other columns
+    grouped_scores = parameters[['Parameters', 'Split weight', 'RMSE weight', "Frequency weight"]].groupby('Parameters').mean()
+    
+    # Calculate the final score for each row
+    grouped_scores['Final score'] = grouped_scores['Frequency weight'] *  grouped_scores['Split weight'] * grouped_scores['RMSE weight']
+
+    # Sort the DataFrame by the "Final score" column in descending order
+    grouped_scores = grouped_scores.sort_values(by='Final score', ascending=False)
+
+    # Get the index of the row with the highest final score
+    best_params = grouped_scores['Final score'].idxmax()
+
+    return grouped_scores, best_params
+
+'''
+Description: Returns the best model parameters
+Args:
+    parameters: Parameters to be entered in the parameter grid of the selected model
+    model_name: Name of the selected model [LinearRegression | GeneralizedLinearRegression | RandomForestRegressor | GradientBoostingTreeRegressor]
+Return: 
+    params: Parameters list of the selected model
+'''
+def get_best_model_params(parameters, model_name):
+    if (model_name == LR):
+        params = {
+            'maxIter' : [parameters[0]],
+            'regParam' : [parameters[1]],
+            'elasticNetParam' : [parameters[2]]
+        }   
+    if (model_name == GLR):
+        params = {
+            'maxIter' : [parameters[0]],
+            'regParam' : [parameters[1]],
+            'family': [parameters[2]],
+            'link': [parameters[3]]
+        }
+    elif (model_name == RF):
+        params = {
+            'numTrees' : [parameters[0]],
+            'maxDepth' : [parameters[1]],
+            'seed' : [parameters[2]]
+            }
+    elif (model_name == GBTR):
+        params = {
+            'maxIter' : [parameters[0]],
+            'maxDepth' : [parameters[1]],
+            'stepSize': [parameters[2]],
+            'seed' : [parameters[3]]
+        }
+        
+    return params
 
 ###################
 # --- COMMONS --- #
@@ -172,27 +358,27 @@ Return:
     model: Initialized model
 '''
 def model_selection(model_name, param, features_label, target_label):
-    if model_name == train_validation_parameters.LR:
+    if model_name == LR:
         model = LinearRegression(featuresCol=features_label, \
                                     labelCol=target_label, \
                                     maxIter=param['maxIter'], \
                                     regParam=param['regParam'], \
                                     elasticNetParam=param['elasticNetParam'])
         
-    elif model_name == train_validation_parameters.GLR:
+    elif model_name == GLR:
         model = GeneralizedLinearRegression(featuresCol=features_label, \
                                             labelCol=target_label, \
                                             maxIter=param['maxIter'], \
                                             regParam=param['regParam'])
 
-    elif model_name == train_validation_parameters.RF:
+    elif model_name == RF:
         model = RandomForestRegressor(featuresCol=features_label, \
                                         labelCol=target_label, \
                                         numTrees = param["numTrees"], \
                                         maxDepth = param["maxDepth"], \
                                         seed=param['seed'])
 
-    elif model_name == train_validation_parameters.GBTR:
+    elif model_name == GBTR:
         model = GBTRegressor(featuresCol=features_label, \
                                 labelCol=target_label, \
                                 maxIter = param['maxIter'], \
@@ -358,9 +544,9 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
     all_valid_predictions = [] 
 
     # Identify the splitting type
-    if splitting_info['split_type'] == train_validation_parameters.BS:
+    if splitting_info['split_type'] == BS:
         split_position_df = block_splits(num, splitting_info['splits'])
-    elif splitting_info['split_type'] == train_validation_parameters.WFS:
+    elif splitting_info['split_type'] == WFS:
         split_position_df = walk_forward_splits(num, splitting_info['min_obser'], splitting_info['sliding_window'])
 
     for position in split_position_df.itertuples():
@@ -406,7 +592,7 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
             # Show plots in pairs of 2, only if the split is a multiple of 5 (in case of block_split show them all) except for hyperparameter tuning
             title = model_name + " predictions on split " +  str(idx + 1) + " with " + features_name
             if slow_operations:
-                if (model_type != "hyp_tuning") and (current_plot == 1 or next_plot == 9 or next_plot == 19 or current_plot % 5 == 0 or next_plot % 5 == 0 or splitting_info['split_type'] == parameters.BS):
+                if (model_type != "hyp_tuning") and (current_plot == 1 or next_plot == 9 or next_plot == 19 or current_plot % 5 == 0 or next_plot % 5 == 0 or splitting_info['split_type'] == BS):
                     show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), title, False)            
                 current_plot = current_plot + 1
                 next_plot = next_plot + 1

@@ -1,4 +1,5 @@
 from imports import *
+from config import *
 
 #############################
 # --- USEFUL PARAMETERS --- #
@@ -8,8 +9,9 @@ from imports import *
 colors = ['#636ffb', '#ef553b']
 legend = ["Default", "Tuned"]
 
-# Define the order for 'Splitting' and 'Model' columns
+# Define the order for 'Splitting', 'Dataset', 'Model' columns
 splitting_order = ['Block splits', 'Walk-forward splits', 'Single split']
+dataset_order = ['One week', 'Fifteen days', 'One month', 'Three months']
 model_order = ['LR', 'GLR', 'RF', 'GBTR']
 
 # Mapping for models names
@@ -34,6 +36,15 @@ splitting_mapping = {
     "walk_forward_splits": "Walk-forward splits",
     "single_split": "Single split"
 }
+
+# Mapping for datasets names
+dataset_mapping = {
+    "one_week": "One week",
+    "fifteen_days": "Fifteen days",
+    "one_month": "One month",
+    "three_months": "Three months"
+}
+
 
 features_mapping = {
     "base_features": "Base features",
@@ -102,7 +113,7 @@ def get_rel_results(splits_list, models_list, result_dir):
     return results, accuracy
 
 
-def dataset_fine_tuning(dataset, type):
+def train_valid_dataset_fine_tuning(dataset, type):
     if type == 'results':
         # Replace results labels
         dataset['Model'] = dataset['Model'].replace(model_mapping)
@@ -162,6 +173,206 @@ def train_val_bar_plot_accuracy(grouped, x, y1, y2, title):
 ########################
 # --- TEST RESULTS --- #
 ########################
+
+def get_model_parameters(train_valid_results_raw, models_list, features_list):
+  # Filter train_valid_results based on Type column
+  filtered_results = train_valid_results_raw[
+      (train_valid_results_raw['Type'].isin(['cross_val', 'tuned'])) &
+      (train_valid_results_raw['Splitting'] == 'single_split')
+  ]
+
+  model_params_list = []
+  for index, row in filtered_results.iterrows():
+    # Select model
+    if row['Model'] == LR_MODEL_NAME:
+      model = models_list[0]
+    elif row['Model'] == GLR_MODEL_NAME:
+      model = models_list[1]
+    elif row['Model'] == RF_MODEL_NAME:
+      model = models_list[2]
+    elif row['Model'] == GBTR_MODEL_NAME:
+      model = models_list[3]
+
+    model_name = row['Model']
+    features_label = row['Features']
+
+    if features_label.endswith('_norm'):
+      features_normalization = True
+      features_label = features_label.replace("_norm", "")
+    else:
+      features_normalization = False
+
+    # Select feature
+    if features_label == BASE_FEATURES_LABEL:
+      features = features_list[0]
+    elif features_label == BASE_AND_MOST_CORR_FEATURES_LABEL:
+      features = features_list[1]
+    elif features_label == BASE_AND_LEAST_CORR_FEATURES_LABEL:
+      features = features_list[2]
+
+    model_params = {
+        "Model_name": model_name,
+        "Model": model,
+        "Features_label": features_label,
+        "Features": features,
+        "Normalization": features_normalization
+    }
+
+    model_params_list.append(model_params)
+
+  return model_params_list
+
+'''
+Description: Return the dataset with the selected features
+Args:
+    dataset: The dataset from which to extract the features
+    features_normalization: Indicates whether features should be normalized (True) or not (False)
+    features: list of features to be extracted
+    features_label: The column name of features
+    target_label: The column name of target variable
+Return: 
+    dataset: Dataset with the selected features
+'''
+def select_features(dataset, features_normalization, features, features_label, target_label):
+    if features_normalization:
+        # Assemble the columns into a vector column
+        assembler = VectorAssembler(inputCols = features, outputCol = "raw_features")
+        df_vector  = assembler.transform(dataset).select("timestamp", "id", "market-price", "raw_features", target_label)
+
+        # Create a Normalizer instance
+        normalizer = Normalizer(inputCol="raw_features", outputCol=features_label)
+
+        # Fit and transform the data
+        dataset = normalizer.transform(df_vector).select("timestamp", "id", "market-price", features_label, target_label)
+    else:
+        # Assemble the columns into a vector column
+        assembler = VectorAssembler(inputCols = features, outputCol = features_label)
+        dataset = assembler.transform(dataset).select("timestamp", "id", "market-price", features_label, target_label)
+
+    return dataset
+
+'''
+Description: Evaluation of the selected model
+Args:
+    target_label: The column name of target variable
+    predictions: predictions made by the model
+Return:
+    results: Results obtained from the evaluation
+'''
+def model_evaluation(target_label, predictions):
+    mse_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='mse')
+    rmse_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='rmse')
+    mae_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='mae')
+    r2_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='r2')
+
+    mape = mean_absolute_percentage_error(predictions.toPandas()[target_label], predictions.toPandas()["prediction"])
+
+    mse = mse_evaluator.evaluate(predictions)
+    rmse = rmse_evaluator.evaluate(predictions)
+    mae = mae_evaluator.evaluate(predictions)
+    r2 = r2_evaluator.evaluate(predictions)
+
+    # Adjusted R-squared
+    n = predictions.count()
+    p = len(predictions.columns)
+    adj_r2 = 1-(1-r2)*(n-1)/(n-p-1)
+
+    results = {'rmse':rmse, 'mse':mse, 'mae':mae, 'mape':mape, 'r2':r2, 'adj_r2':adj_r2}
+
+    return results
+
+'''
+Description: Evaluate final model by making predictions on the test set
+Args:
+    dataset: The dataSet which needs to be splited
+    dataset_name: Name of selected dataset [one_week | fifteen_days | one_month | three_months]
+    model: Trained model
+    model_name: Model name selected
+    features_normalization: Indicates whether features should be normalized (True) or not (False)
+    features: Features to be used to make predictions
+    features_name: Name of features used
+    features_label: The column name of features
+    target_label: The column name of target variable
+Return:
+    results_df: Results obtained from the evaluation
+    predictions: Predictions obtained from the model
+'''
+def evaluate_final_model(dataset, dataset_name, model, model_name, features_normalization, features, features_name, features_label, target_label):
+    # Select the type of features to be used
+    dataset = select_features(dataset, features_normalization, features, features_label, target_label)
+
+    # Make predictions
+    predictions = model.transform(dataset).select(target_label, "market-price", "prediction", 'timestamp')
+
+    # Compute validation error by several evaluators
+    eval_res = model_evaluation(target_label, predictions)
+
+    # Use dict to store each result
+    results = {
+        "Model": model_name,
+        "Dataset": dataset_name,
+        "Features": features_name,
+        "RMSE": eval_res['rmse'],
+        "MSE": eval_res['mse'],
+        "MAE": eval_res['mae'],
+        "MAPE": eval_res['mape'],
+        "R2": eval_res['r2'],
+        "Adjusted_R2": eval_res['adj_r2'],
+    }
+
+    # Transform dict to pandas dataset
+    results_pd = pd.DataFrame(results, index=[0])
+
+    return results_pd, predictions
+
+def models_testing(datasets_list, model_params_list):
+  datasets_name_list = ["one_week", "fifteen_days", "one_month", "three_months"]
+  predictions_df = pd.DataFrame(columns=[TARGET_LABEL, "market-price", "prediction", 'timestamp'])
+  test_results = pd.DataFrame(columns=['Model', 'Dataset', 'Features', 'RMSE', 'MSE', 'MAE', 'MAPE', 'R2', 'Adjusted_R2'])
+  test_accuracy = pd.DataFrame(columns=['Model', 'Features', 'Dataset', 'Accuracy'])
+
+  # For each model makes predictions based on the dataset type
+  for model_params in model_params_list:
+      for j, dataset in enumerate(datasets_list):
+        model_name = model_params['Model_name']
+        model = model_params['Model']
+        chosen_features_label = model_params['Features_label']
+        chosen_features = model_params['Features']
+        features_normalization = model_params['Normalization']
+        
+        results, predictions = evaluate_final_model(dataset, datasets_name_list[j], model, model_name, features_normalization, chosen_features, chosen_features_label, FEATURES_LABEL, TARGET_LABEL)
+        test_results = pd.concat([test_results, results], ignore_index=True)
+
+        predictions = predictions.withColumn("Model", lit(model_name)).withColumn("Dataset", lit(datasets_name_list[j]))
+        predictions_df = pd.concat([predictions_df, predictions.toPandas()], ignore_index=True)
+
+        accuracy = model_accuracy(predictions)
+        accuracy_data = {
+            'Model': model_name,
+            'Features': chosen_features_label,
+            'Dataset': datasets_name_list[j],
+            'Accuracy': accuracy
+        }
+
+        accuracy_data_df = pd.DataFrame(accuracy_data, index=['Model'])
+        test_accuracy = pd.concat([test_accuracy, accuracy_data_df], ignore_index=True)
+
+  # Merge results and accuracy
+  final_test_results = pd.merge(test_results, test_accuracy)
+
+  return final_test_results, predictions_df
+
+def test_dataset_fine_tuning(dataset):
+    # Replace results labels
+    dataset['Model'] = dataset['Model'].replace(model_mapping)
+    dataset['Dataset'] = dataset['Dataset'].replace(dataset_mapping)
+    dataset['Features'] = dataset['Features'].replace(features_mapping)
+
+    # Convert the 'Dataset' and 'Model' columns to category type with defined order
+    dataset['Dataset'] = pd.Categorical(dataset['Dataset'], categories=dataset_order, ordered=True)
+    dataset['Model'] = pd.Categorical(dataset['Model'], categories=model_order, ordered=True)
+
+    return dataset
 
 def show_datasets(one_week, fifteen_days, one_month, three_months, title):
   trace1 = go.Scatter(
@@ -300,108 +511,6 @@ def show_results(dataset, model0_name, model0_predictions, model1_name, model1_p
   fig = dict(data=data, layout=layout)
   iplot(fig, filename = title)
 
-'''
-Description: Return the dataset with the selected features
-Args:
-    dataset: The dataset from which to extract the features
-    features_normalization: Indicates whether features should be normalized (True) or not (False)
-    features: list of features to be extracted
-    features_label: The column name of features
-    target_label: The column name of target variable
-Return: 
-    dataset: Dataset with the selected features
-'''
-def select_features(dataset, features_normalization, features, features_label, target_label):
-    if features_normalization:
-        # Assemble the columns into a vector column
-        assembler = VectorAssembler(inputCols = features, outputCol = "raw_features")
-        df_vector  = assembler.transform(dataset).select("timestamp", "id", "market-price", "raw_features", target_label)
-
-        # Create a Normalizer instance
-        normalizer = Normalizer(inputCol="raw_features", outputCol=features_label)
-
-        # Fit and transform the data
-        dataset = normalizer.transform(df_vector).select("timestamp", "id", "market-price", features_label, target_label)
-    else:
-        # Assemble the columns into a vector column
-        assembler = VectorAssembler(inputCols = features, outputCol = features_label)
-        dataset = assembler.transform(dataset).select("timestamp", "id", "market-price", features_label, target_label)
-
-    return dataset
-
-'''
-Description: Evaluation of the selected model
-Args:
-    target_label: The column name of target variable
-    predictions: predictions made by the model
-Return:
-    results: Results obtained from the evaluation
-'''
-def model_evaluation(target_label, predictions):
-    mse_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='mse')
-    rmse_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='rmse')
-    mae_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='mae')
-    r2_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='r2')
-
-    mape = mean_absolute_percentage_error(predictions.toPandas()[target_label], predictions.toPandas()["prediction"])
-
-    mse = mse_evaluator.evaluate(predictions)
-    rmse = rmse_evaluator.evaluate(predictions)
-    mae = mae_evaluator.evaluate(predictions)
-    r2 = r2_evaluator.evaluate(predictions)
-
-    # Adjusted R-squared
-    n = predictions.count()
-    p = len(predictions.columns)
-    adj_r2 = 1-(1-r2)*(n-1)/(n-p-1)
-
-    results = {'rmse':rmse, 'mse':mse, 'mae':mae, 'mape':mape, 'r2':r2, 'adj_r2':adj_r2}
-
-    return results
-
-'''
-Description: Evaluate final model by making predictions on the test set
-Args:
-    dataset: The dataSet which needs to be splited
-    dataset_name: Name of selected dataset [one_week | fifteen_days | one_month | three_months]
-    model: Trained model
-    model_name: Model name selected
-    features_normalization: Indicates whether features should be normalized (True) or not (False)
-    features: Features to be used to make predictions
-    features_name: Name of features used
-    features_label: The column name of features
-    target_label: The column name of target variable
-Return:
-    results_df: Results obtained from the evaluation
-    predictions: Predictions obtained from the model
-'''
-def evaluate_final_model(dataset, dataset_name, model, model_name, features_normalization, features, features_name, features_label, target_label):
-    # Select the type of features to be used
-    dataset = select_features(dataset, features_normalization, features, features_label, target_label)
-
-    # Make predictions
-    predictions = model.transform(dataset).select(target_label, "market-price", "prediction", 'timestamp')
-
-    # Compute validation error by several evaluators
-    eval_res = model_evaluation(target_label, predictions)
-
-    # Use dict to store each result
-    results = {
-        "Model": model_name,
-        "Dataset": dataset_name,
-        "Features": features_name,
-        "RMSE": eval_res['rmse'],
-        "MSE": eval_res['mse'],
-        "MAE": eval_res['mae'],
-        "MAPE": eval_res['mape'],
-        "R2": eval_res['r2'],
-        "Adjusted_R2": eval_res['adj_r2'],
-    }
-
-    # Transform dict to pandas dataset
-    results_pd = pd.DataFrame(results, index=[0])
-
-    return results_pd, predictions
 
 '''
 Description: How good the models are at predicting whether the price will go up or down
@@ -432,23 +541,35 @@ def model_accuracy(dataset):
 
     return accuracy
 
-def test_bar_plot(grouped, colors, x, y, title):
-    fig = make_subplots(rows=1, cols=4, subplot_titles=[f'{name}' for name, _ in grouped])
+def test_bar_plot_results(grouped, x, y1, y2, facet_col, title1, title2):
+    # Create a bar chart for RMSE 
+    fig_rmse = px.bar(grouped, x=x, y=y1, facet_col=facet_col, title=title1, color=facet_col)
+    fig_rmse.update_layout(barmode='group')
+    fig_rmse.update_layout(title_font=dict(size=24, color='black'))
+    fig_rmse.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+    fig_rmse.show()
 
-    for i, (name, group) in enumerate(grouped):
+    # Create a bar chart for R2 
+    fig_r2 = px.bar(grouped, x=x, y=y2, facet_col=facet_col, title=title2, color=facet_col)
+    fig_r2.update_layout(barmode='group')
+    fig_r2.update_layout(title_font=dict(size=24, color='black'))
+    fig_r2.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+    fig_r2.show()
+
+def test_bar_plot_accuracy(grouped, x, y, title):
+    fig = make_subplots(rows=1, cols=4, subplot_titles=[f'{dataset}' for dataset, _ in grouped])
+
+    for i, (dataset, group) in enumerate(grouped):
         row = (i // 4) + 1
         col = (i % 4) + 1
 
-        # Create a list of colors for each bar in the plot
-        bar_colors = [colors[j%len(colors)] for j in range(len(group[x]))]
-
         fig.add_trace(
-            go.Bar(x=group[x], y=group[y], name=name, marker_color=bar_colors, showlegend=False),
+            go.Bar(x=group[x], y=group[y], showlegend=False),
             row=row, col=col
         )
 
         fig.update_xaxes(title_text=x, row=row, col=col)
-        fig.update_yaxes(title_text=y, row=row, col=col)
+        fig.update_yaxes(title_text='Accuracy', row=row, col=col)
 
     fig.update_layout(title=title, showlegend=True, width=1500, height=500, title_font=dict(size=24, color='black'))
     fig.show()
