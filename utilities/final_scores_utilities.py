@@ -170,12 +170,13 @@ Args:
     title2: Title for R2 plot
 Return: None
 '''
-def train_val_bar_plot_results(grouped, colors, x, y1, y2, facet_col, title1, title2):
+def train_val_bar_plot_results(grouped, colors, x, y1, y2, facet_col, title1, title2, save_path):
     # Create a bar chart for RMSE 
     fig_rmse = px.bar(grouped, x=x, y=y1, color=colors, facet_col=facet_col, title=title1)
     fig_rmse.update_layout(barmode='group')
     fig_rmse.update_layout(title_font=dict(size=24, color='black'))
     fig_rmse.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+    fig_rmse.write_image(save_path + "/train_valid_rmse_plot.png")  # Save RMSE plot as an image
     fig_rmse.show()
 
     # Create a bar chart for R2 
@@ -183,6 +184,7 @@ def train_val_bar_plot_results(grouped, colors, x, y1, y2, facet_col, title1, ti
     fig_r2.update_layout(barmode='group')
     fig_r2.update_layout(title_font=dict(size=24, color='black'))
     fig_r2.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+    fig_r2.write_image(save_path + "/train_valid_r2_plot.png")  # Save R2 plot as an image
     fig_r2.show()
 
 '''
@@ -195,7 +197,7 @@ Args:
     title: Title for the plot
 Return: None    
 '''
-def train_val_bar_plot_accuracy(grouped, x, y1, y2, title):
+def train_val_bar_plot_accuracy(grouped, x, y1, y2, title, save_path):
     fig = make_subplots(rows=1, cols=3, subplot_titles=[f'{splitting}' for splitting, _ in grouped])
 
     for i, (splitting, group) in enumerate(grouped):
@@ -216,6 +218,7 @@ def train_val_bar_plot_accuracy(grouped, x, y1, y2, title):
         fig.update_yaxes(title_text='Accuracy', row=row, col=col)
 
     fig.update_layout(title=title, showlegend=True, width=1500, height=500, title_font=dict(size=24, color='black'))
+    fig.write_image(f"{save_path}/train_valid_accuracy_plot.png")  # Save the accuracy plot as an image
     fig.show()
 
 ########################
@@ -653,12 +656,13 @@ Args:
     title2: Title for R2 plot
 Return: None
 '''
-def test_bar_plot_results(grouped, x, y1, y2, facet_col, title1, title2):
+def test_bar_plot_results(grouped, x, y1, y2, facet_col, title1, title2, save_path):
     # Create a bar chart for RMSE 
     fig_rmse = px.bar(grouped, x=x, y=y1, facet_col=facet_col, title=title1, color=facet_col)
     fig_rmse.update_layout(barmode='group')
     fig_rmse.update_layout(title_font=dict(size=24, color='black'))
     fig_rmse.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+    fig_rmse.write_image(f"{save_path}/test_rmse_plot.png")  # Save the RMSE plot as an image
     fig_rmse.show()
 
     # Create a bar chart for R2 
@@ -666,6 +670,7 @@ def test_bar_plot_results(grouped, x, y1, y2, facet_col, title1, title2):
     fig_r2.update_layout(barmode='group')
     fig_r2.update_layout(title_font=dict(size=24, color='black'))
     fig_r2.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+    fig_r2.write_image(f"{save_path}/test_r2_plot.png")  # Save the R2 plot as an image
     fig_r2.show()
 
 '''
@@ -677,7 +682,7 @@ Args:
     title: Title for the plot
 Return: None    
 '''
-def test_bar_plot_accuracy(grouped, x, y, title):
+def test_bar_plot_accuracy(grouped, x, y, title, save_path):
     fig = make_subplots(rows=1, cols=4, subplot_titles=[f'{dataset}' for dataset, _ in grouped])
 
     for i, (dataset, group) in enumerate(grouped):
@@ -693,4 +698,5 @@ def test_bar_plot_accuracy(grouped, x, y, title):
         fig.update_yaxes(title_text='Accuracy', row=row, col=col)
 
     fig.update_layout(title=title, showlegend=True, width=1500, height=500, title_font=dict(size=24, color='black'))
+    fig.write_image(f"{save_path}/test_accuracy_plot.png")  # Save the accuracy plot as an image
     fig.show()
