@@ -28,7 +28,7 @@ def dataset_info(dataset):
   dataset.printSchema()
 
 '''
-Description: Plot the division of the main dataset into train / validation and test set
+Description: Plot the division of the main dataset
 Args:
     train_valid: Train / validation portion of the dataset 
     test: Test portion of the dataset 
@@ -89,7 +89,7 @@ def dataset_visualization(train_valid, test, title):
 '''
 Description: Plot the selected feature
 Args:
-    dataset: dataset to be considered
+    dataset: Dataset to be considered
     key: Title of the feature to be inserted in the graph
     value: Title of the feature contained in the dataset
 Return: None
@@ -141,8 +141,8 @@ def features_visualization(dataset, key, value):
 '''
 Description: Plot the ohlcv features
 Args:
-    dataset: dataset to be considered
-    features: List of features to be plotted in the graph 
+    dataset: Dataset to be considered
+    features: List of ohlcv features
     title: Chart title
 Return: None
 '''
@@ -222,8 +222,8 @@ def ohlcv_visualization(dataset, features, title):
 '''
 Description: Plot the sma features
 Args:
-    dataset: dataset to be considered
-    features: List of features to be plotted in the graph 
+    dataset: Dataset to be considered
+    features: List of sma features
     title: Chart title
 Return: None
 '''

@@ -81,6 +81,15 @@ def dataset_info(dataset):
   # Print the schema of the dataset
   dataset.printSchema()
 
+''' 
+Description: Retrieves all results obtained during the train/validation phase
+Args:
+    splits_list: List of splitting methods used
+    models_list: List of models used
+    result_dir: Directory containing the results
+Return:
+    dataset: Dataset containing all results obtained during the train/validation phase
+'''
 def get_all_results(splits_list, models_list, result_dir):
     dataset = pd.DataFrame(columns=['Model', 'Type', 'Dataset', 'Splitting', 'Features', 'Parameters', 'RMSE', 'MSE', 'MAE', 'MAPE', 'R2', 'Adjusted_R2', 'Time'])
 
@@ -95,6 +104,15 @@ def get_all_results(splits_list, models_list, result_dir):
     
     return dataset
 
+''' 
+Description: Retrieves all the most relevant results obtained during the train/validation phase (those of the best default model and the tuned model)
+Args:
+    splits_list: List of splitting methods used
+    models_list: List of models used
+    result_dir: Directory containing the results
+Return:
+    dataset: Dataset containing all results obtained during the train/validation phase
+'''
 def get_rel_results(splits_list, models_list, result_dir):
     results = pd.DataFrame(columns=['Model', 'Type', 'Dataset', 'Splitting', 'Features', 'Parameters', 'RMSE', 'MSE', 'MAE', 'MAPE', 'R2', 'Adjusted_R2', 'Time'])
     accuracy = pd.DataFrame(columns=['Model', 'Features', 'Splitting', 'Accuracy (default)', 'Accuracy (tuned)'])
@@ -112,7 +130,14 @@ def get_rel_results(splits_list, models_list, result_dir):
     
     return results, accuracy
 
-
+'''
+Description: Return the dataset containing the train/validation results with the values renamed
+Args:
+    dataset: The dataset containing the train/validation results
+    type: Type of dataset [results | accuracy]
+Return: 
+    dataset: Updated dataset
+'''
 def train_valid_dataset_fine_tuning(dataset, type):
     if type == 'results':
         # Replace results labels
@@ -132,6 +157,19 @@ def train_valid_dataset_fine_tuning(dataset, type):
     
     return dataset
 
+'''
+Description: Show the results obtained during the train / validation phase
+Args:
+    grouped: Grouped dataset
+    colors: Colors to be used in the plot based on Type [Features | Default | Tuned]
+    x: x axis for Model
+    y1: y axis for RMSE
+    y2: y axis for R2
+    facet_col: Facet column for Splitting
+    title1: Title for RMSE plot
+    title2: Title for R2 plot
+Return: None
+'''
 def train_val_bar_plot_results(grouped, colors, x, y1, y2, facet_col, title1, title2):
     # Create a bar chart for RMSE 
     fig_rmse = px.bar(grouped, x=x, y=y1, color=colors, facet_col=facet_col, title=title1)
@@ -147,6 +185,16 @@ def train_val_bar_plot_results(grouped, colors, x, y1, y2, facet_col, title1, ti
     fig_r2.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
     fig_r2.show()
 
+'''
+Description: Show the accuracy obtained during the train / validation phase
+Args:
+    grouped: Grouped dataset
+    x: x axis for Model
+    y1: y axis for Accuracy (default)
+    y2: y axis for Accuracy (tuned)
+    title: Title for the plot
+Return: None    
+'''
 def train_val_bar_plot_accuracy(grouped, x, y1, y2, title):
     fig = make_subplots(rows=1, cols=3, subplot_titles=[f'{splitting}' for splitting, _ in grouped])
 
@@ -174,6 +222,15 @@ def train_val_bar_plot_accuracy(grouped, x, y1, y2, title):
 # --- TEST RESULTS --- #
 ########################
 
+'''
+Description: Return the model parameters
+Args:
+    train_valid_results_raw: The dataset containing the results of the train / validation phase
+    models_list: List of models
+    features_list: List of features
+Return:
+    model_params_list: List of model parameters
+'''
 def get_model_parameters(train_valid_results_raw, models_list, features_list):
   # Filter train_valid_results based on Type column
   filtered_results = train_valid_results_raw[
@@ -252,12 +309,12 @@ def select_features(dataset, features_normalization, features, features_label, t
     return dataset
 
 '''
-Description: Evaluation of the selected model
+Description: Return the metrics of the selected model
 Args:
     target_label: The column name of target variable
     predictions: predictions made by the model
 Return:
-    results: Results obtained from the evaluation
+    results: Metrics obtained from the evaluation
 '''
 def model_evaluation(target_label, predictions):
     mse_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='mse')
@@ -284,11 +341,11 @@ def model_evaluation(target_label, predictions):
 '''
 Description: Evaluate final model by making predictions on the test set
 Args:
-    dataset: The dataSet which needs to be splited
+    dataset: The test set to be used
     dataset_name: Name of selected dataset [one_week | fifteen_days | one_month | three_months]
     model: Trained model
-    model_name: Model name selected
-    features_normalization: Indicates whether features should be normalized (True) or not (False)
+    model_name: Name of the model selected
+    features_normalization: Indicates whether features should be normalized or not
     features: Features to be used to make predictions
     features_name: Name of features used
     features_label: The column name of features
@@ -325,6 +382,15 @@ def evaluate_final_model(dataset, dataset_name, model, model_name, features_norm
 
     return results_pd, predictions
 
+'''
+Description: Evaluate final model by making predictions on the test set
+Args:
+    datasets_list: List of datasets
+    model_params_list: List of model parameters 
+Return:
+    final_test_results: Results obtained from the evaluation 
+    predictions_df: Predictions obtained from the model
+'''
 def models_testing(datasets_list, model_params_list):
   datasets_name_list = ["one_week", "fifteen_days", "one_month", "three_months"]
   predictions_df = pd.DataFrame(columns=[TARGET_LABEL, "market-price", "prediction", 'timestamp'])
@@ -340,6 +406,7 @@ def models_testing(datasets_list, model_params_list):
         chosen_features = model_params['Features']
         features_normalization = model_params['Normalization']
         
+        # Evaluate final model
         results, predictions = evaluate_final_model(dataset, datasets_name_list[j], model, model_name, features_normalization, chosen_features, chosen_features_label, FEATURES_LABEL, TARGET_LABEL)
         test_results = pd.concat([test_results, results], ignore_index=True)
 
@@ -354,6 +421,7 @@ def models_testing(datasets_list, model_params_list):
             'Accuracy': accuracy
         }
 
+        # Transform dict to pandas dataset
         accuracy_data_df = pd.DataFrame(accuracy_data, index=['Model'])
         test_accuracy = pd.concat([test_accuracy, accuracy_data_df], ignore_index=True)
 
@@ -362,6 +430,13 @@ def models_testing(datasets_list, model_params_list):
 
   return final_test_results, predictions_df
 
+'''
+Description: Return the dataset containing the test results with the values renamed
+Args:
+    dataset: The dataset containing the test results
+Return: 
+    dataset: Updated dataset
+'''
 def test_dataset_fine_tuning(dataset):
     # Replace results labels
     dataset['Model'] = dataset['Model'].replace(model_mapping)
@@ -374,6 +449,16 @@ def test_dataset_fine_tuning(dataset):
 
     return dataset
 
+'''
+Description: Plot the splitted datasets
+Args:
+    one_week: Dataset containing the data for one week
+    fifteen_days: Dataset containing the data for fifteen days
+    one_month: Dataset containing the data one month
+    three_months: Dataset containing the data for three months
+    title: Title for the plot
+Return: None
+'''
 def show_datasets(one_week, fifteen_days, one_month, three_months, title):
   trace1 = go.Scatter(
       x = three_months['timestamp'],
@@ -439,6 +524,21 @@ def show_datasets(one_week, fifteen_days, one_month, three_months, title):
   fig = dict(data=data, layout=layout)
   iplot(fig, filename = title)
 
+'''
+Description: Plot the prediction obtained from the test phase
+Args:
+    dataset: The whole test dataset
+    model0_name: Name of the first model
+    model0_predictions: Predictions obtained from the first model
+    model1_name: Name of the second model
+    model1_predictions: Predictions obtained from the second model
+    model2_name: Name of the third model
+    model2_predictions: Predictions obtained from the third model
+    model3_name: Name of the fourth model
+    model3_predictions: Predictions obtained from the fourth model
+    title: Title for the plot
+Return: None
+'''
 def show_results(dataset, model0_name, model0_predictions, model1_name, model1_predictions, model2_name, model2_predictions, model3_name, model3_predictions, title):
   trace1 = go.Scatter(
       x = dataset['timestamp'],
@@ -513,11 +613,11 @@ def show_results(dataset, model0_name, model0_predictions, model1_name, model1_p
 
 
 '''
-Description: How good the models are at predicting whether the price will go up or down
+Description: Return the accuracy of the model (how good the models are at predicting whether the price will go up or down)
 Args:
-    dataset: The dataset which needs to be splited
-Return:
-    accuracy: Return the percentage of correct predictions
+    predictions: Predictions made by the model
+Return: 
+    accuracy: Percentage of correct predictions
 '''
 def model_accuracy(dataset):
     # Compute the number of total rows in the DataFrame.
@@ -541,6 +641,18 @@ def model_accuracy(dataset):
 
     return accuracy
 
+'''
+Description: Show the results obtained during the test phase
+Args:
+    grouped: Grouped dataset
+    x: x axis for Model
+    y1: y axis for RMSE
+    y2: y axis for R2
+    facet_col: Facet column for Dataset
+    title1: Title for RMSE plot
+    title2: Title for R2 plot
+Return: None
+'''
 def test_bar_plot_results(grouped, x, y1, y2, facet_col, title1, title2):
     # Create a bar chart for RMSE 
     fig_rmse = px.bar(grouped, x=x, y=y1, facet_col=facet_col, title=title1, color=facet_col)
@@ -556,6 +668,15 @@ def test_bar_plot_results(grouped, x, y1, y2, facet_col, title1, title2):
     fig_r2.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
     fig_r2.show()
 
+'''
+Description: Show the accuracy obtained during the test phase
+Args:
+    grouped: Grouped dataset
+    x: x axis for Model
+    y: y axis for Accuracy
+    title: Title for the plot
+Return: None    
+'''
 def test_bar_plot_accuracy(grouped, x, y, title):
     fig = make_subplots(rows=1, cols=4, subplot_titles=[f'{dataset}' for dataset, _ in grouped])
 

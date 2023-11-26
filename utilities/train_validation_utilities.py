@@ -6,11 +6,11 @@ from config import *
 ######################
 
 '''
-Description: Returns the  parameters of the selected splitting type
+Description: Get the splitting parameters based on the split type
 Args:
-    split_type: Type of splitting [block_splits | walk_forward_splits |single_split]
-Return: 
-    params: Parameters of the selected splitting type
+    split_type: The type of split to be performed
+Returns:
+    dict: A dictionary containing the splitting parameters
 '''
 def get_splitting_params(split_type):
     if split_type == BS:
@@ -27,50 +27,52 @@ def get_splitting_params(split_type):
         params = {'split_type': SS,
                   'split_label': 'months',
                   'split_value': 1}
+    else:
+        raise ValueError("Invalid split type")
 
     return params
 
 '''
 Description: Returns the default parameters of the selected model
 Args:
-    model_name: Name of the selected model [LinearRegression | GeneralizedLinearRegression | RandomForestRegressor | GradientBoostingTreeRegressor]
-Return: 
-    params: Parameters list of the selected model
+    model_name: Name of the selected model
+Returns: 
+    params: Dictionary of default parameters for the selected model
 '''
 def get_defaults_model_params(model_name):
-    if (model_name == LR):
+    if model_name == LR:
         params = {
-            'maxIter' : [100],
-            'regParam' : [0.0],
-            'elasticNetParam' : [0.0]
+            'maxIter': [100],
+            'regParam': [0.0],
+            'elasticNetParam': [0.0]
         }   
-    if (model_name == GLR):
+    elif model_name == GLR:
         params = {
-            'maxIter' : [25],
-            'regParam' : [0]
+            'maxIter': [25],
+            'regParam': [0]
         }
-    elif (model_name == RF):
+    elif model_name == RF:
         params = {
-            'numTrees' : [20],
-            'maxDepth' : [5],
-            'seed' : [RANDOM_SEED]
-            }
-    elif (model_name == GBTR):
+            'numTrees': [20],
+            'maxDepth': [5],
+            'seed': [RANDOM_SEED]
+        }
+    elif model_name == GBTR:
         params = {
-            'maxIter' : [20],
-            'maxDepth' : [5],
+            'maxIter': [20],
+            'maxDepth': [5],
             'stepSize': [0.1],
-            'seed' : [RANDOM_SEED]
+            'seed': [RANDOM_SEED]
         }
     
     return params
 
 '''
-Description: Returns the model grid parameters of the selected model
+Description: Return the parameters grid of the selected model
 Args:
-    model_name: Name of the selected model [LinearRegression | GeneralizedLinearRegression | RandomForestRegressor | GradientBoostingTreeRegressor]
-Return: 
-    params: Parameters list of the selected model
+    model_name: Name of the selected model
+Returns: 
+    params: Dictionary of the parameters grid of the selected model
 '''
 def get_model_grid_params(model_name):
     if (model_name == LR):
@@ -103,12 +105,12 @@ def get_model_grid_params(model_name):
     return params
 
 '''
-Description: Choose the best model parameters
+Description: Return the best model parameters based on the scoring mechanism
 Args:
-    parameters: Input parameters
+    parameters: DataFrame containing the parameters and corresponding scores
 Return: 
-    grouped_scores: Scores of all parameters
-    best_params: Parameters with the best score
+    grouped_scores: DataFrame with the average scores for each unique set of parameters
+    best_params: Tuple representing the parameters with the highest final score
 '''
 def choose_best_params(parameters):
     # Calculate the weight of each value in the "Splits" column
@@ -123,7 +125,7 @@ def choose_best_params(parameters):
     # Add the RMSE weight as a new column
     parameters['RMSE weight'] = rmse_weight
     
-    # To access the values of a tuple 
+    # Convert the values in the "Parameters" column to tuples
     parameters['Parameters'] = parameters['Parameters'].apply(tuple)
 
     # Calculate the frequency of each unique value in the "Parameters" column
@@ -132,7 +134,7 @@ def choose_best_params(parameters):
     # Normalize the frequencies to a scale of 0 to 1
     freq_norm = freq / freq.max()
 
-    # Create a new column called "Frequency" with the normalized frequencies
+    # Create a new column called "Frequency weight" with the normalized frequencies
     parameters['Frequency weight'] = parameters['Parameters'].map(freq_norm)
 
     # Group the rows by the "Parameters" column and calculate the average of the other columns
@@ -148,12 +150,12 @@ def choose_best_params(parameters):
     best_params = grouped_scores['Final score'].idxmax()
 
     return grouped_scores, best_params
-
+    
 '''
 Description: Returns the best model parameters
 Args:
     parameters: Parameters to be entered in the parameter grid of the selected model
-    model_name: Name of the selected model [LinearRegression | GeneralizedLinearRegression | RandomForestRegressor | GradientBoostingTreeRegressor]
+    model_name: Name of the selected model
 Return: 
     params: Parameters list of the selected model
 '''
@@ -348,9 +350,9 @@ def model_comparison(results, model_info, evaluator_lst):
     return comparison_df
 
 '''
-Description: Selection of the model to be initialized
+Description: Return the intialized model
 Args:
-    model_name: Model name selected
+    model_name: Model to be selected
     param: Parameters of the selected model
     features_label: The column name of features
     target_label: The column name of target variable
@@ -389,12 +391,12 @@ def model_selection(model_name, param, features_label, target_label):
     return model
 
 '''
-Description: Evaluation of the selected model
+Description: Return the metrics of the selected model
 Args:
     target_label: The column name of target variable
     predictions: predictions made by the model
 Return:
-    results: Results obtained from the evaluation
+    results: Metrics obtained from the evaluation
 '''
 def model_evaluation(target_label, predictions):
     mse_evaluator = RegressionEvaluator(labelCol=target_label, predictionCol="prediction", metricName='mse')
@@ -419,18 +421,18 @@ def model_evaluation(target_label, predictions):
     return results
 
 '''
-Description: Tell how good the models are at predicting whether the price will go up or down
+Description: Return the accuracy of the model (how good the models are at predicting whether the price will go up or down)
 Args:
-    dataset: The dataset which needs to be splited
+    predictions: Predictions made by the model
 Return: 
-    accuracy: Return the percentage of correct predictions
+    accuracy: Percentage of correct predictions
 '''
-def model_accuracy(dataset):    
+def model_accuracy(predictions):    
     # Compute the number of total rows in the DataFrame.
-    total_rows = dataset.count()
+    total_rows = predictions.count()
 
     # Create a column "correct_prediction" which is worth 1 if the prediction is correct, otherwise 0
-    dataset = dataset.withColumn(
+    predictions = predictions.withColumn(
         "correct_prediction",
         (
             (col("market-price") < col("next-market-price")) & (col("market-price") < col("prediction"))
@@ -440,7 +442,7 @@ def model_accuracy(dataset):
     )
 
     # Count the number of correct predictions
-    correct_predictions = dataset.filter(col("correct_prediction")).count()
+    correct_predictions = predictions.filter(col("correct_prediction")).count()
 
     # Compite percentage of correct predictions
     accuracy = (correct_predictions / total_rows) * 100
@@ -452,12 +454,12 @@ def model_accuracy(dataset):
 ###########################
 
 '''
-Description: Block splits time series split
+Description: Return the sets of split positions for block splits time series split
 Args:
-    num: Number of datasets
+    num: Number of samples in the dataset
     n_splits: Split times
 Return: 
-    split_position_df: All sets of split positions in a Pandas dataset.
+    split_position_df: All sets of split positions in a Pandas dataset
 '''
 def block_splits(num, n_splits):
     # Calculate the split position for each fold 
@@ -478,13 +480,13 @@ def block_splits(num, n_splits):
     return split_position_df
 
 '''
-Description: Walk forward time series split
+Description: Return the sets of split positions for walk forward time series split
 Args:
-    num: Number of dataset
+    num: Number of samples in the dataset
     min_obser: Minimum number of observations
-    sliding_window: Sliding Window
+    sliding_window: Sliding window size
 Return: 
-    split_position_df: All sets of split positions in a Pandas dataset.
+    split_position_df: All sets of split positions in a Pandas dataset
 ''' 
 def walk_forward_splits(num, min_obser, sliding_window):
     # Calculate the split position for each fold 
@@ -503,10 +505,10 @@ def walk_forward_splits(num, min_obser, sliding_window):
 Description: Perform train / validation using multiple splitting methods
 Args:
     dataset: The dataset which needs to be splited
-    params: Parameters which want to test 
-    splitting_info: The splitting type method [block_splits | walk_forward_splits]
-    model_name: Model name selected
-    model_type: Model type [default | default_norm | hyp_tuning | cross_val]
+    params: Model's parameters to use
+    splitting_info: Splitting method selected [block_splits | walk_forward_splits]
+    model_name: Name of the model selected
+    model_type: Model type [default | default_norm | cross_val | hyp_tuning]
     features_normalization: Indicates whether features should be normalized or not
     features: Features to be used to make predictions
     features_name: Name of features used
@@ -589,7 +591,7 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
             train_predictions = pipeline_model.transform(train_data).select(target_label, "market-price", "prediction", 'timestamp')
             valid_predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
 
-            # Show plots in pairs of 2, only if the split is a multiple of 5 (in case of block_split show them all) except for hyperparameter tuning
+            # Show plots in pairs of 2 (first and multiple of 5, in case of block_split show them all except for hyperparameter tuning)
             title = model_name + " predictions on split " +  str(idx + 1) + " with " + features_name
             if slow_operations:
                 if (model_type != "hyp_tuning") and (current_plot == 1 or next_plot == 9 or next_plot == 19 or current_plot % 5 == 0 or next_plot % 5 == 0 or splitting_info['split_type'] == BS):
@@ -689,7 +691,7 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
 ########################
 
 '''
-Description: Short term time series split
+Description: Return the dataset ready to perform short term time series split
 Args:
     dataset: The dataset which needs to be splited
     label: Type of splitting [weeks | months | years]
@@ -723,10 +725,10 @@ def short_term_split(dataset, split_label, split_value):
 Description: Perform train / validation using single split method
 Args:
     dataset: The dataset which needs to be splited
-    params: Parameters which want to test 
+    params: Model's parameters to use
     splitting_info: The splitting type method [short_term_split]
-    model_name: Model name selected
-    model_type: Model type [default | default_norm | final_validated]
+    model_name: Name of the model selected
+    model_type: Model type [single_split]
     features_normalization: Indicates whether features should be normalized or not
     features: Features to be used to make predictions
     features_name: Name of features used
@@ -839,10 +841,10 @@ def single_split(dataset, params, splitting_info, model_name, model_type, featur
 '''
 Description: Evaluation of the final trained model
 Args:
-    dataset: The dataset which needs to be splited
-    params: Parameters which want to test 
-    model_name: Model name selected
-    model_type: Model type [final_trained]
+    dataset: The whole train / validation set
+    params: Model's parameters to use
+    model_name: Name of the model selected
+    model_type: Model type [final]
     features_normalization: Indicates whether features should be normalized or not
     features: Features to be used to make predictions
     features_name: Name of features used
