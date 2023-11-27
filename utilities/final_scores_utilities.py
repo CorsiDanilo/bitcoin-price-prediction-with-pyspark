@@ -162,30 +162,43 @@ Description: Show the results obtained during the train / validation phase
 Args:
     grouped: Grouped dataset
     colors: Colors to be used in the plot based on Type [Features | Default | Tuned]
-    x: x axis for Model
-    y1: y axis for RMSE
-    y2: y axis for R2
-    facet_col: Facet column for Splitting
-    title1: Title for RMSE plot
-    title2: Title for R2 plot
+    model: x axis for Model
+    rmse: y axis for RMSE
+    r2: y axis for R2
+    splitting: Facet column for Splitting
+    rmse_title: Title for RMSE plot
+    r2_title: Title for R2 plot
 Return: None
 '''
-def train_val_bar_plot_results(grouped, colors, x, y1, y2, facet_col, title1, title2, save_path):
+def train_val_rmse_r2_plot(grouped, feature, model, rmse, r2, splitting, rmse_title, r2_title, save_path):
     # Create a bar chart for RMSE 
-    fig_rmse = px.bar(grouped, x=x, y=y1, color=colors, facet_col=facet_col, title=title1)
-    fig_rmse.update_layout(barmode='group')
-    fig_rmse.update_layout(title_font=dict(size=24, color='black'))
-    fig_rmse.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
-    fig_rmse.write_image(save_path + "/train_valid_rmse_plot.png")  # Save RMSE plot as an image
+    fig_rmse = train_val_rmse_plot(grouped, feature, model, rmse, splitting, rmse_title)
     fig_rmse.show()
 
     # Create a bar chart for R2 
-    fig_r2 = px.bar(grouped, x=x, y=y2, color=colors, facet_col=facet_col, title=title2)
+    fig_r2 = train_val_r2_plot(grouped, feature, model, r2, splitting, r2_title)
+    fig_r2.show()
+
+    fig_rmse.write_image(f"{save_path}train_val_rmse.png")  # Save the RMSE plot as an image
+    fig_r2.write_image(f"{save_path}train_val_r2.png")  # Save the R2 plot as an image
+
+''' Create a bar chart for RMSE  '''
+def train_val_rmse_plot(grouped, feature, model, rmse, splitting, title):
+    fig_rmse = px.bar(grouped, x=model, y=rmse, color=feature, facet_col=splitting, title=title)
+    fig_rmse.update_layout(barmode='group')
+    fig_rmse.update_layout(title_font=dict(size=24, color='black'))
+    fig_rmse.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+
+    return fig_rmse
+
+''' Create a bar chart for R2  '''
+def train_val_r2_plot(grouped, feature, model, r2, splitting, title):
+    fig_r2 = px.bar(grouped, x=model, y=r2, color=feature, facet_col=splitting, title=title)
     fig_r2.update_layout(barmode='group')
     fig_r2.update_layout(title_font=dict(size=24, color='black'))
     fig_r2.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
-    fig_r2.write_image(save_path + "/train_valid_r2_plot.png")  # Save R2 plot as an image
-    fig_r2.show()
+
+    return fig_r2
 
 '''
 Description: Show the accuracy obtained during the train / validation phase
@@ -197,7 +210,7 @@ Args:
     title: Title for the plot
 Return: None    
 '''
-def train_val_bar_plot_accuracy(grouped, x, y1, y2, title, save_path):
+def train_val_accuracy_plot(grouped, x, y1, y2, title, save_path):
     fig = make_subplots(rows=1, cols=3, subplot_titles=[f'{splitting}' for splitting, _ in grouped])
 
     for i, (splitting, group) in enumerate(grouped):
@@ -218,7 +231,7 @@ def train_val_bar_plot_accuracy(grouped, x, y1, y2, title, save_path):
         fig.update_yaxes(title_text='Accuracy', row=row, col=col)
 
     fig.update_layout(title=title, showlegend=True, width=1500, height=500, title_font=dict(size=24, color='black'))
-    fig.write_image(f"{save_path}/train_valid_accuracy_plot.png")  # Save the accuracy plot as an image
+    fig.write_image(f"{save_path}train_valid_accuracy.png")  # Save the accuracy plot as an image
     fig.show()
 
 ########################
@@ -542,77 +555,78 @@ Args:
     title: Title for the plot
 Return: None
 '''
-def show_results(dataset, model0_name, model0_predictions, model1_name, model1_predictions, model2_name, model2_predictions, model3_name, model3_predictions, title):
-  trace1 = go.Scatter(
-      x = dataset['timestamp'],
-      y = dataset['next-market-price'].astype(float),
-      mode = 'lines',
-      name = 'Actual next Market price (usd)'
-  )
+def show_results(dataset, model0_name, model0_predictions, model1_name, model1_predictions, model2_name, model2_predictions, model3_name, model3_predictions, title, save_path):
+    trace1 = go.Scatter(
+        x = dataset['timestamp'],
+        y = dataset['next-market-price'].astype(float),
+        mode = 'lines',
+        name = 'Actual next Market price (usd)'
+    )
 
-  trace2 = go.Scatter(
-      x = model0_predictions['timestamp'],
-      y = model0_predictions['prediction'].astype(float),
-      mode = 'lines',
-      name = model0_name + ' predictions'
-  )
+    trace2 = go.Scatter(
+        x = model0_predictions['timestamp'],
+        y = model0_predictions['prediction'].astype(float),
+        mode = 'lines',
+        name = model0_name + ' predictions'
+    )
 
-  trace3 = go.Scatter(
-      x = model1_predictions['timestamp'],
-      y = model1_predictions['prediction'].astype(float),
-      mode = 'lines',
-      name = model1_name + ' predictions'
-  )
+    trace3 = go.Scatter(
+        x = model1_predictions['timestamp'],
+        y = model1_predictions['prediction'].astype(float),
+        mode = 'lines',
+        name = model1_name + ' predictions'
+    )
 
-  trace4 = go.Scatter(
-      x = model2_predictions['timestamp'],
-      y = model2_predictions['prediction'].astype(float),
-      mode = 'lines',
-      name = model2_name + ' predictions'
-  )
+    trace4 = go.Scatter(
+        x = model2_predictions['timestamp'],
+        y = model2_predictions['prediction'].astype(float),
+        mode = 'lines',
+        name = model2_name + ' predictions'
+    )
 
-  trace5 = go.Scatter(
-      x = model3_predictions['timestamp'],
-      y = model3_predictions['prediction'].astype(float),
-      mode = 'lines',
-      name = model3_name + ' predictions'
-  )
+    trace5 = go.Scatter(
+        x = model3_predictions['timestamp'],
+        y = model3_predictions['prediction'].astype(float),
+        mode = 'lines',
+        name = model3_name + ' predictions'
+    )
 
-  layout = dict(
-      title=title,
-      xaxis=dict(
-          rangeselector=dict(
-              buttons=list([
-                  # Change the count to desired amount of months.
-                  dict(count=1,
-                      label='1m',
-                      step='month',
-                      stepmode='backward'),
-                  dict(count=6,
-                      label='6m',
-                      step='month',
-                      stepmode='backward'),
-                  dict(count=12,
-                      label='1y',
-                      step='month',
-                      stepmode='backward'),
-                  dict(count=36,
-                      label='3y',
-                      step='month',
-                      stepmode='backward'),
-                  dict(step='all')
-              ])
-          ),
-          rangeslider=dict(
-              visible = True
-          ),
-          type='date'
-      )
-  )
+    layout = dict(
+        title=title,
+        xaxis=dict(
+            rangeselector=dict(
+                buttons=list([
+                    # Change the count to desired amount of months.
+                    dict(count=1,
+                        label='1m',
+                        step='month',
+                        stepmode='backward'),
+                    dict(count=6,
+                        label='6m',
+                        step='month',
+                        stepmode='backward'),
+                    dict(count=12,
+                        label='1y',
+                        step='month',
+                        stepmode='backward'),
+                    dict(count=36,
+                        label='3y',
+                        step='month',
+                        stepmode='backward'),
+                    dict(step='all')
+                ])
+            ),
+            rangeslider=dict(
+                visible = True
+            ),
+            type='date'
+        )
+    )
 
-  data = [trace1, trace2, trace3, trace4, trace5]
-  fig = dict(data=data, layout=layout)
-  iplot(fig, filename = title)
+    data = [trace1, trace2, trace3, trace4, trace5]
+    fig = dict(data=data, layout=layout)
+    fig.write_image(f"{save_path}/test_predictions.png")
+    iplot(fig, filename = title)
 
 
 '''
@@ -648,41 +662,54 @@ def model_accuracy(dataset):
 Description: Show the results obtained during the test phase
 Args:
     grouped: Grouped dataset
-    x: x axis for Model
-    y1: y axis for RMSE
-    y2: y axis for R2
-    facet_col: Facet column for Dataset
-    title1: Title for RMSE plot
-    title2: Title for R2 plot
+    model: x axis for Model
+    rmse: y axis for RMSE
+    r2: y axis for R2
+    dataset: Facet column for Dataset
+    rmse_title: Title for RMSE plot
+    r2_title: Title for R2 plot
 Return: None
 '''
-def test_bar_plot_results(grouped, x, y1, y2, facet_col, title1, title2, save_path):
+def test_rmse_r2_plot(grouped, model, rmse, r2, dataset, rmse_title, r2_title, save_path):
     # Create a bar chart for RMSE 
-    fig_rmse = px.bar(grouped, x=x, y=y1, facet_col=facet_col, title=title1, color=facet_col)
-    fig_rmse.update_layout(barmode='group')
-    fig_rmse.update_layout(title_font=dict(size=24, color='black'))
-    fig_rmse.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
-    fig_rmse.write_image(f"{save_path}/test_rmse_plot.png")  # Save the RMSE plot as an image
+    fig_rmse = test_rmse_plot(grouped, model, rmse, dataset, rmse_title)
     fig_rmse.show()
 
     # Create a bar chart for R2 
-    fig_r2 = px.bar(grouped, x=x, y=y2, facet_col=facet_col, title=title2, color=facet_col)
+    fig_r2 = test_r2_plot(grouped, model, r2, dataset, r2_title)
+    fig_r2.show()
+
+    fig_rmse.write_image(f"{save_path}test_rmse.png")  # Save the RMSE plot as an image
+    fig_r2.write_image(f"{save_path}test_r2.png")  # Save the R2 plot as an image
+
+''' Create a bar chart for RMSE  '''
+def test_rmse_plot(grouped, feature, model, rmse, dataset, title):
+    fig_rmse = px.bar(grouped, x=model, y=rmse, facet_col=dataset, title=title, color=dataset)
+    fig_rmse.update_layout(barmode='group')
+    fig_rmse.update_layout(title_font=dict(size=24, color='black'))
+    fig_rmse.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
+
+    return fig_rmse
+
+''' Create a bar chart for R2  '''
+def test_r2_plot(grouped, feature, model, r2, dataset, title):
+    fig_r2 = px.bar(grouped, x=model, y=r2, facet_col=dataset, title=title, color=dataset)
     fig_r2.update_layout(barmode='group')
     fig_r2.update_layout(title_font=dict(size=24, color='black'))
     fig_r2.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
-    fig_r2.write_image(f"{save_path}/test_r2_plot.png")  # Save the R2 plot as an image
-    fig_r2.show()
+
+    return fig_r2
 
 '''
 Description: Show the accuracy obtained during the test phase
 Args:
     grouped: Grouped dataset
-    x: x axis for Model
-    y: y axis for Accuracy
+    model: x axis for Model
+    accuracy: y axis for Accuracy
     title: Title for the plot
 Return: None    
 '''
-def test_bar_plot_accuracy(grouped, x, y, title, save_path):
+def test_accuracy_plot(grouped, model, accuracy, title, save_path):
     fig = make_subplots(rows=1, cols=4, subplot_titles=[f'{dataset}' for dataset, _ in grouped])
 
     for i, (dataset, group) in enumerate(grouped):
@@ -690,13 +717,13 @@ def test_bar_plot_accuracy(grouped, x, y, title, save_path):
         col = (i % 4) + 1
 
         fig.add_trace(
-            go.Bar(x=group[x], y=group[y], showlegend=False),
+            go.Bar(x=group[model], y=group[accuracy], showlegend=False),
             row=row, col=col
         )
 
-        fig.update_xaxes(title_text=x, row=row, col=col)
+        fig.update_xaxes(title_text=model, row=row, col=col)
         fig.update_yaxes(title_text='Accuracy', row=row, col=col)
 
     fig.update_layout(title=title, showlegend=True, width=1500, height=500, title_font=dict(size=24, color='black'))
-    fig.write_image(f"{save_path}/test_accuracy_plot.png")  # Save the accuracy plot as an image
+    fig.write_image(f"{save_path}/test_accuracy.png")  # Save the accuracy plot as an image
     fig.show()
