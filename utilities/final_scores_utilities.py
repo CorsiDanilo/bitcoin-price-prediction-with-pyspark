@@ -50,7 +50,7 @@ features_mapping = {
     "base_features": "Base features",
     "base_and_most_corr_features": "Base + most corr. features",
     "base_and_least_corr_features": "Base + least corr. features",
-    "base__features_norm": "Base features(norm.)",
+    "base_features_norm": "Base features (norm.)",
     "base_and_most_corr_features_norm": "Base + most corr. features(norm.)",
     "base_and_least_corr_features_norm": "Base + least corr. features (norm.)"
 }
@@ -231,7 +231,7 @@ def train_val_accuracy_plot(grouped, x, y1, y2, title, save_path):
         fig.update_yaxes(title_text='Accuracy', row=row, col=col)
 
     fig.update_layout(title=title, showlegend=True, width=1500, height=500, title_font=dict(size=24, color='black'))
-    fig.write_image(f"{save_path}train_valid_accuracy.png")  # Save the accuracy plot as an image
+    fig.write_image(f"{save_path}train_val_accuracy.png")  # Save the accuracy plot as an image
     fig.show()
 
 ########################
@@ -555,7 +555,7 @@ Args:
     title: Title for the plot
 Return: None
 '''
-def show_results(dataset, model0_name, model0_predictions, model1_name, model1_predictions, model2_name, model2_predictions, model3_name, model3_predictions, title, save_path):
+def show_results(dataset, model0_name, model0_predictions, model1_name, model1_predictions, model2_name, model2_predictions, model3_name, model3_predictions, title):
     trace1 = go.Scatter(
         x = dataset['timestamp'],
         y = dataset['next-market-price'].astype(float),
@@ -625,7 +625,6 @@ def show_results(dataset, model0_name, model0_predictions, model1_name, model1_p
 
     data = [trace1, trace2, trace3, trace4, trace5]
     fig = dict(data=data, layout=layout)
-    fig.write_image(f"{save_path}/test_predictions.png")
     iplot(fig, filename = title)
 
 
@@ -683,7 +682,7 @@ def test_rmse_r2_plot(grouped, model, rmse, r2, dataset, rmse_title, r2_title, s
     fig_r2.write_image(f"{save_path}test_r2.png")  # Save the R2 plot as an image
 
 ''' Create a bar chart for RMSE  '''
-def test_rmse_plot(grouped, feature, model, rmse, dataset, title):
+def test_rmse_plot(grouped, model, rmse, dataset, title):
     fig_rmse = px.bar(grouped, x=model, y=rmse, facet_col=dataset, title=title, color=dataset)
     fig_rmse.update_layout(barmode='group')
     fig_rmse.update_layout(title_font=dict(size=24, color='black'))
@@ -692,7 +691,7 @@ def test_rmse_plot(grouped, feature, model, rmse, dataset, title):
     return fig_rmse
 
 ''' Create a bar chart for R2  '''
-def test_r2_plot(grouped, feature, model, r2, dataset, title):
+def test_r2_plot(grouped, model, r2, dataset, title):
     fig_r2 = px.bar(grouped, x=model, y=r2, facet_col=dataset, title=title, color=dataset)
     fig_r2.update_layout(barmode='group')
     fig_r2.update_layout(title_font=dict(size=24, color='black'))
@@ -725,5 +724,5 @@ def test_accuracy_plot(grouped, model, accuracy, title, save_path):
         fig.update_yaxes(title_text='Accuracy', row=row, col=col)
 
     fig.update_layout(title=title, showlegend=True, width=1500, height=500, title_font=dict(size=24, color='black'))
-    fig.write_image(f"{save_path}/test_accuracy.png")  # Save the accuracy plot as an image
+    fig.write_image(f"{save_path}test_accuracy.png")  # Save the accuracy plot as an image
     fig.show()
