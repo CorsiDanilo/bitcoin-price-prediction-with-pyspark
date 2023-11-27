@@ -45,13 +45,12 @@ dataset_mapping = {
     "three_months": "Three months"
 }
 
-
 features_mapping = {
     "base_features": "Base features",
     "base_and_most_corr_features": "Base + most corr. features",
     "base_and_least_corr_features": "Base + least corr. features",
     "base_features_norm": "Base features (norm.)",
-    "base_and_most_corr_features_norm": "Base + most corr. features(norm.)",
+    "base_and_most_corr_features_norm": "Base + most corr. features (norm.)",
     "base_and_least_corr_features_norm": "Base + least corr. features (norm.)"
 }
 
@@ -271,16 +270,17 @@ def get_model_parameters(train_valid_results_raw, models_list, features_list):
 
     if features_label.endswith('_norm'):
       features_normalization = True
-      features_label = features_label.replace("_norm", "")
+      features_label_tmp = features_label.replace("_norm", "")
     else:
       features_normalization = False
+      features_label_tmp = features_label
 
     # Select feature
-    if features_label == BASE_FEATURES_LABEL:
+    if features_label_tmp == BASE_FEATURES_LABEL:
       features = features_list[0]
-    elif features_label == BASE_AND_MOST_CORR_FEATURES_LABEL:
+    elif features_label_tmp == BASE_AND_MOST_CORR_FEATURES_LABEL:
       features = features_list[1]
-    elif features_label == BASE_AND_LEAST_CORR_FEATURES_LABEL:
+    elif features_label_tmp == BASE_AND_LEAST_CORR_FEATURES_LABEL:
       features = features_list[2]
 
     model_params = {
@@ -626,7 +626,6 @@ def show_results(dataset, model0_name, model0_predictions, model1_name, model1_p
     data = [trace1, trace2, trace3, trace4, trace5]
     fig = dict(data=data, layout=layout)
     iplot(fig, filename = title)
-
 
 '''
 Description: Return the accuracy of the model (how good the models are at predicting whether the price will go up or down)
