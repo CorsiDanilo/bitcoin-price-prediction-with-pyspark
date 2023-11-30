@@ -15,8 +15,7 @@ It does not have a central bank behind it that distributes new currency but reli
 Transactions can be made through the Internet to anyone with a "bitcoin address" 
 Bitcoin's value is determined by the market and the number of people using it. 
 Its blockchain, or public ledger of transactions, is constantly updated and validated by nodes in the network.
-The cryptocurrency Bitcoin has attracted the attention of many people in recent years. 
-However, it's price fluctuation can be extremely unpredictable, which makes it difficult to predict when the right time to buy or sell this digital currency will be. 
+The cryptocurrency Bitcoin has attracted the attention of many people in recent years, however, it's price fluctuation can be extremely unpredictable, which makes it difficult to predict when the right time to buy or sell this digital currency will be. 
 In this context, prediction Bitcoin prices can be a competitive advantage for investors and traders, as it could allow them to make informed decisions on the right time to enter or exit the market.
 In this project, I will analyze some machine learning techniques to understand, through the processing of historical data, how accurately the price of Bitcoin can be predicted and whether this can provide added value to cryptocurrency investors and traders.
 
@@ -97,13 +96,12 @@ During this phase the dataset will be splitted according to different splitting 
 
    ![single-split.png](./notebooks/images/single-split.png)
 
-Several types of regression algorithms will be used, including: 
+Several types of regression algorithms will be used to see their differences and how they perform in the various stages of training / validation and testing, including: 
 * `Linear Regression`
 * `Generalized Linear Regression`
 * `Random Forest Regressor`
 * `Gradient Boosting Tree Regressor` 
 
-To see their differences and how they perform in the various stages of training / validation and testing. 
 
 Different types of metrics will be used to get a complete picture of the performance of the various models, including: 
 * `RMSE (Root Mean Squared Error)`
@@ -113,7 +111,7 @@ Different types of metrics will be used to get a complete picture of the perform
 * `R2 (R-squared)`
 * `Adjusted R2`
 
-Since predicting the price accurately is very difficult I also saw how good the models are at predicting whether the price will go up or down in this way:
+Since predicting the price accurately is very difficult, I also saw how good the models are at predicting whether the price will go up or down in this way:
 
 For each prediction let's consider the actual market-price, next-market-price and our predicted next-market-price (prediction).
 I compute whether the current prediction is correct (1) or not (0):

@@ -232,8 +232,8 @@ def select_features(dataset, features_normalization, features, features_label, t
         assembler = VectorAssembler(inputCols = features, outputCol = "raw_features")
         df_vector  = assembler.transform(dataset).select("timestamp", "id", "market-price", "raw_features", target_label)
 
-        # Create a Normalizer instance
-        normalizer = Normalizer(inputCol="raw_features", outputCol=features_label)
+        # Create a Normalizer instance using L2 norm
+        normalizer = Normalizer(inputCol="raw_features", outputCol=features_label, p=2.0)
 
         # Fit and transform the data
         dataset = normalizer.transform(df_vector).select("timestamp", "id", "market-price", features_label, target_label)

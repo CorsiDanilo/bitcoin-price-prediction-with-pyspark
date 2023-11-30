@@ -8,7 +8,7 @@ from pyspark.ml.feature import VectorAssembler
 from pyspark.ml.stat import Correlation
 from pyspark.sql import SparkSession
 from pyspark.ml.evaluation import RegressionEvaluator
-from pyspark.ml .feature import Normalizer
+from pyspark.ml.feature import Normalizer
 from pyspark.ml.regression import LinearRegression, GeneralizedLinearRegression, RandomForestRegressor, GBTRegressor
 from pyspark.ml import Pipeline
 from pyspark.sql.window import Window
