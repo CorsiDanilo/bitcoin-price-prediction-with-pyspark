@@ -74,8 +74,9 @@ All these features will be divided into two distinct groups:
     - If < 0.6, then then they will be considered `least correlated`.
 
 The strategy for the model's train / validation phase will be:
-- Test models with base features
-- See if by adding the additional most and least correlated features to them improves the performance
+- Train / validate models with base features
+- See if by adding the additional most and least correlated features to them the performance improves
+
 
 The whole dataset will be splitted into two sets:
 * `Train / Validation set:` will be used to train the models and validate the performances.
@@ -146,12 +147,12 @@ Concern the train / validation pipeline, it is structured like this:
 - `Default with normalization:` like the previous one but features are normalized
 
 Then the features that gave on average the most satisfactory results (for each model) are chosen and proceeded with:
-- `Hyperparameter tuning:` finding the best parameters to use. Since during this stage will be used the Block split / Walk forward split method of the dataset I compute a score for each parameter chosen by each split, assigning weights based on:
+- `Hyperparameter tuning:` finding the best model's parameters to use. Since during this stage will be used the Block split / Walk forward split method of the dataset I compute a score for each parameter chosen by each split, assigning weights based on:
    * Their `frequency` for each split (if the same parameters are chosen from several splits, these will have greater weight) 
    * The `split` they belong to (the closer the split is to today's date the more weight they will have)
    * Their `RMSE value` for each split (the lower this is, the more weight they will have)
    
-   Then, the overall score will be calculated by putting together these three weights for each parameter and the one with the best score will be the chosen parameter.
+   Then, the best set of parameters is chosen based on the overall score obtained by putting these weights together.
 
 - `Cross Validation:` validate the performance of the model with the chosen parameters (also here using Block split / Walk forward split)
 
