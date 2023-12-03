@@ -16,14 +16,14 @@ Transactions can be made through the Internet to anyone with a "bitcoin address"
 Bitcoin's value is determined by the market and the number of people using it. 
 Its blockchain, or public ledger of transactions, is constantly updated and validated by nodes in the network.
 The cryptocurrency Bitcoin has attracted the attention of many people in recent years, however, it's price fluctuation can be extremely unpredictable, which makes it difficult to predict when the right time to buy or sell this digital currency will be. 
-In this context, prediction Bitcoin prices can be a competitive advantage for investors and traders, as it could allow them to make informed decisions on the right time to enter or exit the market.
+In this context, predicting  Bitcoin prices can be a competitive advantage for investors and traders, as it could allow them to make informed decisions on the right time to enter or exit the market.
 In this project, I will analyze some machine learning techniques to understand, through the processing of historical data, how accurately the price of Bitcoin can be predicted and whether this can provide added value to cryptocurrency investors and traders.
 
 ## **Goal**
 *``Is it possible to make predictions about the price of Bitcoin using machine learning methods in combination with the price information and technical characteristics of its blockchain?``*
 
 ## **Dataset**
-I chose to collect data on the Bitcoin blockchain using the API of the website Blockchain.org and the price information from two famous exchange, Binance and Kraken. They were retrieved the most relevant information from the last four years to the present day (a period for which there were moments of high volatility but also a lot of price lateralization). The procedure has been made as automatic as possible so that the same periods are considered each time the entire procedure is executed. 
+I chose to collect data on the Bitcoin blockchain using the API of the website Blockchain.org and the price information from two famous exchanges, Binance and Kraken. They retrieved the most relevant information from the last four years to the present day (a period for which there were moments of high volatility but also a lot of price lateralization). The procedure has been automated in such a way that the same period is always considered.
 
 The features taken under consideration were divided into several categories:
 
@@ -70,8 +70,8 @@ After obtaining the features regarding the technical data of the blockchain and 
 All these features will be divided into two distinct groups:
 - `Base features:` contains all the Currency Statistics features
 - `Base and additional features:` contains the Base features plus the additional features divided based on their correlation value with the price: 
-    - If >= 0.6, then then they will be considered `most correlated`.
-    - If < 0.6, then then they will be considered `least correlated`.
+    - If >= 0.6, then they will be considered `most correlated`.
+    - If < 0.6, then they will be considered `least correlated`.
 
 The strategy for the model's train / validation phase will be:
 - Train / validate models with base features
@@ -168,9 +168,9 @@ After loading the trained models, the test set is divided into further mini-sets
 ├── datasets
 │   ├── output
 │   │   ├── bitcoin_blockchain_data_15min_test.parquet
-│   │   ├── bitcoin_blockchain_data_15min_train_valid.parquet
+│   │   └── bitcoin_blockchain_data_15min_train_valid.parquet
 │   ├── raw
-│   │   ├── bitcoin_blockchain_data_15min.parquet
+│   │   └── bitcoin_blockchain_data_15min.parquet
 │   └── temp
 ├── features
 │   ├── base_and_least_corr_features.json
@@ -188,7 +188,6 @@ After loading the trained models, the test set is divided into further mini-sets
 │   ├── 4-walk-forward-split.ipynb
 │   ├── 5-single-split.ipynb
 │   ├── 6-final-scores.ipynb
-│   ├── desktop.ini
 │   ├── exports
 │   │   ├── 2-feature-engineering.html
 │   │   ├── 3-block-split_GeneralizedLinearRegression.html
@@ -206,7 +205,6 @@ After loading the trained models, the test set is divided into further mini-sets
 │   │   └── require.js
 │   └── images
 │       ├── block-splits.png
-│       ├── desktop.ini
 │       ├── Drawings.excalidraw
 │       ├── single-split.png
 │       └── walk-forward-splits.png
@@ -217,7 +215,6 @@ After loading the trained models, the test set is divided into further mini-sets
 ├── requirements.txt
 ├── results
 │   ├── block_splits
-│   │   ├── desktop.ini
 │   │   ├── GeneralizedLinearRegression_accuracy.csv
 │   │   ├── GeneralizedLinearRegression_all.csv
 │   │   ├── GeneralizedLinearRegression_rel.csv
@@ -231,24 +228,23 @@ After loading the trained models, the test set is divided into further mini-sets
 │   │   ├── RandomForestRegressor_all.csv
 │   │   └── RandomForestRegressor_rel.csv
 │   ├── final
-│   │   ├── default_train_val_r2_non_negative.png
-│   │   ├── default_train_val_r2.png
-│   │   ├── default_train_val_rmse.png
-│   │   ├── desktop.ini
 │   │   ├── final.csv
-│   │   ├── final_test_accuracy.png
-│   │   ├── final_test_fifteen_days_prediction.png.png
-│   │   ├── final_test_one_month_prediction.png.png
-│   │   ├── final_test_one_week_prediction.png.png
-│   │   ├── final_test_r2_non_negative.png
-│   │   ├── final_test_r2.png
-│   │   ├── final_test_rmse.png
-│   │   ├── final_test_three_months_prediction.png
-│   │   ├── final_train_val_accuracy.png
-│   │   ├── final_train_val_r2.png
-│   │   └── final_train_val_rmse.png
+│   │   └── plots
+│   │       ├── default_train_val_r2_non_negative.png
+│   │       ├── default_train_val_r2.png
+│   │       ├── default_train_val_rmse.png
+│   │       ├── final_test_accuracy.png
+│   │       ├── final_test_fifteen_days_prediction.png
+│   │       ├── final_test_one_month_prediction.png
+│   │       ├── final_test_one_week_prediction.png
+│   │       ├── final_test_r2_non_negative.png
+│   │       ├── final_test_r2.png
+│   │       ├── final_test_rmse.png
+│   │       ├── final_test_three_months_prediction.png
+│   │       ├── final_train_val_accuracy.png
+│   │       ├── final_train_val_r2.png
+│   │       └── final_train_val_rmse.png
 │   ├── single_split
-│   │   ├── desktop.ini
 │   │   ├── GeneralizedLinearRegression_accuracy.csv
 │   │   ├── GeneralizedLinearRegression_all.csv
 │   │   ├── GeneralizedLinearRegression_rel.csv
@@ -262,7 +258,6 @@ After loading the trained models, the test set is divided into further mini-sets
 │   │   ├── RandomForestRegressor_all.csv
 │   │   └── RandomForestRegressor_rel.csv
 │   └── walk_forward_splits
-│       ├── desktop.ini
 │       ├── GeneralizedLinearRegression_accuracy.csv
 │       ├── GeneralizedLinearRegression_all.csv
 │       ├── GeneralizedLinearRegression_rel.csv
@@ -297,7 +292,7 @@ After loading the trained models, the test set is divided into further mini-sets
 - Each folder (`GeneralizedLinearRegression`, `GradientBoostingTreeRegressor`, `LinearRegression` and `RandomForestRegressor`) contains the trained model with the best parameters, ready to be used to perform price prediction on never-before-seen data
 
 ### `Notebooks folder:` contains notebooks produced
-- `exports folder:` contains the .html of each model run for each notebook based on the splitting method with final results and interactive graphs
+- `exports folder:` contains the .html of feature engineering notebook and for each models train / validation run based on the splitting method with final results and interactive graphs
 - `1-data-crawling.ipynb:` crawling data on Bitcoin's price and blochckain by querying APIs
 - `2-feature-engineering.ipynb:` adding useful features regardings the price of Bitcoin, visualizing data and performing feature selection
 - `3-5-splitting_method.ipynb:` it performs training/validation of models according to the chosen split method (block split, walk forward split or single split)
