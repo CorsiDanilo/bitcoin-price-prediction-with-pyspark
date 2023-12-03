@@ -309,7 +309,7 @@ After loading the trained models, the test set is divided into further mini-sets
 - `train_validation_utilities.py:` contains the methods used in the notebooks where models are trained and validated
 
 # **Final results**
-![final_test_one_week_prediction.png](https://drive.google.com/uc?id=1B-Dwawa6l3KS1TK7TCAzJ5l4iqNpNIUE)
-![final_test_fifteen_days_prediction.png](https://drive.google.com/uc?id=19SKB4CNBpVFYkBUE9ElJIf6FenfXnPdD)
-![final_test_one_month_prediction.png](https://drive.google.com/uc?id=1BCUmsftXDZoFPrNKFm9uoqGp3G1lXGDH)
-![final_test_three_months_prediction.png](https://drive.google.com/uc?id=1AnDjpZ5bo7FBN9rvEdasBB35ByzhIwvs)
+![final_test_one_week_prediction.png](./results/final/plots/final_test_one_week_prediction.png)
+![final_test_fifteen_days_prediction.png](./results/final/plots/final_test_fifteen_days_prediction.png)
+![final_test_one_month_prediction.png](./results/final/plots/final_test_one_month_prediction.png)
+![final_test_three_months_prediction.png](./results/final/plots/final_test_three_months_prediction.png)
