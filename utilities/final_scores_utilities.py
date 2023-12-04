@@ -5,14 +5,15 @@ from config import *
 # --- USEFUL PARAMETERS --- #
 #############################
 
-#Plotting parameters
+# Plotting parameters
 colors = ['#636ffb', '#ef553b']
-legend = ["Default", "Tuned"]
+type_order = ["Default", "Tuned"]
 
 # Define the order for 'Splitting', 'Dataset', 'Model' columns
 splitting_order = ['Block splits', 'Walk-forward splits', 'Single split']
-dataset_order = ['One week', 'Fifteen days', 'One month', 'Three months']
+features_order = ['Base features', 'Base + most corr. features', 'Base + least corr. features', 'Base features (norm.)', 'Base + most corr. features (norm.)', 'Base + least corr. features (norm.)']
 model_order = ['LR', 'GLR', 'RF', 'GBTR']
+dataset_order = ['One week', 'Fifteen days', 'One month', 'Three months']
 
 # Mapping for models names
 model_mapping = {
@@ -217,12 +218,12 @@ def train_val_accuracy_plot(grouped, x, y1, y2, title, save_path):
         col = (i % 3) + 1
 
         fig.add_trace(
-            go.Bar(x=group[x], y=group[y1], name=legend[0], marker_color=colors[0], showlegend=(i==0)),
+            go.Bar(x=group[x], y=group[y1], name=type_order[0], marker_color=colors[0], showlegend=(i==0)),
             row=row, col=col
         )
 
         fig.add_trace(
-            go.Bar(x=group[x], y=group[y2], name=legend[1], marker_color=colors[1], showlegend=(i==0)),
+            go.Bar(x=group[x], y=group[y2], name=type_order[1], marker_color=colors[1], showlegend=(i==0)),
             row=row, col=col
         )
 
