@@ -23,7 +23,7 @@ In this project, I will analyze some machine learning techniques to understand, 
 *``Is it possible to make predictions about the price of Bitcoin using machine learning methods in combination with the price information and technical characteristics of its blockchain?``*
 
 ## **Dataset**
-I chose to collect data on the Bitcoin blockchain using the API of the website Blockchain.org and the price information from two famous exchanges, Binance and Kraken. They retrieved the most relevant information from the last four years to the present day (a period for which there were moments of high volatility but also a lot of price lateralization). The procedure has been automated in such a way that the same period is always considered.
+I chose to collect data on the Bitcoin blockchain using the API of the website Blockchain.org and the price information from two famous exchanges, Binance and Kraken. They retrieved the most relevant information from 2019-12-07	to the 2023-11-13 (~4 years, a period for which there were moments of high volatility but also a lot of price lateralization).
 
 The features taken under consideration were divided into several categories:
 

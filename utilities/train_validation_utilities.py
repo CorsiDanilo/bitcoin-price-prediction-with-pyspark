@@ -288,7 +288,7 @@ def show_results(dataset, train, valid, title, onlyTrain):
             name = 'Predicted next makert price (usd)'
         )
         
-    layout = dict(
+    layout = go.Layout(
         title= title,
         xaxis=dict(
             rangeselector=dict(
@@ -325,9 +325,8 @@ def show_results(dataset, train, valid, title, onlyTrain):
     else:
         data = [trace1,trace2]
 
-    fig = dict(data=data, layout=layout)
-    iplot(fig, filename = title)
-   
+    fig = go.Figure(data=data, layout=layout)
+    fig.show()   
 '''
 Description: Returns the average of the results obtained
 Args:

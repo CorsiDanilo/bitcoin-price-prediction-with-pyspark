@@ -50,7 +50,7 @@ def dataset_visualization(train_valid, test, title):
         name = "Test set"
     )
 
-    layout = dict(
+    layout = go.Layout(
         title=title,
         xaxis=dict(
             rangeselector=dict(
@@ -83,31 +83,36 @@ def dataset_visualization(train_valid, test, title):
     )
 
     data = [trace1, trace2]
-    fig = dict(data=data, layout=layout)
-    iplot(fig, filename = title)
-
+    fig = go.Figure(data=data, layout=layout)
+    fig.show()
 '''
-Description: Plot the selected feature
+Description: Plot the division of the main dataset
 Args:
-    dataset: Dataset to be considered
-    key: Title of the feature to be inserted in the graph
-    value: Title of the feature contained in the dataset
+    train_valid: Train / validation portion of the dataset 
+    test: Test portion of the dataset 
+    title: Chart title
 Return: None
 '''
-def features_visualization(dataset, key, value):
-    trace = go.Scatter(
-        x = dataset['timestamp'],
-        y = dataset[value].astype(float),
+def dataset_visualization(train_valid, test, title):
+    trace1 = go.Scatter(
+        x = train_valid['timestamp'],
+        y = train_valid["market-price"].astype(float),
         mode = 'lines',
-        name = key
+        name = "Train / Validation set"
     )
 
-    layout = dict(
-        title=key,
+    trace2 = go.Scatter(
+        x = test['timestamp'],
+        y = test['market-price'].astype(float),
+        mode = 'lines',
+        name = "Test set"
+    )
+
+    layout = go.Layout(
+        title=title,
         xaxis=dict(
             rangeselector=dict(
                 buttons=list([
-                    # Change the count to desired amount of months.
                     dict(count=1,
                         label='1m',
                         step='month',
@@ -134,9 +139,9 @@ def features_visualization(dataset, key, value):
         )
     )
 
-    data = [trace]
-    fig = dict(data=data, layout=layout)
-    iplot(fig, filename = "Data visualization with rangeslider")
+    data = [trace1, trace2]
+    fig = go.Figure(data=data, layout=layout)
+    fig.show()
 
 '''
 Description: Plot the ohlcv features
@@ -182,7 +187,7 @@ def ohlcv_visualization(dataset, features, title):
         name = features[3][0]
     )
 
-    layout = dict(
+    layout = go.Layout(
         title=title,
         xaxis=dict(
             rangeselector=dict(
@@ -215,9 +220,8 @@ def ohlcv_visualization(dataset, features, title):
     )
 
     data = [trace1, trace2, trace3, trace4, trace5]
-
-    fig = dict(data=data, layout=layout)
-    iplot(fig, filename = title)
+    fig = go.Figure(data=data, layout=layout)
+    fig.show()
 
 '''
 Description: Plot the sma features
@@ -256,7 +260,7 @@ def sma_visualization(dataset, features, title):
         name = features[2][0]
     )
 
-    layout = dict(
+    layout = go.Layout(
         title=title,
         xaxis=dict(
             rangeselector=dict(
@@ -289,6 +293,5 @@ def sma_visualization(dataset, features, title):
     )
 
     data = [trace1, trace2, trace3, trace4]
-
-    fig = dict(data=data, layout=layout)
-    iplot(fig, filename = title)
+    fig = go.Figure(data=data, layout=layout)
+    fig.show()

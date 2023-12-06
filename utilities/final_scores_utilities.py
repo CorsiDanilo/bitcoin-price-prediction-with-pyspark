@@ -477,70 +477,70 @@ Args:
 Return: None
 '''
 def show_datasets(one_week, fifteen_days, one_month, three_months, title):
-  trace1 = go.Scatter(
-      x = three_months['timestamp'],
-      y = three_months['market-price'].astype(float),
-      mode = 'lines',
-      name = 'Three months market price (usd)'
-  )
+    trace1 = go.Scatter(
+        x = three_months['timestamp'],
+        y = three_months['market-price'].astype(float),
+        mode = 'lines',
+        name = 'Three months market price (usd)'
+    )
 
-  trace2 = go.Scatter(
-      x = one_month['timestamp'],
-      y = one_month['market-price'].astype(float),
-      mode = 'lines',
-      name = 'One month market price (usd)'
-  )
+    trace2 = go.Scatter(
+        x = one_month['timestamp'],
+        y = one_month['market-price'].astype(float),
+        mode = 'lines',
+        name = 'One month market price (usd)'
+    )
 
-  trace3 = go.Scatter(
-      x = fifteen_days['timestamp'],
-      y = fifteen_days['market-price'].astype(float),
-      mode = 'lines',
-      name = 'Fifteen days market price (usd)'
-  )
+    trace3 = go.Scatter(
+        x = fifteen_days['timestamp'],
+        y = fifteen_days['market-price'].astype(float),
+        mode = 'lines',
+        name = 'Fifteen days market price (usd)'
+    )
 
-  trace4 = go.Scatter(
-      x = one_week['timestamp'],
-      y = one_week['market-price'].astype(float),
-      mode = 'lines',
-      name = 'One week market price (usd)'
-  )
+    trace4 = go.Scatter(
+        x = one_week['timestamp'],
+        y = one_week['market-price'].astype(float),
+        mode = 'lines',
+        name = 'One week market price (usd)'
+    )
 
-  layout = dict(
-      title=title + " predictions",
-      xaxis=dict(
-          rangeselector=dict(
-              buttons=list([
-                  # Change the count to desired amount of months.
-                  dict(count=1,
-                      label='1m',
-                      step='month',
-                      stepmode='backward'),
-                  dict(count=6,
-                      label='6m',
-                      step='month',
-                      stepmode='backward'),
-                  dict(count=12,
-                      label='1y',
-                      step='month',
-                      stepmode='backward'),
-                  dict(count=36,
-                      label='3y',
-                      step='month',
-                      stepmode='backward'),
-                  dict(step='all')
-              ])
-          ),
-          rangeslider=dict(
-              visible = True
-          ),
-          type='date'
-      )
-  )
+    layout = go.Layout(
+        title=title + " predictions",
+        xaxis=dict(
+            rangeselector=dict(
+                buttons=list([
+                    # Change the count to desired amount of months.
+                    dict(count=1,
+                        label='1m',
+                        step='month',
+                        stepmode='backward'),
+                    dict(count=6,
+                        label='6m',
+                        step='month',
+                        stepmode='backward'),
+                    dict(count=12,
+                        label='1y',
+                        step='month',
+                        stepmode='backward'),
+                    dict(count=36,
+                        label='3y',
+                        step='month',
+                        stepmode='backward'),
+                    dict(step='all')
+                ])
+            ),
+            rangeslider=dict(
+                visible = True
+            ),
+            type='date'
+        )
+    )
 
-  data = [trace1, trace2, trace3, trace4]
-  fig = dict(data=data, layout=layout)
-  iplot(fig, filename = title)
+    data = [trace1, trace2, trace3, trace4]
+    fig = go.Figure(data=data, layout=layout)
 
+    fig.show()
 '''
 Description: Plot the prediction obtained from the test phase
 Args:
@@ -592,7 +592,7 @@ def show_results(dataset, model0_name, model0_predictions, model1_name, model1_p
         name = model3_name + ' predictions'
     )
 
-    layout = dict(
+    layout = go.Layout(
         title=title,
         xaxis=dict(
             rangeselector=dict(
@@ -625,9 +625,8 @@ def show_results(dataset, model0_name, model0_predictions, model1_name, model1_p
     )
 
     data = [trace1, trace2, trace3, trace4, trace5]
-    fig = dict(data=data, layout=layout)
-    iplot(fig, filename = title)
-
+    fig = go.Figure(data=data, layout=layout)
+    fig.show()
 '''
 Description: Return the accuracy of the model (how good the models are at predicting whether the price will go up or down)
 Args:
