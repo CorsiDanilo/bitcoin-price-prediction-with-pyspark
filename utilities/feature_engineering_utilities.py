@@ -85,63 +85,6 @@ def dataset_visualization(train_valid, test, title):
     data = [trace1, trace2]
     fig = go.Figure(data=data, layout=layout)
     fig.show()
-'''
-Description: Plot the division of the main dataset
-Args:
-    train_valid: Train / validation portion of the dataset 
-    test: Test portion of the dataset 
-    title: Chart title
-Return: None
-'''
-def dataset_visualization(train_valid, test, title):
-    trace1 = go.Scatter(
-        x = train_valid['timestamp'],
-        y = train_valid["market-price"].astype(float),
-        mode = 'lines',
-        name = "Train / Validation set"
-    )
-
-    trace2 = go.Scatter(
-        x = test['timestamp'],
-        y = test['market-price'].astype(float),
-        mode = 'lines',
-        name = "Test set"
-    )
-
-    layout = go.Layout(
-        title=title,
-        xaxis=dict(
-            rangeselector=dict(
-                buttons=list([
-                    dict(count=1,
-                        label='1m',
-                        step='month',
-                        stepmode='backward'),
-                    dict(count=6,
-                        label='6m',
-                        step='month',
-                        stepmode='backward'),
-                    dict(count=12,
-                        label='1y',
-                        step='month',
-                        stepmode='backward'),
-                    dict(count=36,
-                        label='3y',
-                        step='month',
-                        stepmode='backward'),
-                    dict(step='all')
-                ])
-            ),
-            rangeslider=dict(
-                visible = True
-            ),
-            type='date'
-        )
-    )
-
-    data = [trace1, trace2]
-    fig = go.Figure(data=data, layout=layout)
-    fig.show()
 
 '''
 Description: Plot the ohlcv features
@@ -220,6 +163,58 @@ def ohlcv_visualization(dataset, features, title):
     )
 
     data = [trace1, trace2, trace3, trace4, trace5]
+    fig = go.Figure(data=data, layout=layout)
+    fig.show()
+
+'''
+Description: Plot the selected feature
+Args:
+    dataset: Dataset to be considered
+    key: Title of the feature to be inserted in the graph
+    value: Title of the feature contained in the dataset
+Return: None
+'''
+def features_visualization(dataset, key, value):
+    trace = go.Scatter(
+        x = dataset['timestamp'],
+        y = dataset[value].astype(float),
+        mode = 'lines',
+        name = key
+    )
+
+    layout = dict(
+        title=key,
+        xaxis=dict(
+            rangeselector=dict(
+                buttons=list([
+                    # Change the count to desired amount of months.
+                    dict(count=1,
+                        label='1m',
+                        step='month',
+                        stepmode='backward'),
+                    dict(count=6,
+                        label='6m',
+                        step='month',
+                        stepmode='backward'),
+                    dict(count=12,
+                        label='1y',
+                        step='month',
+                        stepmode='backward'),
+                    dict(count=36,
+                        label='3y',
+                        step='month',
+                        stepmode='backward'),
+                    dict(step='all')
+                ])
+            ),
+            rangeslider=dict(
+                visible = True
+            ),
+            type='date'
+        )
+    )
+
+    data = [trace]
     fig = go.Figure(data=data, layout=layout)
     fig.show()
 

@@ -530,7 +530,6 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
 
     # Plot to show
     current_plot = 0
-    next_plot = 1
 
     # Get the number of samples
     num = dataset.count()
@@ -590,13 +589,16 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
             train_predictions = pipeline_model.transform(train_data).select(target_label, "market-price", "prediction", 'timestamp')
             valid_predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
 
-            # Show plots in pairs of 2 (first and multiple of 5, in case of block_split show them all except for hyperparameter tuning)
-            title = model_name + " predictions on split " +  str(idx + 1) + " with " + features_name
+            # Show plots
             if slow_operations:
-                if (model_type != "hyp_tuning") and (current_plot == 1 or next_plot == 9 or next_plot == 19 or current_plot % 5 == 0 or next_plot % 5 == 0 or splitting_info['split_type'] == BS):
-                    show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), title, False)            
-                current_plot = current_plot + 1
-                next_plot = next_plot + 1
+                title = model_name + " predictions on split " +  str(idx + 1) + " with " + features_name
+                if (model_type != "hyp_tuning"):
+                    if splitting_info['split_type'] == BS:
+                        show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), title, False)    
+                    elif splitting_info['split_type'] == WFS:
+                        if current_plot == 0 or current_plot == 1 or current_plot == 5 or current_plot == 6:
+                            show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), title, False)    
+                            current_plot = current_plot + 1
 
             if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
                 # Append predictions to the list

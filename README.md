@@ -158,6 +158,25 @@ Then the features that gave on average the most satisfactory results (for each m
 
 If the final results are satisfactory, the model will be trained on the whole train / validation set and saved in order to make predictions on the test set.
 
+⚠️ Note: Due to the large size of the notebooks with the outputs, it was not possible for me to upload them to the E-Learning / GitHub platforms, below are links to the notebooks for each model and splitting method with the outputs viewable using Colab: 
+- **[Data crawling](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg)**
+- **Block splitting  method:**
+   - [Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+   - [Generalized Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+   - [Random Forest Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+   - [Gradient Boosting Tree Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+- **Walk forward splitting method:** 
+   - [Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+   - [Generalized Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+   - [Random Forest Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+   - [Gradient Boosting Tree Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+- **Single splitting method:** 
+   - [Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+   - [Generalized Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+   - [Random Forest Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+   - [Gradient Boosting Tree Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+- **[Final scores](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg)**
+
 ### **3. Final scores**
 After loading the trained models, the test set is divided into further mini-sets of `1 week`, `15 days`, `1 month` and `3 months` to see how the models' performance degrades as time increases. Final results are collected and compared to draw conclusions (see final results).
 
@@ -188,21 +207,6 @@ After loading the trained models, the test set is divided into further mini-sets
 │   ├── 4-walk-forward-split.ipynb
 │   ├── 5-single-split.ipynb
 │   ├── 6-final-scores.ipynb
-│   ├── exports
-│   │   ├── 2-feature-engineering.html
-│   │   ├── 3-block-split_GeneralizedLinearRegression.html
-│   │   ├── 3-block-split_GradientBoostingTreeRegressor.html
-│   │   ├── 3-block-split_LinearRegression.html
-│   │   ├── 3-block-split_RandomForestRegressor.html
-│   │   ├── 4-walk-forward-split_GeneralizedLinearRegression.html
-│   │   ├── 4-walk-forward-split_GradientBoostingTreeRegressor.html
-│   │   ├── 4-walk-forward-split_LinearRegression.html
-│   │   ├── 4-walk-forward-split_RandomForestRegressor.html
-│   │   ├── 5-single-split_GeneralizedLinearRegression.html
-│   │   ├── 5-single-split_GradientBoostingTreeRegressor.html
-│   │   ├── 5-single-split_LinearRegression.html
-│   │   ├── 5-single-split_RandomForestRegressor.html
-│   │   └── require.js
 │   └── images
 │       ├── block-splits.png
 │       ├── Drawings.excalidraw
@@ -292,10 +296,9 @@ After loading the trained models, the test set is divided into further mini-sets
 - Each folder (`GeneralizedLinearRegression`, `GradientBoostingTreeRegressor`, `LinearRegression` and `RandomForestRegressor`) contains the trained model with the best parameters, ready to be used to perform price prediction on never-before-seen data
 
 ### `Notebooks folder:` contains notebooks produced
-- `exports folder:` contains the .html of feature engineering notebook and for each models train / validation run based on the splitting method with final results and interactive graphs
 - `1-data-crawling.ipynb:` crawling data on Bitcoin's price and blochckain by querying APIs
 - `2-feature-engineering.ipynb:` adding useful features regardings the price of Bitcoin, visualizing data and performing feature selection
-- `3-5-splitting_method.ipynb:` it performs training/validation of models according to the chosen split method (block split, walk forward split or single split)
+- `3-5-<splitting_method>.ipynb:` it performs training/validation of models according to the chosen split method (block split, walk forward split or single split)
 - `6-final-scores.ipynb:` display the final scores and making predictions on the test set with the models trained on the whole train / validation set
 
 ### `Results folder:` contains all results obtained
@@ -309,7 +312,7 @@ After loading the trained models, the test set is divided into further mini-sets
 - `train_validation_utilities.py:` contains the methods used in the notebooks where models are trained and validated
 
 # **Final results**
-![final_test_one_week_prediction.png](./results/final/plots/final_test_one_week_prediction.png)
-![final_test_fifteen_days_prediction.png](./results/final/plots/final_test_fifteen_days_prediction.png)
-![final_test_one_month_prediction.png](./results/final/plots/final_test_one_month_prediction.png)
-![final_test_three_months_prediction.png](./results/final/plots/final_test_three_months_prediction.png)
+![final_test_one_week_prediction.png](https://drive.google.com/uc?export=view&id=1ChXxKdh9oq0gOPQJbZKZvMIvY7qeNuR-)
+![final_test_fifteen_days_prediction.png](https://drive.google.com/uc?export=view&id=1Cl5DUX9qANJV684jTKp87H81l9ZPLqLN)
+![final_test_one_month_prediction.png](https://drive.google.com/uc?export=view&id=1CiihC-GTjhPD5Ixw1TQR-rXvtvA6GG_I)
+![final_test_three_months_prediction.png](https://drive.google.com/uc?export=view&id=1CYWiTzaixYH7S9OjvRQLey8n9Wjbmhpk)

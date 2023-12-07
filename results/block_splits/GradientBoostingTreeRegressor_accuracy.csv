@@ -1,2 +1,2 @@
 Model,Features,Splitting,Accuracy (default),Accuracy (tuned)
-GradientBoostingTreeRegressor,base_features,block_splits,51.04460541364849,50.171559283263434
+GradientBoostingTreeRegressor,base_features,block_splits,50.407929851315295,50.171559283263434

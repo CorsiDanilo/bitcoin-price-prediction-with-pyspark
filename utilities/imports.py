@@ -19,7 +19,7 @@ from pyspark.ml import PipelineModel
 # Graph packages
 import plotly.express as px
 import matplotlib.pyplot as plt
-from plotly import init_notebook_mode, iplot, plot
+from plotly.offline import init_notebook_mode, iplot, plot
 import plotly.io as pio
 from plotly.subplots import make_subplots
 import plotly.graph_objs as go
