@@ -178,102 +178,112 @@ After loading the trained models, the test set is divided into further mini-sets
 
 ```
 .
-├── datasets
-│   ├── output
-│   │   ├── bitcoin_blockchain_data_15min_test.parquet
-│   │   └── bitcoin_blockchain_data_15min_train_valid.parquet
-│   ├── raw
-│   │   └── bitcoin_blockchain_data_15min.parquet
-│   └── temp
-├── features
-│   ├── base_and_least_corr_features.json
-│   ├── base_and_most_corr_features.json
-│   ├── base_features.json
-├── models
-│   ├── GeneralizedLinearRegression
-│   ├── GradientBoostingTreeRegressor
-│   ├── LinearRegression
-│   └── RandomForestRegressor
-├── notebooks
-│   ├── 1-data-crawling.ipynb
-│   ├── 2-feature-engineering.ipynb
-│   ├── 3-block-split.ipynb
-│   ├── 4-walk-forward-split.ipynb
-│   ├── 5-single-split.ipynb
-│   ├── 6-final-scores.ipynb
-│   └── images
-│       ├── block-splits.png
-│       ├── Drawings.excalidraw
-│       ├── single-split.png
-│       └── walk-forward-splits.png
-├── presentation
-│   ├── presentation.pptx
-│   └── speech.docx
-├── README.md
-├── requirements.txt
-├── results
-│   ├── block_splits
-│   │   ├── GeneralizedLinearRegression_accuracy.csv
-│   │   ├── GeneralizedLinearRegression_all.csv
-│   │   ├── GeneralizedLinearRegression_rel.csv
-│   │   ├── GradientBoostingTreeRegressor_accuracy.csv
-│   │   ├── GradientBoostingTreeRegressor_all.csv
-│   │   ├── GradientBoostingTreeRegressor_rel.csv
-│   │   ├── LinearRegression_accuracy.csv
-│   │   ├── LinearRegression_all.csv
-│   │   ├── LinearRegression_rel.csv
-│   │   ├── RandomForestRegressor_accuracy.csv
-│   │   ├── RandomForestRegressor_all.csv
-│   │   └── RandomForestRegressor_rel.csv
-│   ├── final
-│   │   ├── final.csv
-│   │   └── plots
-│   │       ├── default_train_val_r2_non_negative.png
-│   │       ├── default_train_val_r2.png
-│   │       ├── default_train_val_rmse.png
-│   │       ├── final_test_accuracy.png
-│   │       ├── final_test_fifteen_days_prediction.png
-│   │       ├── final_test_one_month_prediction.png
-│   │       ├── final_test_one_week_prediction.png
-│   │       ├── final_test_r2_non_negative.png
-│   │       ├── final_test_r2.png
-│   │       ├── final_test_rmse.png
-│   │       ├── final_test_three_months_prediction.png
-│   │       ├── final_train_val_accuracy.png
-│   │       ├── final_train_val_r2.png
-│   │       └── final_train_val_rmse.png
-│   ├── single_split
-│   │   ├── GeneralizedLinearRegression_accuracy.csv
-│   │   ├── GeneralizedLinearRegression_all.csv
-│   │   ├── GeneralizedLinearRegression_rel.csv
-│   │   ├── GradientBoostingTreeRegressor_accuracy.csv
-│   │   ├── GradientBoostingTreeRegressor_all.csv
-│   │   ├── GradientBoostingTreeRegressor_rel.csv
-│   │   ├── LinearRegression_accuracy.csv
-│   │   ├── LinearRegression_all.csv
-│   │   ├── LinearRegression_rel.csv
-│   │   ├── RandomForestRegressor_accuracy.csv
-│   │   ├── RandomForestRegressor_all.csv
-│   │   └── RandomForestRegressor_rel.csv
-│   └── walk_forward_splits
-│       ├── GeneralizedLinearRegression_accuracy.csv
-│       ├── GeneralizedLinearRegression_all.csv
-│       ├── GeneralizedLinearRegression_rel.csv
-│       ├── GradientBoostingTreeRegressor_accuracy.csv
-│       ├── GradientBoostingTreeRegressor_all.csv
-│       ├── GradientBoostingTreeRegressor_rel.csv
-│       ├── LinearRegression_accuracy.csv
-│       ├── LinearRegression_all.csv
-│       ├── LinearRegression_rel.csv
-│       ├── RandomForestRegressor_accuracy.csv
-│       ├── RandomForestRegressor_all.csv
-│       └── RandomForestRegressor_rel.csv
-└── utilities
-    ├── config.py
-    ├── feature_engineering_utilities.py
-    ├── final_scores_utilities.py
-    ├── imports.py
-    └── train_validation_utilities.py
+|-- README.md
+|-- datasets
+|   |-- output
+|   |   |-- bitcoin_blockchain_data_15min_test.parquet
+|   |   `-- bitcoin_blockchain_data_15min_train_valid.parquet
+|   |-- raw
+|   |   `-- bitcoin_blockchain_data_15min.parquet
+|   `-- temp
+|-- features
+|   |-- base_and_least_corr_features.json
+|   |-- base_and_most_corr_features.json
+|   `-- base_features.json
+|-- models
+|   |-- GeneralizedLinearRegression
+|   |-- GradientBoostingTreeRegressor
+|   |-- LinearRegression
+|   `-- RandomForestRegressor
+|-- notebooks
+|   |-- 1-data-crawling.ipynb
+|   |-- 2-feature-engineering.ipynb
+|   |-- 3-block-split_GeneralizedLinearRegression.ipynb
+|   |-- 3-block-split_GradientBoostingTreeRegressor.ipynb
+|   |-- 3-block-split_LinearRegression.ipynb
+|   |-- 3-block-split_RandomForestRegressor.ipynb
+|   |-- 4-walk-forward-split_GeneralizedLinearRegression.ipynb
+|   |-- 4-walk-forward-split_GradientBoostingTreeRegressor.ipynb
+|   |-- 4-walk-forward-split_LinearRegression.ipynb
+|   |-- 4-walk-forward-split_RandomForestRegressor.ipynb
+|   |-- 5-single-split_GeneralizedLinearRegression.ipynb
+|   |-- 5-single-split_GradientBoostingTreeRegressor.ipynb
+|   |-- 5-single-split_LinearRegression.ipynb
+|   |-- 5-single-split_RandomForestRegressor.ipynb
+|   |-- 6-final-scores.ipynb
+|   `-- images
+|       |-- Drawings.excalidraw
+|       |-- block-splits.png
+|       |-- single-split.png
+|       `-- walk-forward-splits.png
+|-- presentation
+|   |-- presentation.pptx
+|   `-- speech.docx
+|-- requirements.txt
+|-- results
+|   |-- block_splits
+|   |   |-- GeneralizedLinearRegression_accuracy.csv
+|   |   |-- GeneralizedLinearRegression_all.csv
+|   |   |-- GeneralizedLinearRegression_rel.csv
+|   |   |-- GradientBoostingTreeRegressor_accuracy.csv
+|   |   |-- GradientBoostingTreeRegressor_all.csv
+|   |   |-- GradientBoostingTreeRegressor_rel.csv
+|   |   |-- LinearRegression_accuracy.csv
+|   |   |-- LinearRegression_all.csv
+|   |   |-- LinearRegression_rel.csv
+|   |   |-- RandomForestRegressor_accuracy.csv
+|   |   |-- RandomForestRegressor_all.csv
+|   |   `-- RandomForestRegressor_rel.csv
+|   |-- final
+|   |   |-- final.csv
+|   |   `-- plots
+|   |       |-- default_train_val_r2.png
+|   |       |-- default_train_val_r2_non_negative.png
+|   |       |-- default_train_val_rmse.png
+|   |       |-- final_test_accuracy.png
+|   |       |-- final_test_fifteen_days_prediction.png
+|   |       |-- final_test_one_month_prediction.png
+|   |       |-- final_test_one_week_prediction.png
+|   |       |-- final_test_r2.png
+|   |       |-- final_test_r2_non_negative.png
+|   |       |-- final_test_rmse.png
+|   |       |-- final_test_three_months_prediction.png
+|   |       |-- final_train_val_accuracy.png
+|   |       |-- final_train_val_r2.png
+|   |       |-- final_train_val_r2_non_negative.png
+|   |       `-- final_train_val_rmse.png
+|   |-- single_split
+|   |   |-- GeneralizedLinearRegression_accuracy.csv
+|   |   |-- GeneralizedLinearRegression_all.csv
+|   |   |-- GeneralizedLinearRegression_rel.csv
+|   |   |-- GradientBoostingTreeRegressor_accuracy.csv
+|   |   |-- GradientBoostingTreeRegressor_all.csv
+|   |   |-- GradientBoostingTreeRegressor_rel.csv
+|   |   |-- LinearRegression_accuracy.csv
+|   |   |-- LinearRegression_all.csv
+|   |   |-- LinearRegression_rel.csv
+|   |   |-- RandomForestRegressor_accuracy.csv
+|   |   |-- RandomForestRegressor_all.csv
+|   |   `-- RandomForestRegressor_rel.csv
+|   `-- walk_forward_splits
+|       |-- GeneralizedLinearRegression_accuracy.csv
+|       |-- GeneralizedLinearRegression_all.csv
+|       |-- GeneralizedLinearRegression_rel.csv
+|       |-- GradientBoostingTreeRegressor_accuracy.csv
+|       |-- GradientBoostingTreeRegressor_all.csv
+|       |-- GradientBoostingTreeRegressor_rel.csv
+|       |-- LinearRegression_accuracy.csv
+|       |-- LinearRegression_all.csv
+|       |-- LinearRegression_rel.csv
+|       |-- RandomForestRegressor_accuracy.csv
+|       |-- RandomForestRegressor_all.csv
+|       `-- RandomForestRegressor_rel.csv
+`-- utilities
+    |-- config.py
+    |-- feature_engineering_utilities.py
+    |-- final_scores_utilities.py
+    |-- imports.py
+    |-- train_validation_utilities.py
 ```
 
 ### `Datasets folder:` contains the original, temporary and processed datasets
