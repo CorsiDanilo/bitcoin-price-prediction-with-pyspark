@@ -113,34 +113,10 @@ Different types of metrics will be used to get a complete picture of the perform
 * `Adjusted R2`
 
 Since predicting the price accurately is very difficult, I also saw how good the models are at predicting whether the price will go up or down in this way:
-
-For each prediction let's consider the actual market-price, next-market-price and our predicted next-market-price (prediction).
-I compute whether the current prediction is correct (1) or not (0):
-
-$$ 
-prediction\_is\_correct
-= 
-\begin{cases}
-0 \text{ if [(market-price > next-market-price) and (market-price < prediction)] or [(market-price < next-market-price) and (market-price > prediction)]} \\
-1 \text{ if [(market-price > next-market-price) and (market-price > prediction)] or [(market-price < next-market-price) and (market-price < prediction)]}
-\end{cases}
-$$
-
-After that I count the number of correct prediction:
-$$ 
-correct\_predictions
-= 
-\sum_{i=0}^{total\_rows} prediction\_is\_correct
-$$
-
-Finally I compute the percentage of accuracy of the model:
-$$
-\\ 
-accuracy 
-= 
-(correct\_predictions / total\_rows) 
-* 100
-$$
+- For each prediction let's consider the actual market-price, next-market-price and our predicted next-market-price (prediction).
+- I compute whether the current prediction is correct (1) or not (0)
+- After that I count the number of correct prediction
+- Finally I compute the percentage of accuracy of the model
 
 Concern the train / validation pipeline, it is structured like this:
 - `Default without normalization:` make predictions using the base model
@@ -158,24 +134,42 @@ Then the features that gave on average the most satisfactory results (for each m
 
 If the final results are satisfactory, the model will be trained on the whole train / validation set and saved in order to make predictions on the test set.
 
-⚠️ Note: Due to the large size of the notebooks with the outputs, it was not possible for me to upload them to the E-Learning / GitHub platforms, below are links to the notebooks for each model and splitting method with the outputs viewable using Colab: 
-- **[Data crawling](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg)**
-- **Block splitting  method:**
-   - [Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
-   - [Generalized Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
-   - [Random Forest Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
-   - [Gradient Boosting Tree Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
-- **Walk forward splitting method:** 
-   - [Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
-   - [Generalized Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
-   - [Random Forest Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
-   - [Gradient Boosting Tree Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
-- **Single splitting method:** 
-   - [Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
-   - [Generalized Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
-   - [Random Forest Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
-   - [Gradient Boosting Tree Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
-- **[Final scores](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg)**
+⚠️ Note: Due to the large size of the notebooks with the outputs, it was not possible for me to upload them to the E-Learning / GitHub platforms, below are links to the notebooks with the outputs viewable using Colab: 
+
+1.  [Data crawling](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg)
+2.  [Feature engineering](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+
+3. **Block splitting:**
+
+      3.1. [Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+
+      3.2. [Generalized Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+
+      3.3. [Random Forest Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+
+      3.4. [Gradient Boosting Tree Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+
+4.  **Walk forward splitting:**
+
+      4.1 [Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+
+      4.2 [Generalized Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+
+      4.3 [Random Forest Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+
+      4.4 [Gradient Boosting Tree Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+
+5.  **Single splitting:** 
+
+      5.1 [Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+
+      5.2 [Generalized Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+
+      5.3 [Random Forest Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+
+      5.4 [Gradient Boosting Tree Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+
+6. [Final scores](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
 
 ### **3. Final scores**
 After loading the trained models, the test set is divided into further mini-sets of `1 week`, `15 days`, `1 month` and `3 months` to see how the models' performance degrades as time increases. Final results are collected and compared to draw conclusions (see final results).
