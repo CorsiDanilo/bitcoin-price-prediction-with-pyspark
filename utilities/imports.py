@@ -40,3 +40,4 @@ import functools
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 from sklearn.metrics import mean_absolute_percentage_error
+from tqdm import tqdm
