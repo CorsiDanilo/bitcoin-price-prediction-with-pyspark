@@ -298,7 +298,7 @@ After loading the trained models, the test set is divided into further mini-sets
 ### `Notebooks folder:` contains notebooks produced
 - `1-data-crawling.ipynb:` crawling data on Bitcoin's price and blochckain by querying APIs
 - `2-feature-engineering.ipynb:` adding useful features regardings the price of Bitcoin, visualizing data and performing feature selection
-- `3-5-<splitting_method>.ipynb:` it performs training/validation of models according to the chosen split method (block split, walk forward split or single split)
+- `3-5-<splitting-method>_<model>.ipynb:` it performs training/validation of models according to the chosen split method (block split, walk forward split or single split)
 - `6-final-scores.ipynb:` display the final scores and making predictions on the test set with the models trained on the whole train / validation set
 
 ### `Results folder:` contains all results obtained
@@ -312,7 +312,7 @@ After loading the trained models, the test set is divided into further mini-sets
 - `train_validation_utilities.py:` contains the methods used in the notebooks where models are trained and validated
 
 # **Final results**
-![final_test_one_week_prediction.png](https://drive.google.com/uc?export=view&id=1ChXxKdh9oq0gOPQJbZKZvMIvY7qeNuR-)
-![final_test_fifteen_days_prediction.png](https://drive.google.com/uc?export=view&id=1Cl5DUX9qANJV684jTKp87H81l9ZPLqLN)
-![final_test_one_month_prediction.png](https://drive.google.com/uc?export=view&id=1CiihC-GTjhPD5Ixw1TQR-rXvtvA6GG_I)
-![final_test_three_months_prediction.png](https://drive.google.com/uc?export=view&id=1CYWiTzaixYH7S9OjvRQLey8n9Wjbmhpk)
+<img src="https://github.com/CorsiDanilo/big-data-computing-project/blob/main/results/final/plots/final_test_one_week_prediction.png?raw=1">
+<img src="https://github.com/CorsiDanilo/big-data-computing-project/blob/main/results/final/plots/final_test_fifteen_days_prediction.png?raw=1">
+<img src="https://github.com/CorsiDanilo/big-data-computing-project/blob/main/results/final/plots/final_test_one_month_prediction.png?raw=1">
+<img src="https://github.com/CorsiDanilo/big-data-computing-project/blob/main/results/final/plots/final_test_three_months_prediction.png?raw=1">

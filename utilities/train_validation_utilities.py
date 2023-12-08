@@ -546,7 +546,7 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
         split_position_df = block_splits(num, splitting_info['splits'])
     elif splitting_info['split_type'] == WFS:
         split_position_df = walk_forward_splits(num, splitting_info['min_obser'], splitting_info['sliding_window'])
-    num_splits = split_position_df.shape[0]-1
+    num_splits = split_position_df.shape[0]
 
     for position in split_position_df.itertuples():
         best_result = {"RMSE": float('inf')}
@@ -589,17 +589,14 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
             valid_predictions = pipeline_model.transform(valid_data).select(target_label, "market-price", "prediction", 'timestamp')
 
             # Show plots
-            if (model_type != "hyp_tuning"):
-                if slow_operations:
+            if slow_operations:
+                if (model_type != "hyp_tuning"):
                     title = model_name + " predictions on split " +  str(idx + 1) + " with " + features_name
-                    if splitting_info['split_type'] == BS: # Show all the plots
+                    if splitting_info['split_type'] == BS: # Show all the plots (for BS)
                         show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), title, False)    
                     elif splitting_info['split_type'] == WFS: # Show only the first, the middle and the last split
-                        if (idx == 0 or split == 1) or (idx == num_splits-1 or idx == num_splits):
+                        if idx+1 == num_splits//2 or idx+1 == (num_splits//2) + 1: # Show only the middle plots (for WFS), uncomment this to show all of them (WARNING: you cannot save the notebook due to it's size)
                             show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), title, False)  
-                        else:
-                            print("...") # Print dots to indicate that some plots are not shown (too many)
-                else:  
                     print("Split [" + str(idx + 1) + "/" + str(num_splits) +  "]")
 
             if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
