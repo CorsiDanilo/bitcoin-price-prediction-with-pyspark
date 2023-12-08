@@ -87,15 +87,15 @@ During this phase the dataset will be splitted according to different splitting 
 
 - `Block time series splits:` involves dividing the time series into blocks of equal length, and then using each block as a separate fold for cross-validation.
 
-   ![block-splits.png](./notebooks/images/block-splits.png)
+   <img src="https://github.com/CorsiDanilo/big-data-computing-project/blob/main/notebooks/images/block-splits.png?raw=1">
 
 - `Walk forward time series splits:` involves using a sliding window approach to create the training and validation sets for each fold. The model is trained on a fixed window of historical data, and then validated on the next observation in the time series. This process is repeated for each subsequent observation, with the window sliding forward one step at a time. 
 
-   ![walk-forward-splits.png](./notebooks/images/walk-forward-splits.png)
+   <img src="https://github.com/CorsiDanilo/big-data-computing-project/blob/main/notebooks/images/walk-forward-splits.png?raw=1">
 
 - `Single time series split` involves dividing the time series considering as validation set a narrow period of time and as train set everything that happened before this period, in such a way as to best benefit from the trend in the short term.
 
-   ![single-split.png](./notebooks/images/single-split.png)
+   <img src="https://github.com/CorsiDanilo/big-data-computing-project/blob/main/notebooks/images/single-split.png?raw=1">
 
 Several types of regression algorithms will be used to see their differences and how they perform in the various stages of training / validation and testing, including: 
 * `Linear Regression`
