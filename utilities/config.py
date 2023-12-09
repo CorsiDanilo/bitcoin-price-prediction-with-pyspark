@@ -8,7 +8,7 @@ GLR = "GeneralizedLinearRegression"
 RF = "RandomForestRegressor"
 GBTR = "GradientBoostingTreeRegressor"
 
-#Spltting methods
+# Spltting methods
 BS = "block_splits"
 WFS = "walk_forward_splits"
 SS = "single_split"

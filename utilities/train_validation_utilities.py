@@ -571,8 +571,9 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
         
         # All combination of params
         param_lst = [dict(zip(params, param)) for param in product(*params.values())]
+        pbar = tqdm(param_lst)
 
-        for param in tqdm(param_lst):
+        for param in pbar:
             # Chosen Model
             model = model_selection(model_name, param, features_label, target_label)
 
@@ -597,7 +598,7 @@ def multiple_splits(dataset, params, splitting_info, model_name, model_type, fea
                     elif splitting_info['split_type'] == WFS: # Show only the first, the middle and the last split
                         if idx+1 == num_splits//2 or idx+1 == (num_splits//2) + 1: # Show only the middle plots (for WFS), uncomment this to show all of them (WARNING: you cannot save the notebook due to it's size)
                             show_results(dataset.toPandas(), train_predictions.toPandas(), valid_predictions.toPandas(), title, False)  
-                    print("Split [" + str(idx + 1) + "/" + str(num_splits) +  "]")
+            pbar.set_description(f"Split: [{str(idx + 1)}/{str(num_splits)}]")
 
             if model_type == "default" or model_type == "default_norm" or model_type == "cross_val":
                 # Append predictions to the list
