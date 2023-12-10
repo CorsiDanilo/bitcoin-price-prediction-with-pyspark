@@ -1,3 +1,3 @@
 Model,Type,Dataset,Splitting,Features,Parameters,RMSE,MSE,MAE,MAPE,R2,Adjusted_R2,Time
-GeneralizedLinearRegression,default_norm,valid,single_split,base_and_most_corr_features_norm,"[25, 0]",829.0372370663741,687302.7404426474,672.3622734429771,0.02283848312113026,-3.016081039637271,-3.0214880824371866,0.3979527950286865
-GeneralizedLinearRegression,tuned,valid,single_split,base_and_most_corr_features_norm,"[5, 0.2, 'gaussian', 'log']",826.8801930345411,683730.85363284,670.7453040766078,0.02278309616486229,-2.9952096156657046,-3.0005885582650524,0.4159872531890869
+GeneralizedLinearRegression,default_norm,valid,single_split,base_and_most_corr_features_norm,"[25, 0]",829.0372370663741,687302.7404426474,672.3622734429771,0.02283848312113026,-3.016081039637271,-3.0214880824371866,0.489912748336792
+GeneralizedLinearRegression,tuned,valid,single_split,base_and_most_corr_features_norm,"[5, 0.2, 'gaussian', 'log']",826.8801930345411,683730.85363284,670.7453040766078,0.02278309616486229,-2.9952096156657046,-3.0005885582650524,0.3935379981994629

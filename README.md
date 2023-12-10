@@ -136,40 +136,40 @@ If the final results are satisfactory, the model will be trained on the whole tr
 
 ⚠️ Note: Due to the large size of the notebooks with the outputs, it was not possible for me to upload them to the E-Learning / GitHub platforms, below are links to the notebooks with the outputs viewable using Colab: 
 
-1.  [Data crawling](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg)
-2.  [Feature engineering](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+1.  [Data crawling](https://drive.google.com/file/d/1Kge0w40KDNjtRWsx0i82eDCg8ifTlAHX/view?usp=sharing)
+2.  [Feature engineering](https://drive.google.com/file/d/1KvpnWJ5VqOhG0wBaG6Hn_49zI0pxxFt1/view?usp=sharing) 
 
 3. **Block splitting:**
 
-      3.1. [Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+      3.1. [Linear Regression](https://drive.google.com/file/d/1L_TxiphKFR2qDamYs7fS8K3Ex2RONYR_/view?usp=sharing) 
 
-      3.2. [Generalized Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+      3.2. [Generalized Linear Regression](https://drive.google.com/file/d/1Lvd9TmYMYKbra3PFapNJY3-5Pa_LXIXq/view?usp=sharing) 
 
-      3.3. [Random Forest Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+      3.3. [Random Forest Regressor](https://drive.google.com/file/d/1MCtofqa6kxOB1nAZH1QTSScmKZhmeaoA/view?usp=sharing) 
 
-      3.4. [Gradient Boosting Tree Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+      3.4. [Gradient Boosting Tree Regressor](https://drive.google.com/file/d/1Lb8QZBAaTcL-kiZCPCyND7RiPuqoFlvb/view?usp=sharing) 
 
 4.  **Walk forward splitting:**
 
-      4.1 [Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+      4.1 [Linear Regression](https://drive.google.com/file/d/1LxmudhmiPZ_FTfMT0rTT5Z8tSqdd-fDV/view?usp=sharing) 
 
-      4.2 [Generalized Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+      4.2 [Generalized Linear Regression](https://drive.google.com/file/d/1M5SglOmF780D8pBIwEfX-KjVRlD1RdZj/view?usp=sharing) 
 
-      4.3 [Random Forest Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+      4.3 [Random Forest Regressor](https://drive.google.com/file/d/1LxF0qQHg-gZG9TQTI3MHH--oszB4BOaR/view?usp=sharing) 
 
-      4.4 [Gradient Boosting Tree Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+      4.4 [Gradient Boosting Tree Regressor](https://drive.google.com/file/d/1M-wnVvVn2A5haQmoYINR3TmKaEKpTKm8/view?usp=sharing) 
 
 5.  **Single splitting:** 
 
-      5.1 [Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+      5.1 [Linear Regression](https://drive.google.com/file/d/1MKPu0XQ66JIjeSFCcUeLzUDS9i0edQ3O/view?usp=sharing) 
 
-      5.2 [Generalized Linear Regression](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+      5.2 [Generalized Linear Regression](https://drive.google.com/file/d/1MLTxZ9VWbURL3tQaVA9p97njkClsf3rw/view?usp=sharing) 
 
-      5.3 [Random Forest Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+      5.3 [Random Forest Regressor](https://drive.google.com/file/d/1MGlzaOP09SDFbdujooA0hxmgM7G5XByk/view?usp=sharing) 
 
-      5.4 [Gradient Boosting Tree Regressor](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+      5.4 [Gradient Boosting Tree Regressor](https://drive.google.com/file/d/1MLSUwe35Ty5YP4zrhRwggq5jmk-hD894/view?usp=sharing) 
 
-6. [Final scores](https://www.bloomberg.com/news/articles/2021-10-21/bitcoin-appears-to-crash-87-on-binance-in-apparent-mistake#xj4y7vzkg) 
+6. [Final scores](https://drive.google.com/file/d/1MEjsk7Dstbxe_qqjGwbES2JRupBtCnTF/view?usp=sharing) 
 
 ### **3. Final scores**
 After loading the trained models, the test set is divided into further mini-sets of `1 week`, `15 days`, `1 month` and `3 months` to see how the models' performance degrades as time increases. Final results are collected and compared to draw conclusions (see final results).

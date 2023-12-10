@@ -856,7 +856,7 @@ Return:
     pipeline_model: Final trained model
     predictions: Predictions obtained from the model
 '''
-def evaluate_trained_model(dataset, params, model_name, model_type, features_normalization, features, features_name, features_label, target_label):    
+def evaluate_trained_model(dataset, params, model_name, model_type, features_normalization, features, features_name, features_label, target_label, slow_operations):    
     # Select the type of features to be used
     dataset = select_features(dataset, features_normalization, features, features_label, target_label)
 
@@ -907,6 +907,8 @@ def evaluate_trained_model(dataset, params, model_name, model_type, features_nor
     results_df = pd.DataFrame(results)
 
     # Show plots
-    show_results(None, predictions.toPandas(), None, model_name + " prediction on the whole train / validation set", True)
+    if slow_operations:
+        title = model_name + " prediction on the whole train / validation set with " + features_name
+        show_results(None, predictions.toPandas(), None, title, True)
         
     return results_df, pipeline_model, predictions.toPandas()
