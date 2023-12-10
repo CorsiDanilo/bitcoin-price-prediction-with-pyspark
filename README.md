@@ -134,7 +134,7 @@ Then the features that gave on average the most satisfactory results (for each m
 
 If the final results are satisfactory, the model will be trained on the whole train / validation set and saved in order to make predictions on the test set.
 
-⚠️ Note: Due to the large size of the notebooks with the outputs, it was not possible for me to upload them to the E-Learning / GitHub platforms, below are links to the notebooks with the outputs viewable using Colab: 
+⚠️ **Note**: Due to the large size of the notebooks with the outputs, it was not possible for me to upload them to the E-Learning / GitHub platforms, below are links to the notebooks with the outputs viewable using Colab: 
 
 1.  [Data crawling](https://drive.google.com/file/d/1Kge0w40KDNjtRWsx0i82eDCg8ifTlAHX/view?usp=sharing)
 2.  [Feature engineering](https://drive.google.com/file/d/1KvpnWJ5VqOhG0wBaG6Hn_49zI0pxxFt1/view?usp=sharing) 
