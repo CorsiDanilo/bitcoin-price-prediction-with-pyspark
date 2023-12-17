@@ -541,6 +541,7 @@ def show_datasets(one_week, fifteen_days, one_month, three_months, title):
     fig = go.Figure(data=data, layout=layout)
 
     fig.show()
+    
 '''
 Description: Plot the prediction obtained from the test phase
 Args:
@@ -561,7 +562,7 @@ def show_results(dataset, model0_name, model0_predictions, model1_name, model1_p
         x = dataset['timestamp'],
         y = dataset['next-market-price'].astype(float),
         mode = 'lines',
-        name = 'Actual next Market price (usd)'
+        name = 'Actual market price'
     )
 
     trace2 = go.Scatter(
