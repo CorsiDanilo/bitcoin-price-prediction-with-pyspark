@@ -316,4 +316,4 @@ After loading the trained models, the test set is divided into further mini-sets
 - `train_validation_utilities.py:` contains the methods used in the notebooks where models are trained and validated
 
 # **Final results**
-<img src="https://github.com/CorsiDanilo/big-data-computing-project/blob/main/results/final/plots/final_test_predictions.png?raw=1">
+<img src="https://github.com/CorsiDanilo/big-data-computing-project/blob/main/results/final/plots/final_test_predictions.jpg?raw=1">
