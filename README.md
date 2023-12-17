@@ -237,21 +237,6 @@ After loading the trained models, the test set is divided into further mini-sets
 |   |-- final
 |   |   |-- final.csv
 |   |   `-- plots
-|   |       |-- default_train_val_r2.png
-|   |       |-- default_train_val_r2_non_negative.png
-|   |       |-- default_train_val_rmse.png
-|   |       |-- final_test_accuracy.png
-|   |       |-- final_test_fifteen_days_prediction.png
-|   |       |-- final_test_one_month_prediction.png
-|   |       |-- final_test_one_week_prediction.png
-|   |       |-- final_test_r2.png
-|   |       |-- final_test_r2_non_negative.png
-|   |       |-- final_test_rmse.png
-|   |       |-- final_test_three_months_prediction.png
-|   |       |-- final_train_val_accuracy.png
-|   |       |-- final_train_val_r2.png
-|   |       |-- final_train_val_r2_non_negative.png
-|   |       `-- final_train_val_rmse.png
 |   |-- single_split
 |   |   |-- GeneralizedLinearRegression_accuracy.csv
 |   |   |-- GeneralizedLinearRegression_all.csv
