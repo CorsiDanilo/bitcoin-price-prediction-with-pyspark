@@ -94,7 +94,7 @@ Args:
     title: Chart title
 Return: None
 '''
-def ohlcv_visualization(dataset, features, title):
+def ohlc_visualization(dataset, features, title):
     trace1 = go.Scatter(
         x = dataset['timestamp'],
         y = dataset["market-price"].astype(float),
