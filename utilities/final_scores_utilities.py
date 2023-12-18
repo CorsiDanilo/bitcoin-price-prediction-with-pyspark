@@ -506,7 +506,7 @@ def show_datasets(one_week, fifteen_days, one_month, three_months, title):
     )
 
     layout = go.Layout(
-        title=title + " predictions",
+        title=title,
         xaxis=dict(
             rangeselector=dict(
                 buttons=list([
