@@ -1,2 +1,2 @@
 Model,Features,Splitting,Accuracy (default),Accuracy (tuned)
-RandomForestRegressor,base_features,block_splits,53.808616088448346,54.29279451010294
+RandomForestRegressor,base_and_least_corr_features,block_splits,52.08539839878002,52.31033168128098

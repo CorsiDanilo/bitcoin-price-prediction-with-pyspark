@@ -51,6 +51,7 @@ The features taken under consideration were divided into several categories:
    - `n-transactions:` the total number of confirmed transactions per day.
    - `estimated-transaction-volume-usd:` the total estimated value in USD of transactions on the blockchain.
 
+<img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/features_group.png?raw=1">
 
 ## **Project pipeline**
 
@@ -73,6 +74,8 @@ All these features will be divided into two distinct groups:
     - If >= 0.6, then they will be considered `most correlated`.
     - If < 0.6, then they will be considered `least correlated`.
 
+<img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/grouped_features.png?raw=1">
+
 The strategy for the model's train / validation phase will be:
 - Train / validate models with base features
 - See if by adding the additional most and least correlated features to them the performance improves
@@ -87,15 +90,15 @@ During this phase the dataset will be splitted according to different splitting 
 
 - `Block time series splits:` involves dividing the time series into blocks of equal length, and then using each block as a separate fold for cross-validation.
 
-   <img src="https://github.com/CorsiDanilo/big-data-computing-project/blob/main/notebooks/images/block-splits.png?raw=1">
+   <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/block-splits.png?raw=1">
 
 - `Walk forward time series splits:` involves using a sliding window approach to create the training and validation sets for each fold. The model is trained on a fixed window of historical data, and then validated on the next observation in the time series. This process is repeated for each subsequent observation, with the window sliding forward one step at a time. 
 
-   <img src="https://github.com/CorsiDanilo/big-data-computing-project/blob/main/notebooks/images/walk-forward-splits.png?raw=1">
+   <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/walk-forward-splits.png?raw=1">
 
 - `Single time series split` involves dividing the time series considering as validation set a narrow period of time and as train set everything that happened before this period, in such a way as to best benefit from the trend in the short term.
 
-   <img src="https://github.com/CorsiDanilo/big-data-computing-project/blob/main/notebooks/images/single-split.png?raw=1">
+   <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/single-split.png?raw=1">
 
 Several types of regression algorithms will be used to see their differences and how they perform in the various stages of training / validation and testing, including: 
 * `Linear Regression`
@@ -118,11 +121,16 @@ Since predicting the price accurately is very difficult, I also saw how good the
 - After that I count the number of correct prediction
 - Finally I compute the percentage of accuracy of the model
 
+<img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/accuracy_procedure.png?raw=1">
+
 Concern the train / validation pipeline, it is structured like this:
 - `Default without normalization:` make predictions using the base model
 - `Default with normalization:` like the previous one but features are normalized
 
-Then the features that gave on average the most satisfactory results (for each model) are chosen and proceeded with:
+   Then the features that for each model gave the most satisfactory results are chosen.
+
+   <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/base_model_procedure.png?raw=1">
+
 - `Hyperparameter tuning:` finding the best model's parameters to use. Since during this stage will be used the Block split / Walk forward split method of the dataset I compute a score for each parameter chosen by each split, assigning weights based on:
    * Their `frequency` for each split (if the same parameters are chosen from several splits, these will have greater weight) 
    * The `split` they belong to (the closer the split is to today's date the more weight they will have)
@@ -130,9 +138,13 @@ Then the features that gave on average the most satisfactory results (for each m
    
    Then, the best set of parameters is chosen based on the overall score obtained by putting these weights together.
 
+   <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/hyper_param_tuning_procedure.png?raw=1">
+
 - `Cross Validation:` validate the performance of the model with the chosen parameters (also here using Block split / Walk forward split)
 
-If the final results are satisfactory, the model will be trained on the whole train / validation set and saved in order to make predictions on the test set.
+   If the final results are satisfactory, the model will be trained on the whole train / validation set and saved in order to make predictions on the test set.
+
+   <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/cross_valid_and_final_procedure.png?raw=1">
 
 ⚠️ **Note**: Due to the large size of the notebooks with the outputs, it was not possible for me to upload them to the E-Learning / GitHub platforms, below are links to the notebooks with the outputs viewable using Colab: 
 
@@ -173,6 +185,8 @@ If the final results are satisfactory, the model will be trained on the whole tr
 
 ### **3. Final scores**
 After loading the trained models, the test set is divided into further mini-sets of `1 week`, `15 days`, `1 month` and `3 months` to see how the models' performance degrades as time increases. Final results are collected and compared to draw conclusions (see final results).
+
+<img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/test_split.png?raw=1">
 
 # **Project structure**
 
@@ -237,6 +251,21 @@ After loading the trained models, the test set is divided into further mini-sets
 |   |-- final
 |   |   |-- final.csv
 |   |   `-- plots
+|   |       |-- default_train_val_r2.png
+|   |       |-- default_train_val_r2_non_negative.png
+|   |       |-- default_train_val_rmse.png
+|   |       |-- final_test_accuracy.png
+|   |       |-- final_test_fifteen_days_prediction.png
+|   |       |-- final_test_one_month_prediction.png
+|   |       |-- final_test_one_week_prediction.png
+|   |       |-- final_test_r2.png
+|   |       |-- final_test_r2_non_negative.png
+|   |       |-- final_test_rmse.png
+|   |       |-- final_test_three_months_prediction.png
+|   |       |-- final_train_val_accuracy.png
+|   |       |-- final_train_val_r2.png
+|   |       |-- final_train_val_r2_non_negative.png
+|   |       `-- final_train_val_rmse.png
 |   |-- single_split
 |   |   |-- GeneralizedLinearRegression_accuracy.csv
 |   |   |-- GeneralizedLinearRegression_all.csv
@@ -301,4 +330,4 @@ After loading the trained models, the test set is divided into further mini-sets
 - `train_validation_utilities.py:` contains the methods used in the notebooks where models are trained and validated
 
 # **Final results**
-<img src="https://github.com/CorsiDanilo/big-data-computing-project/blob/main/results/final/plots/final_test_predictions.jpg?raw=1">
+<img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/results/final/plots/final_test_predictions.jpg?raw=1">
