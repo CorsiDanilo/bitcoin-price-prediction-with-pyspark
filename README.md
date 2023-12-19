@@ -186,7 +186,7 @@ Concern the train / validation pipeline, it is structured like this:
 ### **3. Final scores**
 After loading the trained models, the test set is divided into further mini-sets of `1 week`, `15 days`, `1 month` and `3 months` to see how the models' performance degrades as time increases. Final results are collected and compared to draw conclusions (see final results).
 
-<img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/test_split.png?raw=1">
+<img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/test_split_plot.png?raw=1">
 
 # **Project structure**
 
