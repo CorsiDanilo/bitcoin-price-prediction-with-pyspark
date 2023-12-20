@@ -23,7 +23,7 @@ In this project, I will analyze some machine learning techniques to understand, 
 *``Is it possible to make predictions about the price of Bitcoin using machine learning methods in combination with the price information and technical characteristics of its blockchain?``*
 
 ## **Dataset**
-I chose to collect data on the Bitcoin blockchain using the API of the website Blockchain.org and the price information from two famous exchanges, Binance and Kraken. They retrieved the most relevant information from 2019-12-07	to the 2023-11-13 (~4 years, a period for which there were moments of high volatility but also a lot of price lateralization).
+I chose to collect data on the Bitcoin blockchain using the API of the website Blockchain.com and the price information from two famous exchanges, Binance and Kraken. They retrieved the most relevant information from 2019-12-07	to the 2023-11-13 (~4 years, a period for which there were moments of high volatility but also a lot of price lateralization).
 
 The features taken under consideration were divided into several categories:
 
@@ -64,7 +64,7 @@ The project is structured like this:
 The project was carried out with `Apache Spark` (but during feature engineering I converted the Spark dataframe to a Pandas one to make some plots)
 
 ### **1. Data crawling / Feature engineering**
-After obtaining the features regarding the technical data of the blockchain and the price of Bitcoin by contacting the APIs of Blockchain.org and the two exchanges, other features are added:
+After obtaining the features regarding the technical data of the blockchain and the price of Bitcoin by contacting the APIs of Blockchain.com and the two exchanges, other features are added:
 *   `next-market-price:` represents the price of Bitcoin for the next day (this will be the target variable on which to make predictions).
 *   `sma-x-days:` indicators that calculate the average price over a specified number of days (5, 7, 10, 20, 50 and 100 days in our case). They are commonly used by traders to identify trends and potential buy or sell signals.
 
