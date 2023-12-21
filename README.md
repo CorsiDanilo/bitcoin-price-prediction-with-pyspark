@@ -206,9 +206,25 @@ After loading the trained models, the test set is divided into further mini-sets
 |   `-- base_features.json
 |-- models
 |   |-- GeneralizedLinearRegression
+|   |   |-- metadata
+|   |   |   |-- ...
+|   |   `-- stages
+|   |       |-- ...
 |   |-- GradientBoostingTreeRegressor
+|   |   |-- metadata
+|   |   |   |-- ...
+|   |   `-- stages
+|   |       |-- ...
 |   |-- LinearRegression
+|   |   |-- metadata
+|   |   |   |-- ...
+|   |   `-- stages
+|   |       |-- ...
 |   `-- RandomForestRegressor
+|   |   |-- metadata
+|   |   |   |-- ...
+|   |   `-- stages
+|   |       |-- ...
 |-- notebooks
 |   |-- 1-data-crawling.ipynb
 |   |-- 2-feature-engineering.ipynb
@@ -225,14 +241,20 @@ After loading the trained models, the test set is divided into further mini-sets
 |   |-- 5-single-split_LinearRegression.ipynb
 |   |-- 5-single-split_RandomForestRegressor.ipynb
 |   |-- 6-final-scores.ipynb
-|   `-- images
-|       |-- Drawings.excalidraw
-|       |-- block-splits.png
-|       |-- single-split.png
-|       `-- walk-forward-splits.png
+|   |-- images
+|   |   |-- accuracy_procedure.png
+|   |   |-- base_model_procedure.png
+|   |   |-- block-splits.png
+|   |   |-- cross_valid_and_final_procedure.png
+|   |   |-- excalidraw
+|   |   |-- features_group.png
+|   |   |-- grouped_features.png
+|   |   |-- hyper_param_tuning_procedure.png
+|   |   |-- single-split.png
+|   |   |-- test_split_plot.png
+|   |   `-- walk-forward-splits.png
 |-- presentation
-|   |-- presentation.pptx
-|   `-- speech.docx
+|   `-- presentation.pptx
 |-- requirements.txt
 |-- results
 |   |-- block_splits
@@ -258,6 +280,7 @@ After loading the trained models, the test set is divided into further mini-sets
 |   |       |-- final_test_fifteen_days_prediction.png
 |   |       |-- final_test_one_month_prediction.png
 |   |       |-- final_test_one_week_prediction.png
+|   |       |-- final_test_predictions.jpg
 |   |       |-- final_test_r2.png
 |   |       |-- final_test_r2_non_negative.png
 |   |       |-- final_test_rmse.png
@@ -297,7 +320,7 @@ After loading the trained models, the test set is divided into further mini-sets
     |-- feature_engineering_utilities.py
     |-- final_scores_utilities.py
     |-- imports.py
-    |-- train_validation_utilities.py
+    `-- train_validation_utilities.py
 ```
 
 ### `Datasets folder:` contains the original, temporary and processed datasets
@@ -311,9 +334,10 @@ After loading the trained models, the test set is divided into further mini-sets
 - `base_features.json:` contains the name of the currency features of Bitcoin
 
 ### `Models folder:` contains files related to the trained models
-- Each folder (`GeneralizedLinearRegression`, `GradientBoostingTreeRegressor`, `LinearRegression` and `RandomForestRegressor`) contains the trained model with the best parameters, ready to be used to perform price prediction on never-before-seen data
+- Each folder (`GeneralizedLinearRegression`, `GradientBoostingTreeRegressor`, `LinearRegression` and `RandomForestRegressor`) contains the trained model with the best parameters, ready to be used to perform price prediction on never-before-seen data.
 
 ### `Notebooks folder:` contains notebooks produced
+- `images folder:` contains images of the graphics used in the notebooks and presentation
 - `1-data-crawling.ipynb:` crawling data on Bitcoin's price and blochckain by querying APIs
 - `2-feature-engineering.ipynb:` adding useful features regardings the price of Bitcoin, visualizing data and performing feature selection
 - `3-5-<splitting-method>_<model>.ipynb:` it performs training/validation of models according to the chosen split method (block split, walk forward split or single split)
