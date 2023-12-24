@@ -9,142 +9,139 @@ La Sapienza, University of Rome
 ### Author: Corsi Danilo (1742375) - corsi.1742375@studenti.uniroma1.it
 
 # **Project details**
+## **Outline**
+- In this project I’ve decided to build a Bitcoin price forecasting model in order to see if it possible to make predictions about the price of Bitcoin using machine learning methods
+- I will first introduce what bitcoin is and what is the aim of this project
+- Next we will see what data will be used and how to achieve the goal
+- Followed by a description of the main stages of the project
+- And finally draw the final conclusions
+
 ## **Introduction**
-Bitcoin is a decentralized cryptocurrency, created in 2009 by an anonymous inventor under the pseudonym Satoshi Nakamoto. 
-It does not have a central bank behind it that distributes new currency but relies on a network of nodes, i.e., PCs, that manage it in a distributed, peer-to-peer mode; and on the use of strong cryptography to validate and secure transactions. 
-Transactions can be made through the Internet to anyone with a "bitcoin address" 
-Bitcoin's value is determined by the market and the number of people using it. 
-Its blockchain, or public ledger of transactions, is constantly updated and validated by nodes in the network.
-The cryptocurrency Bitcoin has attracted the attention of many people in recent years, however, it's price fluctuation can be extremely unpredictable, which makes it difficult to predict when the right time to buy or sell this digital currency will be. 
-In this context, predicting  Bitcoin prices can be a competitive advantage for investors and traders, as it could allow them to make informed decisions on the right time to enter or exit the market.
-In this project, I will analyze some machine learning techniques to understand, through the processing of historical data, how accurately the price of Bitcoin can be predicted and whether this can provide added value to cryptocurrency investors and traders.
+- Bitcoin is a decentralized cryptocurrency, created in 2009 by an anonymous inventor under the pseudonym of Satoshi Nakamoto
+- It does not have a central bank behind it but relies on a network of nodes that manage it in a distributed, peer-to-peer mode
+- It uses strong cryptography to validate and secure transactions
+- These can be made through the Internet to anyone with a bitcoin address
+- And are contained in a public ledger of which is constantly updated and validated by nodes in the network
+- It’s value is determined by the market and the number of people using it
+- This criptocurrency has attracted the attention of many people in recent years, however, it's price fluctuation can be extremely unpredictable
+- In this context, predicting Bitcoin prices can be a competitive advantage for investors and traders, as it could allow them to make informed decisions on the right time to enter or exit the market
 
 ## **Goal**
-*``Is it possible to make predictions about the price of Bitcoin using machine learning methods in combination with the price information and technical characteristics of its blockchain?``*
+- ``Analyze some machine learning techniques to understand, through the processing of historical data, how accurately the price of Bitcoin can be predicted and whether this can provide added value to cryptocurrency investors and traders``*
 
-## **Dataset**
-I chose to collect data on the Bitcoin blockchain using the API of the website Blockchain.com and the price information from two famous exchanges, Binance and Kraken. They retrieved the most relevant information from 2019-12-07	to the 2023-11-13 (~4 years, a period for which there were moments of high volatility but also a lot of price lateralization).
+## **Dataset and features**
+- I collected Bitcoin blockchain data using the API of the [Blockchain.com](https://www.blockchain.com/) website and price information from two popular exchanges, [Binance](https://www.binance.com) and [Kraken](https://www.kraken.com/)
+- I decided to retreieve the most relevant data from the last four years to current days, a period for which there were moments of high volatility but also some price lateralization
+- The features taken under consideration were divided into several categories, from those that describe the price characteristics to those that go into more detail about Bitcoin's blockchain:
+   - **Currency Statistics**
+      - `ohlcv:` stands for “Open, High, Low, Close and Volume” and it's a list of the five types of data that are most common in financial analysis regarding price.
+      - `market-price:` the average USD market price across major bitcoin exchanges.
+      - `trade-volume-usd:` the total USD value of trading volume on major bitcoin exchanges.
+      - `total-bitcoins:` the total number of mined bitcoin that are currently circulating on the network.
+      - `market-cap:` the total USD value of bitcoin in circulation.
 
-The features taken under consideration were divided into several categories:
+   - **Block Details**
+      - `blocks-size:` the total size of the blockchain minus database indexes in megabytes.
+      - `avg-block-size:` the average block size over the past 24 hours in megabytes.
+      - `n-transactions-total:` the total number of transactions on the blockchain.
+      - `n-transactions-per-block:` the average number of transactions per block over the past 24 hours.
 
-- **Currency Statistics**
-   - `ohlcv:` stands for “Open, High, Low, Close and Volume” and it's a list of the five types of data that are most common in financial analysis regarding price.
-   - `market-price:` the average USD market price across major bitcoin exchanges.
-   - `trade-volume-usd:` the total USD value of trading volume on major bitcoin exchanges.
-   - `total-bitcoins:` the total number of mined bitcoin that are currently circulating on the network.
-   - `market-cap:` the total USD value of bitcoin in circulation.
+   - **Mining Information**
+      - `hash-rate:` the estimated number of terahashes per second the bitcoin network is performing in the last 24 hours.
+      - `difficulty:` a relative measure of how difficult it is to mine a new block for the blockchain.
+      - `miners-revenue:` total value of coinbase block rewards and transaction fees paid to miners.
+      - `transaction-fees-usd:` the total USD value of all transaction fees paid to miners. This does not include coinbase block rewards.
 
-- **Block Details**
-   - `blocks-size:` the total size of the blockchain minus database indexes in megabytes.
-   - `avg-block-size:` the average block size over the past 24 hours in megabytes.
-   - `n-transactions-total:` the total number of transactions on the blockchain.
-   - `n-transactions-per-block:` the average number of transactions per block over the past 24 hours.
+   - **Network Activity**
+      - `n-unique-addresses:` the total number of unique addresses used on the blockchain.
+      - `n-transactions:` the total number of confirmed transactions per day.
+      - `estimated-transaction-volume-usd:` the total estimated value in USD of transactions on the blockchain.
 
-- **Mining Information**
-   - `hash-rate:` the estimated number of terahashes per second the bitcoin network is performing in the last 24 hours.
-   - `difficulty:` a relative measure of how difficult it is to mine a new block for the blockchain.
-   - `miners-revenue:` total value of coinbase block rewards and transaction fees paid to miners.
-   - `transaction-fees-usd:` the total USD value of all transaction fees paid to miners. This does not include coinbase block rewards.
-
-- **Network Activity**
-   - `n-unique-addresses:` the total number of unique addresses used on the blockchain.
-   - `n-transactions:` the total number of confirmed transactions per day.
-   - `estimated-transaction-volume-usd:` the total estimated value in USD of transactions on the blockchain.
-
-<img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/features_group.png?raw=1">
+   <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/features_group.png?raw=1">
 
 ## **Project pipeline**
-
-The project is structured like this:
-- `Data crawling:` Bitcoin data retrieval via APIs call
-- `Feature engineering:` manipulation, visualization and feature extraction
-- `Models’ train / validation:` performed with hyperparameter tuning and cross validation based on different methods of splitting the dataset
-- `Final scores:` testing the final models and compare the results
-
-The project was carried out with `Apache Spark` (but during feature engineering I converted the Spark dataframe to a Pandas one to make some plots)
+- The project is structured in this way
+- First, I retrieved all the data and processed them in order to decide how to use the features
+- Then different models are trained using different methods of splitting the dataset, which we will see later
+- And then the final results are collected and conclusions are drawn
+- The project was carried out with Apache Spark but during some phases I converted the Spark dataframe to a Pandas one to make some plots
 
 ### **1. Data crawling / Feature engineering**
-After obtaining the features regarding the technical data of the blockchain and the price of Bitcoin by contacting the APIs of Blockchain.com and the two exchanges, other features are added:
-*   `next-market-price:` represents the price of Bitcoin for the next day (this will be the target variable on which to make predictions).
-*   `sma-x-days:` indicators that calculate the average price over a specified number of days (5, 7, 10, 20, 50 and 100 days in our case). They are commonly used by traders to identify trends and potential buy or sell signals.
+**Features**
+- After obtaining all the data, other features were added such as:
+   - `next-market-price:` that represents the price of Bitcoin for the next day, on which predictions will be made
+   - `simple-moving-averages:` indicators that calculate the average price over a specified number of days
+- Then all the features have been divided into three distinct final groups:
+   - `Base features:` contains all the price features
+   - `Base + most / least correlated features:` contains the previous ones plus the additional blockchain features divided based on their correlation value with the price
+   - If this value is greater than equal to 0.6 they will be considered most correlated, least correlated otherwise
 
-All these features will be divided into two distinct groups:
-- `Base features:` contains all the Currency Statistics features
-- `Base and additional features:` contains the Base features plus the additional features divided based on their correlation value with the price: 
-    - If >= 0.6, then they will be considered `most correlated`.
-    - If < 0.6, then they will be considered `least correlated`.
+   <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/grouped_features.png?raw=1">
 
-<img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/grouped_features.png?raw=1">
-
-The strategy for the model's train / validation phase will be:
-- Train / validate models with base features
-- See if by adding the additional most and least correlated features to them the performance improves
-
-
-The whole dataset will be splitted into two sets:
-* `Train / Validation set:` will be used to train the models and validate the performances.
-* `Test set:` will be used to perform price prediction on never-before-seen data (the last 3 months of the original dataset will be used).
+**Splitting**
+- Then the whole dataset will be splitted into two sets:
+   - `Train / Validation set:` that will be used to train the models and validate the performances
+   - `Test set:` that will be used to perform price prediction on never-before-seen data, in this case the last 3 months of the original dataset will be used
 
 ### **2. Models train / validation**
-During this phase the dataset will be splitted according to different splitting method (in order to figure out which one works best for our problem):
+**Splitting methods**
+- Three different splitting methods were used to train and validate the models in order to figure out which one works best for this problem
+   - `Block splits` involves dividing the time series into blocks of equal length
 
-- `Block time series splits:` involves dividing the time series into blocks of equal length, and then using each block as a separate fold for cross-validation.
+      <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/block-splits.png?raw=1">
+   - `Walk forward splits` involves using a sliding window approach to create the training and validation sets
 
-   <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/block-splits.png?raw=1">
+      <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/walk-forward-splits.png?raw=1">
+   - `Single split` involves dividing the time series considering a narrow period of time making a single split
 
-- `Walk forward time series splits:` involves using a sliding window approach to create the training and validation sets for each fold. The model is trained on a fixed window of historical data, and then validated on the next observation in the time series. This process is repeated for each subsequent observation, with the window sliding forward one step at a time. 
+      <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/single-split.png?raw=1">
+- In the latter case I consider only 2 years instead of 4 as in the others, so as to best benefit from the trend in the short term
 
-   <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/walk-forward-splits.png?raw=1">
+**Models and metrics**
+- Several types of regression algorithms between linear and tree-based will be tested to see their differences: 
+   * `Linear Regression`
+   * `Generalized Linear Regression`
+   * `Random Forest Regressor`
+   * `Gradient Boosting Tree Regressor` 
 
-- `Single time series split` involves dividing the time series considering as validation set a narrow period of time and as train set everything that happened before this period, in such a way as to best benefit from the trend in the short term.
+- Different types of metrics will be used to get a complete picture of the performance of the various models, including: 
+   * `RMSE (Root Mean Squared Error)`
+   * `MSE (Mean Squared Error)`
+   * `MAE (Mean Absolute Error)`
+   * `MAPE (Mean Absolute Percentage Error)`
+   * `R2 (R-squared)`
+   * `Adjusted R2`
 
-   <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/single-split.png?raw=1">
+**Accuracy**
+- Since predicting the price accurately is very difficult, I tried to compute how good the models are at predicting whether the price will go up or down like this:
+   - For each prediction, I am going to consider it correct if the actual price goes up or down and the predicted price follows that trend, wrong if vice versa
+   - After that I count the number of correct predictions among all of them
+   - And finally I compute the overall percentage of accuracy
 
-Several types of regression algorithms will be used to see their differences and how they perform in the various stages of training / validation and testing, including: 
-* `Linear Regression`
-* `Generalized Linear Regression`
-* `Random Forest Regressor`
-* `Gradient Boosting Tree Regressor` 
+   <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/accuracy_procedure.png?raw=1">
 
+**Pipeline**
+- Concern the train / validation pipeline, it is structured like this:
+   - First of all, I saw how the `default models` behave with the three feature groups and applying normalisation to them or not
 
-Different types of metrics will be used to get a complete picture of the performance of the various models, including: 
-* `RMSE (Root Mean Squared Error)`
-* `MSE (Mean Squared Error)`
-* `MAE (Mean Absolute Error)`
-* `MAPE (Mean Absolute Percentage Error)`
-* `R2 (R-squared)`
-* `Adjusted R2`
+      <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/base_model_procedure.png?raw=1">
 
-Since predicting the price accurately is very difficult, I also saw how good the models are at predicting whether the price will go up or down in this way:
-- For each prediction let's consider the actual market-price, next-market-price and our predicted next-market-price (prediction).
-- I compute whether the current prediction is correct (1) or not (0)
-- After that I count the number of correct prediction
-- Finally I compute the percentage of accuracy of the model
-
-<img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/accuracy_procedure.png?raw=1">
-
-Concern the train / validation pipeline, it is structured like this:
-- `Default without normalization:` make predictions using the base model
-- `Default with normalization:` like the previous one but features are normalized
-
-   Then the features that for each model gave the most satisfactory results are chosen.
-
-   <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/base_model_procedure.png?raw=1">
-
-- `Hyperparameter tuning:` finding the best model's parameters to use. Since during this stage will be used the Block split / Walk forward split method of the dataset I compute a score for each parameter chosen by each split, assigning weights based on:
-   * Their `frequency` for each split (if the same parameters are chosen from several splits, these will have greater weight) 
-   * The `split` they belong to (the closer the split is to today's date the more weight they will have)
-   * Their `RMSE value` for each split (the lower this is, the more weight they will have)
+   - Then the features that for each model gave the most satisfactory results are chosen and proceed with the `hyperparameter tuning` to find the best model’s parameters to use
+   - Since during this stage will be used the Block split or  Walk forward split method of the dataset I compute a score for each set of parameters chosen by each split, assigning weights based on their `frequency of occurrence`, `split belonging` and `RMSE value`
+   - Then, the overall score will be calculated by putting together these weights for each set of parameters and the one with the best score will be the chosen one
+      <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/hyper_param_tuning_procedure.png?raw=1">
    
-   Then, the best set of parameters is chosen based on the overall score obtained by putting these weights together.
+   - After that, the performance of each model is validated by performing `cross validation`
+   - And if the final results are satisfactory, the models will be trained on the whole train / validation set and saved in order to make predictions on the test set
+      <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/cross_valid_and_final_procedure.png?raw=1">
 
-   <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/hyper_param_tuning_procedure.png?raw=1">
+### **3. Final scores**
+- On this last phase, all results obtained up to that point are compared and final predictions on the test set are made
+- This has been divided into further mini-sets of  to see how the models performance degrades as time increases
 
-- `Cross Validation:` validate the performance of the model with the chosen parameters (also here using Block split / Walk forward split)
+   <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/test_split_plot.png?raw=1">
 
-   If the final results are satisfactory, the model will be trained on the whole train / validation set and saved in order to make predictions on the test set.
-
-   <img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/cross_valid_and_final_procedure.png?raw=1">
+---
 
 ⚠️ **Note**: Due to the large size of the notebooks with the outputs, it was not possible for me to upload them to the E-Learning / GitHub platforms, below are links to the notebooks with the outputs viewable using Colab: 
 
@@ -183,13 +180,7 @@ Concern the train / validation pipeline, it is structured like this:
 
 6. [Final scores](https://drive.google.com/file/d/1MEjsk7Dstbxe_qqjGwbES2JRupBtCnTF/view?usp=sharing) 
 
-### **3. Final scores**
-After loading the trained models, the test set is divided into further mini-sets of `1 week`, `15 days`, `1 month` and `3 months` to see how the models' performance degrades as time increases. Final results are collected and compared to draw conclusions (see final results).
-
-<img src="https://github.com/CorsiDanilo/bitcoin-price-prediction-with-pyspark/blob/main/notebooks/images/test_split_plot.png?raw=1">
-
 # **Project structure**
-
 ```
 .
 |-- README.md
@@ -206,25 +197,9 @@ After loading the trained models, the test set is divided into further mini-sets
 |   `-- base_features.json
 |-- models
 |   |-- GeneralizedLinearRegression
-|   |   |-- metadata
-|   |   |   |-- ...
-|   |   `-- stages
-|   |       |-- ...
 |   |-- GradientBoostingTreeRegressor
-|   |   |-- metadata
-|   |   |   |-- ...
-|   |   `-- stages
-|   |       |-- ...
 |   |-- LinearRegression
-|   |   |-- metadata
-|   |   |   |-- ...
-|   |   `-- stages
-|   |       |-- ...
 |   `-- RandomForestRegressor
-|   |   |-- metadata
-|   |   |   |-- ...
-|   |   `-- stages
-|   |       |-- ...
 |-- notebooks
 |   |-- 1-data-crawling.ipynb
 |   |-- 2-feature-engineering.ipynb
@@ -241,20 +216,13 @@ After loading the trained models, the test set is divided into further mini-sets
 |   |-- 5-single-split_LinearRegression.ipynb
 |   |-- 5-single-split_RandomForestRegressor.ipynb
 |   |-- 6-final-scores.ipynb
-|   |-- images
-|   |   |-- accuracy_procedure.png
-|   |   |-- base_model_procedure.png
-|   |   |-- block-splits.png
-|   |   |-- cross_valid_and_final_procedure.png
-|   |   |-- excalidraw
-|   |   |-- features_group.png
-|   |   |-- grouped_features.png
-|   |   |-- hyper_param_tuning_procedure.png
-|   |   |-- single-split.png
-|   |   |-- test_split_plot.png
-|   |   `-- walk-forward-splits.png
+|   `-- images
+|       |-- Drawings.excalidraw
+|       |-- block-splits.png
+|       |-- single-split.png
+|       `-- walk-forward-splits.png
 |-- presentation
-|   `-- presentation.pptx
+|   |-- presentation.pptx
 |-- requirements.txt
 |-- results
 |   |-- block_splits
@@ -280,7 +248,6 @@ After loading the trained models, the test set is divided into further mini-sets
 |   |       |-- final_test_fifteen_days_prediction.png
 |   |       |-- final_test_one_month_prediction.png
 |   |       |-- final_test_one_week_prediction.png
-|   |       |-- final_test_predictions.jpg
 |   |       |-- final_test_r2.png
 |   |       |-- final_test_r2_non_negative.png
 |   |       |-- final_test_rmse.png
@@ -320,9 +287,8 @@ After loading the trained models, the test set is divided into further mini-sets
     |-- feature_engineering_utilities.py
     |-- final_scores_utilities.py
     |-- imports.py
-    `-- train_validation_utilities.py
+    |-- train_validation_utilities.py
 ```
-
 ### `Datasets folder:` contains the original, temporary and processed datasets
 - `bitcoin_blockchain_data_15min_test.parquet:` dataset used in the final phase of the project to perform price prediction on never-before-seen data
 - `bitcoin_blockchain_data_15min_train_validation.parquet:` dataset used to train and validate the models
@@ -334,10 +300,9 @@ After loading the trained models, the test set is divided into further mini-sets
 - `base_features.json:` contains the name of the currency features of Bitcoin
 
 ### `Models folder:` contains files related to the trained models
-- Each folder (`GeneralizedLinearRegression`, `GradientBoostingTreeRegressor`, `LinearRegression` and `RandomForestRegressor`) contains the trained model with the best parameters, ready to be used to perform price prediction on never-before-seen data.
+- Each folder (`GeneralizedLinearRegression`, `GradientBoostingTreeRegressor`, `LinearRegression` and `RandomForestRegressor`) contains the trained model with the best parameters, ready to be used to perform price prediction on never-before-seen data
 
 ### `Notebooks folder:` contains notebooks produced
-- `images folder:` contains images of the graphics used in the notebooks and presentation
 - `1-data-crawling.ipynb:` crawling data on Bitcoin's price and blochckain by querying APIs
 - `2-feature-engineering.ipynb:` adding useful features regardings the price of Bitcoin, visualizing data and performing feature selection
 - `3-5-<splitting-method>_<model>.ipynb:` it performs training/validation of models according to the chosen split method (block split, walk forward split or single split)
