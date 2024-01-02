@@ -27,7 +27,7 @@ La Sapienza, University of Rome
 - In this context, predicting Bitcoin prices can be a competitive advantage for investors and traders, as it could allow them to make informed decisions on the right time to enter or exit the market
 
 ## **Goal**
-- ``Analyze some machine learning techniques to understand, through the processing of historical data, how accurately the price of Bitcoin can be predicted and whether this can provide added value to cryptocurrency investors and traders``*
+- ``Analyze some machine learning techniques to understand, through the processing of historical data, how accurately the price of Bitcoin can be predicted and whether this can provide added value to cryptocurrency investors and traders``
 
 ## **Dataset and features**
 - I collected Bitcoin blockchain data using the API of the [Blockchain.com](https://www.blockchain.com/) website and price information from two popular exchanges, [Binance](https://www.binance.com) and [Kraken](https://www.kraken.com/)
