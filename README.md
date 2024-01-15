@@ -29,6 +29,44 @@ La Sapienza, University of Rome
 ## **Goal**
 - ``Analyze some machine learning techniques to understand, through the processing of historical data, how accurately the price of Bitcoin can be predicted and whether this can provide added value to cryptocurrency investors and traders``
 
+---
+
+### ⚠️ **Note**: Because of the large size of the notebooks with the outputs containing the plots, it was not possible for me to upload them to the E-Learning / GitHub platforms, below are links to the notebooks with the outputs viewable using Colab
+1.  [Data crawling](https://drive.google.com/file/d/1Kge0w40KDNjtRWsx0i82eDCg8ifTlAHX/view?usp=sharing)
+2.  [Feature engineering](https://drive.google.com/file/d/1KvpnWJ5VqOhG0wBaG6Hn_49zI0pxxFt1/view?usp=sharing) 
+
+3. **Block splitting:**
+
+      3.1. [Linear Regression](https://drive.google.com/file/d/1L_TxiphKFR2qDamYs7fS8K3Ex2RONYR_/view?usp=sharing) 
+
+      3.2. [Generalized Linear Regression](https://drive.google.com/file/d/1Lvd9TmYMYKbra3PFapNJY3-5Pa_LXIXq/view?usp=sharing) 
+
+      3.3. [Random Forest Regressor](https://drive.google.com/file/d/1MCtofqa6kxOB1nAZH1QTSScmKZhmeaoA/view?usp=sharing) 
+
+      3.4. [Gradient Boosting Tree Regressor](https://drive.google.com/file/d/1Lb8QZBAaTcL-kiZCPCyND7RiPuqoFlvb/view?usp=sharing) 
+
+4.  **Walk forward splitting:**
+
+      4.1 [Linear Regression](https://drive.google.com/file/d/1LxmudhmiPZ_FTfMT0rTT5Z8tSqdd-fDV/view?usp=sharing) 
+
+      4.2 [Generalized Linear Regression](https://drive.google.com/file/d/1M5SglOmF780D8pBIwEfX-KjVRlD1RdZj/view?usp=sharing) 
+
+      4.3 [Random Forest Regressor](https://drive.google.com/file/d/1LxF0qQHg-gZG9TQTI3MHH--oszB4BOaR/view?usp=sharing) 
+
+      4.4 [Gradient Boosting Tree Regressor](https://drive.google.com/file/d/1M-wnVvVn2A5haQmoYINR3TmKaEKpTKm8/view?usp=sharing) 
+
+5.  **Single splitting:** 
+
+      5.1 [Linear Regression](https://drive.google.com/file/d/1MKPu0XQ66JIjeSFCcUeLzUDS9i0edQ3O/view?usp=sharing) 
+
+      5.2 [Generalized Linear Regression](https://drive.google.com/file/d/1MLTxZ9VWbURL3tQaVA9p97njkClsf3rw/view?usp=sharing) 
+
+      5.3 [Random Forest Regressor](https://drive.google.com/file/d/1MGlzaOP09SDFbdujooA0hxmgM7G5XByk/view?usp=sharing) 
+
+      5.4 [Gradient Boosting Tree Regressor](https://drive.google.com/file/d/1MLSUwe35Ty5YP4zrhRwggq5jmk-hD894/view?usp=sharing) 
+
+6. [Final scores](https://drive.google.com/file/d/1MEjsk7Dstbxe_qqjGwbES2JRupBtCnTF/view?usp=sharing) 
+
 ## **Dataset and features**
 - I collected Bitcoin blockchain data using the API of the [Blockchain.com](https://www.blockchain.com/) website and price information from two popular exchanges, [Binance](https://www.binance.com) and [Kraken](https://www.kraken.com/)
 - I decided to retreieve the most relevant data from the last four years to current days, a period for which there were moments of high volatility but also some price lateralization
