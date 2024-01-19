@@ -16,17 +16,17 @@ def get_splitting_params(split_type):
     if split_type == BS:
         # Block splits time series
         params = {'split_type': BS,
-                  'splits': 5}
+                  'splits': 5} # Number of splits to be performed
     elif split_type == WFS:
         # Walk forward splits time series
         params = {'split_type': WFS,
-                  'min_obser': 20000,
-                  'sliding_window': 5000}
+                  'min_obser': 20000, # Minimum number of observations 
+                  'sliding_window': 5000} # Sliding window size 
     elif split_type == SS:
         # Single split time series
         params = {'split_type': SS,
-                  'split_label': 'months',
-                  'split_value': 1}
+                  'split_label': 'months', # Split label [weeks | months | years]
+                  'split_value': 1} # Split value (number of weeks, months or years)
     else:
         raise ValueError("Invalid split type")
 
@@ -77,28 +77,28 @@ Returns:
 def get_model_grid_params(model_name):
     if (model_name == LR):
         params = {
-            'maxIter' : [5, 10, 50, 80, 100],
-            'regParam' : np.arange(0,1,0.2).round(decimals=2),
-            'elasticNetParam' : np.arange(0,1,0.2).round(decimals=2)
+            'maxIter' : [5, 10, 50, 80, 100], # The maximum number of iterations to use, in range [1, inf)
+            'regParam' : np.arange(0,1,0.2).round(decimals=2), # The regularization parameter, in range [0, inf)
+            'elasticNetParam' : np.arange(0,1,0.2).round(decimals=2) # the ElasticNet mixing parameter, in range [0, 1]. For alpha = 0, the penalty is an L2 penalty. For alpha = 1, it is an L1 penalty
         }
     if (model_name == GLR):
         params = {
-            'maxIter' : [5, 10, 50, 80],
-            'regParam' : [0, 0.1, 0.2],
-            'family': ['gaussian', 'gamma'],
-            'link': ['log', 'identity', 'inverse']
+            'maxIter' : [5, 10, 50, 80], # The maximum number of iterations to use, in range [1, inf)
+            'regParam' : [0, 0.1, 0.2], # The regularization parameter, in range [0, inf)
+            'family': ['gaussian', 'gamma'], # The name of family which is a description of the error distribution to be used in the model. Supported options: "gaussian", "binomial", "poisson", "gamma" and "tweedie"
+            'link': ['log', 'identity', 'inverse'] # The name of link function which provides the relationship between the linear predictor and the mean of the distribution function. Supported options: "identity", "log", "inverse", "logit", "probit", "cloglog" and "sqrt"
         }
     elif (model_name == RF):
         params = {
-            'numTrees' : [3, 5, 10, 20, 30],
-            'maxDepth' : [3, 5, 10],
+            'numTrees' : [3, 5, 10, 20, 30], # Number of trees to train (>= 1) 
+            'maxDepth' : [3, 5, 10], # Maximum depth of the tree (>= 0)
             'seed' : [RANDOM_SEED]
         }
     elif (model_name == GBTR):
         params = {
-            'maxIter' : [3, 5, 10, 20, 30],
-            'maxDepth' : [3, 5, 10],
-            'stepSize': [0.1, 0.3, 0.5, 0.7],
+            'maxIter' : [3, 5, 10, 20, 30], # Number of trees to train (>= 1)
+            'maxDepth' : [3, 5, 10], # Maximum depth of the tree (>= 0)
+            'stepSize': [0.1, 0.3, 0.5, 0.7], # Step size (a.k.a. learning rate) in interval (0, 1] for shrinking the contribution of each estimator
             'seed' : [RANDOM_SEED]
         }
 
